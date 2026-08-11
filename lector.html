@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BiblioTech — Portal del Lector</title>
+  <meta name="description" content="Portal del lector: explorá el catálogo, reservá libros, consultá tus préstamos y recibí recomendaciones personalizadas.">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .rating-input { display: flex; gap: 0.3rem; }
+    .rating-star { font-size: 1.5rem; cursor: pointer; color: var(--border); transition: color 0.15s; }
+    .rating-star.active { color: var(--gold); }
+    .book-detail-cover {
+      width: 140px; height: 200px;
+      border-radius: var(--radius-md);
+      object-fit: cover;
+      box-shadow: var(--shadow-lg);
+      flex-shrink: 0;
+    }
+    .book-detail-cover-wrap { 
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      width: 140px; height: 200px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .qr-lector-box { 
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+      padding: 1.5rem; background: white; border-radius: var(--radius-md);
+      max-width: 220px; margin: 0 auto;
+    }
+    .qr-lector-box p { color: #333; font-size: 0.78rem; text-align: center; }
+    .loan-progress {
+      position: relative;
+      height: 4px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      margin-top: 0.5rem;
+    }
+    .loan-progress-fill {
+      position: absolute;
+      left: 0; top: 0;
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width 0.5s ease;
+    }
+    .loan-progress-fill.ok      { background: var(--success); }
+    .loan-progress-fill.warning { background: var(--warning); }
+    .loan-progress-fill.danger  { background: var(--danger); }
+    .genero-chip.selected { background: var(--primary-glow); border-color: var(--primary); color: var(--primary-light); }
+    .recommend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 1rem; }
+    #perfilQR { background: white; padding: 1rem; border-radius: var(--radius-md); display: inline-block; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">📚</div>
+        <span class="logo-text">BiblioTech</span>
+      </div>
+      <div class="sidebar-role-tag">Portal del Lector</div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Catálogo</span>
+      <div class="nav-item active" data-section="s-catalogo" onclick="nav('s-catalogo')">
+        <span class="nav-icon">🔍</span>Explorar catálogo
+      </div>
+      <div class="nav-item" data-section="s-recomendaciones" onclick="nav('s-recomendaciones')">
+        <span class="nav-icon">✨</span>Recomendaciones
+      </div>
+      <span class="nav-section-label">Mis préstamos</span>
+      <div class="nav-item" data-section="s-prestamos" onclick="nav('s-prestamos')">
+        <span class="nav-icon">📘</span>Préstamos activos
+      </div>
+      <div class="nav-item" data-section="s-reservas" onclick="nav('s-reservas')">
+        <span class="nav-icon">🔖</span>Mis reservas
+      </div>
+      <div class="nav-item" data-section="s-historial" onclick="nav('s-historial')">
+        <span class="nav-icon">📋</span>Historial
+      </div>
+      <span class="nav-section-label">Cuenta</span>
+      <div class="nav-item" data-section="s-notificaciones" onclick="nav('s-notificaciones')">
+        <span class="nav-icon">🔔</span>Notificaciones
+        <span class="nav-badge" id="navBadgeNotif" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-section="s-perfil" onclick="nav('s-perfil')">
+        <span class="nav-icon">👤</span>Mi perfil
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="logout()">
+        <div class="user-avatar" id="sidebarAvatar"></div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNombre"></div>
+          <div class="user-role">Cerrar sesión</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Hamburger -->
+  <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- ══ CATÁLOGO ══ -->
+    <div id="s-catalogo" class="section active">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Catálogo</h2>
+          <p class="page-subtitle">Explorá todos los libros disponibles en la biblioteca</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <!-- Search + filtros -->
+        <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center;">
+          <div class="search-bar" style="flex:1;min-width:240px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="catalogoBusqueda" placeholder="Buscar por título, autor, ISBN..." oninput="filtrarCatalogo()">
+          </div>
+          <select class="form-control" id="catalogoGenero" onchange="filtrarCatalogo()" style="width:auto;min-width:160px;">
+            <option value="">Todos los géneros</option>
+          </select>
+          <select class="form-control" id="catalogoDisp" onchange="filtrarCatalogo()" style="width:auto;min-width:160px;">
+            <option value="">Toda disponibilidad</option>
+            <option value="disponible">Disponibles ahora</option>
+            <option value="prestado">Prestados</option>
+          </select>
+        </div>
+        <div id="catalogoResultados" class="text-sm text-muted mb-2"></div>
+        <div class="book-grid" id="catalogoGrid"></div>
+        <div class="empty-state hidden" id="catalogoEmpty">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">Sin resultados</div>
+          <div class="empty-desc">No encontramos libros que coincidan con tu búsqueda.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RECOMENDACIONES ══ -->
+    <div id="s-recomendaciones" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">✨ Recomendado para vos</h2>
+          <p class="page-subtitle">Seleccionado por el Agente Evaluador basado en tu historial y preferencias</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card mb-3" style="background:linear-gradient(135deg,rgba(123,104,238,0.1),rgba(0,201,167,0.05));border-color:rgba(123,104,238,0.25);">
+          <div class="flex items-center gap-2">
+            <span style="font-size:1.5rem;">🤖</span>
+            <div>
+              <div class="fw-600">Agente Evaluador activo</div>
+              <p class="text-sm">El sistema analiza tu historial de lectura, géneros preferidos y la popularidad de cada libro para sugerirte lecturas que creemos que te van a gustar.</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="mb-2">Tus géneros de interés</h4>
+        <div class="chips mb-3" id="generosChips"></div>
+        <div class="divider"></div>
+        <h4 class="mb-2">Libros recomendados</h4>
+        <div class="recommend-grid" id="recomendacionesGrid"></div>
+      </div>
+    </div>
+
+    <!-- ══ PRÉSTAMOS ACTIVOS ══ -->
+    <div id="s-prestamos" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">📘 Mis préstamos</h2>
+          <p class="page-subtitle">Libros que tenés actualmente en tu poder</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <div id="prestamosActivos"></div>
+      </div>
+    </div>
+
+    <!-- ══ RESERVAS ══ -->
+    <div id="s-reservas" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">🔖 Mis reservas</h2>
+          <p class="page-subtitle">Libros reservados en lista de espera</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <div id="reservasLista"></div>
+      </div>
+    </div>
+
+    <!-- ══ HISTORIAL ══ -->
+    <div id="s-historial" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">📋 Historial de lectura</h2>
+          <p class="page-subtitle">Todos los libros que leíste</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Libro</th>
+                <th>Autor</th>
+                <th>Fecha préstamo</th>
+                <th>Fecha devolución</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="historialBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NOTIFICACIONES ══ -->
+    <div id="s-notificaciones" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">🔔 Notificaciones</h2>
+          <p class="page-subtitle">Alertas y avisos importantes de tu cuenta</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="marcarTodasLeidas()">Marcar todas como leídas</button>
+      </div>
+      <div class="page-body">
+        <div id="notificacionesLista" class="flex flex-col gap-1"></div>
+      </div>
+    </div>
+
+    <!-- ══ PERFIL ══ -->
+    <div id="s-perfil" class="section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">👤 Mi perfil</h2>
+          <p class="page-subtitle">Tu información y código QR de identificación</p>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="grid grid-2 gap-3" style="align-items:start;">
+          <div class="card">
+            <h4 class="mb-2">Datos personales</h4>
+            <div id="perfilDatos"></div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <h4 class="mb-2">Tu código QR</h4>
+            <p class="text-sm text-secondary mb-3">Mostralo en el mostrador para identificarte rápidamente</p>
+            <div id="perfilQR"></div>
+            <p class="text-xs text-muted mt-2" id="perfilQRCode"></p>
+          </div>
+        </div>
+        <div class="card mt-3">
+          <h4 class="mb-2">Géneros de interés</h4>
+          <p class="text-sm text-secondary mb-2">Seleccioná los géneros que más te gustan para mejorar tus recomendaciones</p>
+          <div class="chips" id="generosPerfilChips"></div>
+          <button class="btn btn-primary btn-sm mt-2" onclick="guardarPreferencias()">💾 Guardar preferencias</button>
+        </div>
+        <div class="card mt-3">
+          <h4 class="mb-2">Multas pendientes</h4>
+          <div id="perfilMultas"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ MODAL: Detalle de libro ══ -->
+<div class="modal-overlay" id="modalLibro">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalLibroTitulo">Título del libro</h3>
+      <button class="modal-close" onclick="closeModal('modalLibro')">✕</button>
+    </div>
+    <div class="flex gap-3" style="align-items:flex-start;flex-wrap:wrap;">
+      <div class="book-detail-cover-wrap" id="modalLibroCoverWrap"></div>
+      <div style="flex:1;min-width:200px;">
+        <div id="modalLibroMeta"></div>
+        <div class="divider"></div>
+        <div id="modalLibroSinopsis" class="text-sm" style="color:var(--text-secondary);line-height:1.7;"></div>
+        <div class="flex gap-2 mt-3 flex-wrap" id="modalLibroAcciones"></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <h5 class="mb-2">Valorá este libro</h5>
+      <div class="rating-input" id="ratingInput"></div>
+      <textarea id="comentarioLibro" class="form-control mt-2" rows="2" placeholder="Dejá un comentario (opcional)..."></textarea>
+      <button class="btn btn-ghost btn-sm mt-2" onclick="guardarValoracion()">Enviar valoración</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/db.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/agents.js"></script>
+<script>
+  // ── Auth ──
+  DB.init();
+  const sesion = DB.sesion.get();
+  if (!sesion || sesion.rol === 'bibliotecario' || sesion.rol === 'administrador') {
+    window.location.href = 'index.html';
+  }
+
+  let libroActual = null;
+  let ratingActual = 0;
+  const GENEROS_TODOS = ['Literatura Argentina','Realismo Mágico','Clásicos','Ciencia Ficción','Literatura Infantil','Fantasía','Historia / Ensayo','Novela Histórica','Tecnología / Ensayo','Ciencia'];
+
+  // ── Init UI ──
+  function init() {
+    document.getElementById('sidebarAvatar').textContent = getInicial(sesion.nombre, sesion.apellido);
+    document.getElementById('sidebarNombre').textContent = `${sesion.nombre} ${sesion.apellido}`;
+
+    // Notificaciones no leídas
+    const unread = DB.notificaciones.countUnread(sesion.id);
+    const badge = document.getElementById('navBadgeNotif');
+    if (unread > 0) { badge.style.display = ''; badge.textContent = unread; }
+
+    renderCatalogo();
+    renderGenerosFiltro();
+    renderRecomendaciones();
+    renderPrestamos();
+    renderReservas();
+    renderHistorial();
+    renderNotificaciones();
+    renderPerfil();
+
+    // Correr planificador
+    AgentePlanificador.correr();
+
+    // Routing por hash
+    const hash = location.hash.slice(1);
+    if (hash && document.getElementById(hash)) nav(hash);
+  }
+
+  function nav(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+    const section = document.getElementById(id);
+    if (section) { section.classList.add('active'); section.classList.add('animate-fadeIn'); }
+    const navItem = document.querySelector(`[data-section="${id}"]`);
+    if (navItem) navItem.classList.add('active');
+    const bnavItem = document.querySelector(`.bottom-nav-item[data-section="${id}"]`);
+    if (bnavItem) bnavItem.classList.add('active');
+    history.pushState(null,'',`#${id}`);
+    document.getElementById('sidebar').classList.remove('open');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function logout() {
+    if (confirmar('¿Cerrar sesión?')) { DB.sesion.clear(); window.location.href = 'index.html'; }
+  }
+
+  /* ══ CATÁLOGO ══ */
+  function renderGenerosFiltro() {
+    const generos = DB.libros.getGeneros();
+    const sel = document.getElementById('catalogoGenero');
+    generos.forEach(g => { sel.innerHTML += `<option value="${g}">${g}</option>`; });
+  }
+
+  function filtrarCatalogo() {
+    const q = document.getElementById('catalogoBusqueda').value;
+    const genero = document.getElementById('catalogoGenero').value;
+    const disp = document.getElementById('catalogoDisp').value;
+    let libros = DB.libros.search(q, genero);
+    if (disp) {
+      libros = libros.filter(l => {
+        const estados = l.ejemplares.map(e => e.estado);
+        if (disp === 'disponible') return estados.includes('disponible');
+        if (disp === 'prestado')   return !estados.includes('disponible');
+        return true;
+      });
+    }
+    renderCatalogoGrid(libros);
+  }
+
+  function renderCatalogo() {
+    const libros = DB.libros.getAll().filter(l => l.validado);
+    renderCatalogoGrid(libros);
+  }
+
+  function renderCatalogoGrid(libros) {
+    const grid  = document.getElementById('catalogoGrid');
+    const empty = document.getElementById('catalogoEmpty');
+    const res   = document.getElementById('catalogoResultados');
+    res.textContent = `${libros.length} libro${libros.length !== 1 ? 's' : ''} encontrado${libros.length !== 1 ? 's' : ''}`;
+    if (!libros.length) {
+      grid.innerHTML = ''; empty.classList.remove('hidden'); return;
+    }
+    empty.classList.add('hidden');
+    grid.innerHTML = libros.map(l => {
+      const estadoEj = l.ejemplares?.some(e => e.estado === 'disponible') ? 'disponible' :
+                       l.ejemplares?.some(e => e.estado === 'reservado')  ? 'reservado' : 'prestado';
+      return `
+        <div class="book-card" onclick="abrirLibro('${l.id}')">
+          <div class="book-cover">
+            ${portadaImgSegura(l)}
+            <div class="availability-dot ${estadoEj}"></div>
+          </div>
+          <div class="book-info">
+            <div class="book-titulo">${escapeHtml(l.titulo)}</div>
+            <div class="book-autor">${escapeHtml(l.autor)}</div>
+            <div class="book-genero">${escapeHtml(l.genero || '')}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function abrirLibro(libroId) {
+    libroActual = DB.libros.get(libroId);
+    if (!libroActual) return;
+    const l = libroActual;
+    document.getElementById('modalLibroTitulo').textContent = l.titulo;
+
+    // Cover
+    const coverWrap = document.getElementById('modalLibroCoverWrap');
+    coverWrap.innerHTML = portadaImgSegura(l);
+
+    // Meta
+    const ejemsDisp = l.ejemplares?.filter(e => e.estado === 'disponible').length || 0;
+    const ejTotal   = l.ejemplares?.length || 0;
+    document.getElementById('modalLibroMeta').innerHTML = `
+      <div class="flex flex-col gap-1">
+        <div><span class="text-muted text-sm">Autor: </span><strong>${escapeHtml(l.autor)}</strong></div>
+        <div><span class="text-muted text-sm">Editorial: </span>${escapeHtml(l.editorial || '—')}</div>
+        <div><span class="text-muted text-sm">Año: </span>${l.anio || '—'}</div>
+        <div><span class="text-muted text-sm">ISBN: </span>${l.isbn || '—'}</div>
+        <div><span class="text-muted text-sm">Páginas: </span>${l.paginas || '—'}</div>
+        <div><span class="text-muted text-sm">Género: </span>${escapeHtml(l.genero || '—')}</div>
+        <div class="mt-1">
+          ${estadoLibroBadge(ejemsDisp > 0 ? 'disponible' : 'prestado')}
+          <span class="text-sm text-muted ml-1">${ejemsDisp} de ${ejTotal} ejemplar${ejTotal!==1?'es':''} disponible${ejemsDisp!==1?'s':''}</span>
+        </div>
+      </div>`;
+
+    // Sinopsis
+    document.getElementById('modalLibroSinopsis').textContent = l.sinopsis || 'Sin sinopsis disponible.';
+
+    // Acciones
+    const canBorrow  = DB.lectores.canBorrow(sesion.id);
+    const yaReservó  = DB.reservas.getByLector(sesion.id).some(r => r.libroId === libroId && ['pendiente','lista'].includes(r.estado));
+    const yaPrestado = DB.prestamos.getByLector(sesion.id).some(p => p.libroId === libroId && p.estado === 'activo');
+    let acciones = '';
+    if (yaPrestado) {
+      acciones = `<span class="badge badge-success">📘 Ya lo tenés prestado</span>`;
+    } else if (yaReservó) {
+      acciones = `<span class="badge badge-warning">🔖 Ya reservado</span>`;
+    } else if (ejemsDisp > 0) {
+      acciones = `<button class="btn btn-primary" onclick="reservarLibro('${libroId}')">🔖 Reservar</button>`;
+    } else {
+      acciones = `<button class="btn btn-ghost" onclick="reservarLibro('${libroId}')">📋 Unirse a lista de espera</button>`;
+    }
+    document.getElementById('modalLibroAcciones').innerHTML = acciones;
+
+    // Rating
+    ratingActual = 0;
+    renderRating();
+    document.getElementById('comentarioLibro').value = '';
+
+    // Registrar clic en aprendizaje
+    DB.aprendizaje.registrarClic(sesion.id, libroId, 'vista');
+
+    openModal('modalLibro');
+  }
+
+  function renderRating() {
+    const container = document.getElementById('ratingInput');
+    container.innerHTML = [1,2,3,4,5].map(n =>
+      `<span class="rating-star ${n <= ratingActual ? 'active' : ''}" onclick="setRating(${n})">${n <= ratingActual ? '★' : '☆'}</span>`
+    ).join('');
+  }
+
+  function setRating(n) { ratingActual = n; renderRating(); }
+
+  function guardarValoracion() {
+    if (!ratingActual) { toast('Seleccioná una valoración primero', 'warning'); return; }
+    toast(`Valoración de ${ratingActual} estrella${ratingActual!==1?'s':''} enviada. ¡Gracias!`, 'success');
+    DB.aprendizaje.registrarClic(sesion.id, libroActual?.id, 'valoracion');
+  }
+
+  function reservarLibro(libroId) {
+    const check = DB.lectores.canBorrow(sesion.id);
+    if (!check.ok) { toast(check.razon, 'warning'); return; }
+    const res = DB.reservas.crear(sesion.id, libroId);
+    if (res.error) { toast(res.error, 'warning'); return; }
+    const libro = DB.libros.get(libroId);
+    toast(`"${libro?.titulo}" reservado exitosamente.`, 'success');
+    DB.aprendizaje.registrarClic(sesion.id, libroId, 'reserva');
+    closeModal('modalLibro');
+    renderReservas();
+    renderCatalogo();
+    // Notificación
+    DB.notificaciones.add({
+      lectorId: sesion.id, tipo: 'reserva_creada',
+      titulo: '🔖 Reserva confirmada',
+      descripcion: `Tu reserva de "${libro?.titulo}" fue registrada. Te avisamos cuando esté disponible.`,
+      icono: '✅',
+    });
+    actualizarBadgeNotif();
+  }
+
+  /* ══ RECOMENDACIONES ══ */
+  function renderRecomendaciones() {
+    const reco = AgenteEvaluador.recomendarParaLector(sesion.id);
+    const grid = document.getElementById('recomendacionesGrid');
+    grid.innerHTML = reco.map(l => {
+      const portada = getPortadaUrl(l);
+      const imgHtml = portada
+        ? `<img src="${portada}" alt="${escapeHtml(l.titulo)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"book-cover-placeholder\\"><span>📖</span></div>'">`
+        : `<div class="book-cover-placeholder"><span>📖</span></div>`;
+      return `
+        <div class="book-card" onclick="abrirLibro('${l.id}')">
+          <div class="book-cover">${imgHtml}</div>
+          <div class="book-info">
+            <div class="book-titulo">${escapeHtml(l.titulo)}</div>
+            <div class="book-autor">${escapeHtml(l.autor)}</div>
+            <div class="book-genero">${escapeHtml(l.genero || '')}</div>
+          </div>
+        </div>`;
+    }).join('') || '<div class="empty-state"><div class="empty-icon">✨</div><div class="empty-title">Prestá más libros para recibir recomendaciones</div></div>';
+
+    // Chips de géneros
+    const chips = document.getElementById('generosChips');
+    const generosLector = sesion.generosInteres || [];
+    chips.innerHTML = generosLector.map(g =>
+      `<span class="chip active">${g}</span>`
+    ).join('') || '<span class="text-muted text-sm">Sin preferencias configuradas. Configuralas en tu perfil.</span>';
+  }
+
+  /* ══ PRÉSTAMOS ══ */
+  function renderPrestamos() {
+    const container = document.getElementById('prestamosActivos');
+    const prest = DB.prestamos.getByLector(sesion.id).filter(p => p.estado === 'activo' || p.estado === 'vencido');
+    if (!prest.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📘</div><div class="empty-title">Sin préstamos activos</div><div class="empty-desc">Reservá un libro desde el catálogo para empezar.</div></div>`;
+      return;
+    }
+    container.innerHTML = prest.map(p => {
+      const libro = DB.libros.get(p.libroId);
+      if (!libro) return '';
+      const vencimiento = new Date(p.fechaVencimiento);
+      const hoy = new Date();
+      const diasTotal = 14;
+      const diasPasados = Math.floor((hoy - new Date(p.fechaPrestamo)) / 86400000);
+      const pct = Math.min(diasPasados / diasTotal * 100, 100);
+      const progClass = pct > 90 ? 'danger' : pct > 70 ? 'warning' : 'ok';
+      const diasRestantesVal = Math.ceil((vencimiento - hoy) / 86400000);
+      const portada = getPortadaUrl(libro);
+
+      return `
+        <div class="loan-card ${p.estado === 'vencido' ? 'overdue' : ''} mb-2">
+          ${portada ? `<img src="${portada}" class="loan-book-mini" onerror="this.style.display='none'">` : '<div class="loan-book-mini" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📖</div>'}
+          <div class="loan-info">
+            <div class="loan-titulo">${escapeHtml(libro.titulo)}</div>
+            <div class="loan-autor">${escapeHtml(libro.autor)}</div>
+            <div class="loan-dates">
+              <span class="loan-date"><strong>Prestado:</strong> ${formatFecha(p.fechaPrestamo)}</span>
+              <span class="loan-date"><strong>Vence:</strong> ${formatFecha(p.fechaVencimiento)}</span>
+              ${p.estado === 'vencido' 
+                ? `<span class="badge badge-danger">⚠️ Vencido hace ${Math.abs(diasRestantesVal)} días</span>`
+                : `<span class="loan-date" style="color:var(--${progClass==='ok'?'success':progClass==='warning'?'warning':'danger'})">${diasRestantesVal > 0 ? diasRestantesVal + ' días restantes' : 'Vence hoy'}</span>`}
+            </div>
+            <div class="loan-progress mt-1">
+              <div class="loan-progress-fill ${progClass}" style="width:${pct}%"></div>
+            </div>
+          </div>
+          ${p.estado === 'vencido' ? '<div style="color:var(--danger);font-size:0.75rem;text-align:center;">Devolvelo<br>urgente</div>' : ''}
+        </div>`;
+    }).join('');
+  }
+
+  /* ══ RESERVAS ══ */
+  function renderReservas() {
+    const container = document.getElementById('reservasLista');
+    const reservas = DB.reservas.getByLector(sesion.id).filter(r => ['pendiente','lista'].includes(r.estado));
+    if (!reservas.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔖</div><div class="empty-title">Sin reservas activas</div><div class="empty-desc">Cuando reserves un libro desde el catálogo, aparecerá acá.</div></div>`;
+      return;
+    }
+    container.innerHTML = reservas.map(r => {
+      const libro = DB.libros.get(r.libroId);
+      if (!libro) return '';
+      const portada = getPortadaUrl(libro);
+      const posicion = DB.reservas.getColaPorLibro(r.libroId).findIndex(x => x.id === r.id) + 1;
+      return `
+        <div class="loan-card mb-2">
+          ${portada ? `<img src="${portada}" class="loan-book-mini" onerror="this.style.display='none'">` : '<div class="loan-book-mini" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📖</div>'}
+          <div class="loan-info">
+            <div class="loan-titulo">${escapeHtml(libro.titulo)}</div>
+            <div class="loan-autor">${escapeHtml(libro.autor)}</div>
+            <div class="loan-dates mt-1">
+              <span class="loan-date"><strong>Reservado:</strong> ${formatFecha(r.fechaReserva)}</span>
+              ${r.estado === 'lista' ? `<span class="badge badge-success">🟢 ¡Disponible para retirar! Hasta ${formatFecha(r.fechaVencimientoRetiro)}</span>` : `<span class="badge badge-warning">Cola: posición ${posicion}</span>`}
+            </div>
+          </div>
+          <div class="loan-actions">
+            <button class="btn btn-danger btn-sm" onclick="cancelarReserva('${r.id}')">Cancelar</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function cancelarReserva(id) {
+    if (!confirmar('¿Cancelar esta reserva?')) return;
+    DB.reservas.cancelar(id);
+    toast('Reserva cancelada', 'info');
+    renderReservas();
+  }
+
+  /* ══ HISTORIAL ══ */
+  function renderHistorial() {
+    const tbody = document.getElementById('historialBody');
+    const todos = DB.prestamos.getByLector(sesion.id).sort((a,b) => new Date(b.fechaPrestamo) - new Date(a.fechaPrestamo));
+    if (!todos.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Sin historial</td></tr>'; return; }
+    tbody.innerHTML = todos.map(p => {
+      const libro = DB.libros.get(p.libroId);
+      return `<tr>
+        <td><strong>${escapeHtml(libro?.titulo || '—')}</strong></td>
+        <td>${escapeHtml(libro?.autor || '—')}</td>
+        <td>${formatFecha(p.fechaPrestamo)}</td>
+        <td>${formatFecha(p.fechaDevolucion)}</td>
+        <td>${estadoPrestamoBadge(p.estado)}${p.tardio ? ' <span class="badge badge-warning">Tardío</span>' : ''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ══ NOTIFICACIONES ══ */
+  function renderNotificaciones() {
+    const lista = document.getElementById('notificacionesLista');
+    const notifs = DB.notificaciones.getByLector(sesion.id);
+    if (!notifs.length) {
+      lista.innerHTML = `<div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-title">Sin notificaciones</div></div>`;
+      return;
+    }
+    const tipoMap = {
+      vencimiento_proximo: { clase: 'warning', icon: '⏰' },
+      prestamo_vencido:    { clase: 'danger',  icon: '🚨' },
+      recomendacion:       { clase: 'info',    icon: '✨' },
+      reserva_disponible:  { clase: 'success', icon: '🔔' },
+      reserva_creada:      { clase: 'success', icon: '✅' },
+    };
+    lista.innerHTML = notifs.map(n => {
+      const t = tipoMap[n.tipo] || { clase: 'info', icon: '📌' };
+      return `
+        <div class="notif-item ${n.leida ? '' : 'unread'}" onclick="DB.notificaciones.marcarLeida('${n.id}');this.classList.remove('unread');">
+          <div class="notif-icon-wrap ${t.clase}"><span>${t.icon}</span></div>
+          <div class="notif-body">
+            <div class="notif-title">${escapeHtml(n.titulo)}</div>
+            <div class="notif-desc">${escapeHtml(n.descripcion)}</div>
+            <div class="notif-time">${formatFechaRelativa(n.fecha)}</div>
+          </div>
+          ${!n.leida ? '<div class="notif-dot"></div>' : ''}
+        </div>`;
+    }).join('');
+  }
+
+  function marcarTodasLeidas() {
+    DB.notificaciones.marcarTodasLeidas(sesion.id);
+    renderNotificaciones();
+    document.getElementById('navBadgeNotif').style.display = 'none';
+    toast('Todas las notificaciones marcadas como leídas', 'success');
+  }
+
+  function actualizarBadgeNotif() {
+    const unread = DB.notificaciones.countUnread(sesion.id);
+    const badge = document.getElementById('navBadgeNotif');
+    badge.style.display = unread > 0 ? '' : 'none';
+    badge.textContent = unread;
+  }
+
+  /* ══ PERFIL ══ */
+  function renderPerfil() {
+    const lec = DB.lectores.get(sesion.id) || sesion;
+
+    // Datos
+    document.getElementById('perfilDatos').innerHTML = `
+      <div class="flex flex-col gap-2">
+        <div class="flex justify-between"><span class="text-muted">Nombre</span><strong>${escapeHtml(lec.nombre)} ${escapeHtml(lec.apellido)}</strong></div>
+        <div class="flex justify-between"><span class="text-muted">Email</span><strong>${escapeHtml(lec.email)}</strong></div>
+        <div class="flex justify-between"><span class="text-muted">DNI</span><strong>${escapeHtml(lec.dni)}</strong></div>
+        <div class="flex justify-between"><span class="text-muted">Teléfono</span><strong>${escapeHtml(lec.telefono)}</strong></div>
+        <div class="flex justify-between"><span class="text-muted">Categoría</span>${categoriaBadge(lec.categoria)}</div>
+        <div class="flex justify-between"><span class="text-muted">Socio desde</span><strong>${formatFecha(lec.fechaAlta)}</strong></div>
+      </div>`;
+
+    // QR
+    const qrContainer = document.getElementById('perfilQR');
+    qrContainer.innerHTML = '';
+    if (typeof QRCode !== 'undefined' && lec.qr) {
+      new QRCode(qrContainer, { text: lec.qr, width: 160, height: 160, colorDark:'#000', colorLight:'#fff' });
+    }
+    document.getElementById('perfilQRCode').textContent = lec.qr;
+
+    // Géneros en perfil
+    const generosActuales = lec.generosInteres || [];
+    const chipsContainer = document.getElementById('generosPerfilChips');
+    chipsContainer.innerHTML = GENEROS_TODOS.map(g =>
+      `<span class="chip ${generosActuales.includes(g) ? 'genero-chip selected' : 'genero-chip'}" onclick="toggleGenero(this,'${g}')">${g}</span>`
+    ).join('');
+
+    // Multas
+    const multasEl = document.getElementById('perfilMultas');
+    if (lec.multasPendientes > 0) {
+      multasEl.innerHTML = `<div class="alert alert-danger">⚠️ Tenés una multa pendiente de <strong>$${lec.multasPendientes}</strong> por devoluciones tardías. Acercate al mostrador para regularizar tu situación.</div>`;
+    } else {
+      multasEl.innerHTML = `<div class="alert alert-success">✅ Sin multas pendientes.</div>`;
+    }
+  }
+
+  function toggleGenero(el, genero) {
+    el.classList.toggle('genero-chip');
+    el.classList.toggle('selected');
+  }
+
+  function guardarPreferencias() {
+    const seleccionados = [...document.querySelectorAll('#generosPerfilChips .selected')].map(el => el.textContent);
+    DB.lectores.update(sesion.id, { generosInteres: seleccionados });
+    // Actualizar sesión
+    const actualizado = DB.lectores.get(sesion.id);
+    DB.sesion.set(actualizado);
+    toast('Preferencias guardadas. Las recomendaciones se actualizaron.', 'success');
+    renderRecomendaciones();
+  }
+
+  init();
+</script>
+
+<!-- Barra de navegación inferior móvil (Bottom Navigation Bar) -->
+<div class="bottom-nav">
+  <button class="bottom-nav-item active" data-section="s-catalogo" onclick="nav('s-catalogo')">
+    <span class="bnav-icon">🔍</span>
+    <span>Catálogo</span>
+  </button>
+  <button class="bottom-nav-item" data-section="s-recomendaciones" onclick="nav('s-recomendaciones')">
+    <span class="bnav-icon">✨</span>
+    <span>Para vos</span>
+  </button>
+  <button class="bottom-nav-item" data-section="s-prestamos" onclick="nav('s-prestamos')">
+    <span class="bnav-icon">📘</span>
+    <span>Préstamos</span>
+  </button>
+  <button class="bottom-nav-item" data-section="s-reservas" onclick="nav('s-reservas')">
+    <span class="bnav-icon">🔖</span>
+    <span>Reservas</span>
+  </button>
+  <button class="bottom-nav-item" data-section="s-perfil" onclick="nav('s-perfil')">
+    <span class="bnav-icon">👤</span>
+    <span>Perfil</span>
+  </button>
+</div>
+</body>
+</html>
