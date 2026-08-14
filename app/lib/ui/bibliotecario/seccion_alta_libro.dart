@@ -1,0 +1,421 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../agents/agente_analizador.dart';
+import '../../core/tema.dart';
+import '../../domain/enums.dart';
+import '../../domain/models.dart';
+import '../../state/app_state.dart';
+import '../widgets/comunes.dart';
+import '../widgets/shell_adaptativo.dart';
+
+/// Alta de libro con reconocimiento asistido.
+///
+/// Porta `bibliotecario.html #s-agregar-libro`. El flujo respeta la Regla de
+/// Validación Estricta (spec v2 §7): el libro se crea sin validar y solo se
+/// publica cuando el bibliotecario confirma explícitamente.
+class SeccionAltaLibro extends StatefulWidget {
+  const SeccionAltaLibro({super.key});
+
+  @override
+  State<SeccionAltaLibro> createState() => _SeccionAltaLibroState();
+}
+
+class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
+  static const _analizador = AgenteAnalizador();
+
+  final _textoOcr = TextEditingController();
+  final _controles = <String, TextEditingController>{};
+  FichaSugerida? _ficha;
+
+  /// Valores originalmente sugeridos, para detectar qué corrigió la persona.
+  final _sugeridos = <String, String>{};
+
+  @override
+  void dispose() {
+    _textoOcr.dispose();
+    for (final c in _controles.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _analizar() {
+    final ficha = _analizador.procesarTextoOcr(_textoOcr.text);
+    setState(() {
+      _ficha = ficha;
+      _sugeridos.clear();
+      for (final e in ficha.campos.entries) {
+        _sugeridos[e.key] = e.value.valor;
+        _controles.putIfAbsent(e.key, () => TextEditingController()).text =
+            e.value.valor;
+      }
+    });
+  }
+
+  void _limpiar() {
+    setState(() {
+      _ficha = null;
+      _textoOcr.clear();
+      for (final c in _controles.values) {
+        c.clear();
+      }
+    });
+  }
+
+  String _valor(String campo) => _controles[campo]?.text.trim() ?? '';
+
+  void _guardar({required bool publicar}) {
+    final estado = context.read<AppState>();
+    final titulo = _valor('titulo');
+    if (titulo.isEmpty) {
+      avisar(context, 'El título es obligatorio', esError: true);
+      return;
+    }
+
+    final ficha = _ficha;
+    final pendientes = <String>[
+      if (ficha != null)
+        for (final campo in ficha.camposARevisar)
+          if (_valor(campo).isEmpty) campo,
+    ];
+
+    final libro = Libro(
+      id: 'lib-${DateTime.now().millisecondsSinceEpoch}',
+      titulo: titulo,
+      autor: _valor('autor'),
+      editorial: _valor('editorial'),
+      anio: int.tryParse(_valor('anio')),
+      isbn: _valor('isbn'),
+      paginas: int.tryParse(_valor('paginas')),
+      fechaAlta: estado.repo.ahora,
+      camposPendientes: pendientes,
+    );
+
+    final creado = estado.agregarLibro(libro);
+    estado.agregarEjemplar(creado.id, CondicionEjemplar.bueno);
+
+    // Cada corrección sobre lo sugerido alimenta al Agente de Aprendizaje.
+    for (final e in _sugeridos.entries) {
+      final finalValor = _valor(e.key);
+      if (e.value.isNotEmpty && finalValor != e.value) {
+        estado.registrarCorreccion(e.key, e.value, finalValor);
+      }
+    }
+
+    if (publicar) {
+      estado.validarLibro(creado.id);
+      avisar(context, '"$titulo" se publicó en el catálogo');
+    } else {
+      avisar(context,
+          '"$titulo" quedó guardado como borrador, sin publicar en el catálogo');
+    }
+    _limpiar();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ficha = _ficha;
+
+    return Seccion(
+      anchoMaximo: 900,
+      children: [
+        const EncabezadoSeccion(
+          'Alta de libro',
+          subtitulo:
+              'El sistema propone la ficha; vos la confirmás antes de publicarla',
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.document_scanner_outlined,
+                        size: 18, color: Paleta.primary),
+                    const SizedBox(width: 10),
+                    Text('Captura del ejemplar',
+                        style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Pegá el texto reconocido de la tapa, contratapa y página con la '
+                  'ficha técnica. En esta versión el OCR se simula con el texto que '
+                  'ingreses.',
+                  style: TextStyle(
+                      color: Paleta.textMuted, fontSize: 12.5, height: 1.45),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _textoOcr,
+                  maxLines: 7,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'El nombre de la rosa\nUmberto Eco\nEditorial Lumen\nISBN 978-84-08-00626-8\n1980\n560 páginas',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    FilledButton.icon(
+                      onPressed:
+                          _textoOcr.text.trim().isEmpty ? null : _analizar,
+                      icon: const Icon(Icons.auto_fix_high, size: 18),
+                      label: const Text('Analizar'),
+                    ),
+                    const SizedBox(width: 10),
+                    OutlinedButton(
+                      onPressed: () {
+                        _textoOcr.text = _ejemploOcr;
+                        _analizar();
+                      },
+                      child: const Text('Usar ejemplo'),
+                    ),
+                    const Spacer(),
+                    if (ficha != null)
+                      TextButton(
+                          onPressed: _limpiar, child: const Text('Limpiar')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (ficha != null) ...[
+          const SizedBox(height: 18),
+          _ResumenRevision(ficha: ficha),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Ficha sugerida',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Revisá cada campo. Los marcados necesitan tu atención.',
+                    style: TextStyle(color: Paleta.textMuted, fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 16),
+                  for (final campo in _ordenCampos)
+                    if (ficha.campos.containsKey(campo))
+                      _CampoFicha(
+                        nombre: campo,
+                        etiqueta: _etiquetas[campo] ?? campo,
+                        sugerido: ficha.campo(campo),
+                        controlador: _controles[campo]!,
+                        onElegirAlternativa: (v) =>
+                            setState(() => _controles[campo]!.text = v),
+                      ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Paleta.warning.withOpacity(0.09),
+              borderRadius: BorderRadius.circular(Radios.base),
+              border: Border.all(color: Paleta.warning.withOpacity(0.28)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.gavel_outlined, size: 17, color: Paleta.warning),
+                SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    'Ningún libro entra al catálogo público sin tu confirmación, '
+                    'por más que el reconocimiento tenga confianza alta en todos '
+                    'los campos.',
+                    style: TextStyle(
+                        color: Paleta.textSecondary,
+                        fontSize: 12.5,
+                        height: 1.45),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _guardar(publicar: false),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Guardar sin publicar'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => _guardar(publicar: true),
+                  icon: const Icon(Icons.check, size: 18),
+                  label: const Text('Confirmar y publicar'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  static const _ordenCampos = [
+    'titulo',
+    'autor',
+    'editorial',
+    'anio',
+    'isbn',
+    'paginas',
+  ];
+
+  static const _etiquetas = {
+    'titulo': 'Título',
+    'autor': 'Autor',
+    'editorial': 'Editorial',
+    'anio': 'Año',
+    'isbn': 'ISBN',
+    'paginas': 'Páginas',
+  };
+
+  static const _ejemploOcr = '''
+El nombre de la rosa
+Umberto Eco
+Editorial Lumen
+ISBN 978-84-08-00626-8
+1980
+560 páginas''';
+}
+
+/// Aviso con el estado general de la revisión.
+class _ResumenRevision extends StatelessWidget {
+  const _ResumenRevision({required this.ficha});
+
+  final FichaSugerida ficha;
+
+  @override
+  Widget build(BuildContext context) {
+    final pendientes = ficha.camposPendientes.length;
+    final conflictos = ficha.camposEnConflicto.length;
+    final revisar = ficha.camposARevisar.length;
+
+    final (color, icono, texto) = revisar == 0
+        ? (
+            Paleta.success,
+            Icons.check_circle_outline,
+            'Todos los campos se reconocieron con buena confianza. Revisalos igual antes de publicar.'
+          )
+        : (
+            Paleta.warning,
+            Icons.rule,
+            '$revisar ${revisar == 1 ? 'campo necesita' : 'campos necesitan'} revisión'
+                '${pendientes > 0 ? ' · $pendientes sin dato' : ''}'
+                '${conflictos > 0 ? ' · $conflictos con fuentes en conflicto' : ''}.'
+          );
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.09),
+        borderRadius: BorderRadius.circular(Radios.base),
+        border: Border.all(color: color.withOpacity(0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icono, size: 17, color: color),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(
+                  color: Paleta.textSecondary, fontSize: 12.5, height: 1.45),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Un campo editable con su nivel de confianza y sus alternativas.
+class _CampoFicha extends StatelessWidget {
+  const _CampoFicha({
+    required this.nombre,
+    required this.etiqueta,
+    required this.sugerido,
+    required this.controlador,
+    required this.onElegirAlternativa,
+  });
+
+  final String nombre;
+  final String etiqueta;
+  final CampoSugerido sugerido;
+  final TextEditingController controlador;
+  final ValueChanged<String> onElegirAlternativa;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(etiqueta,
+                  style: const TextStyle(
+                      color: Paleta.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(width: 10),
+              Insignia.confianza(sugerido.confianza),
+              if (sugerido.porcentaje > 0) ...[
+                const SizedBox(width: 7),
+                Text('${sugerido.porcentaje}%',
+                    style: const TextStyle(
+                        color: Paleta.textMuted, fontSize: 11.5)),
+              ],
+            ],
+          ),
+          const SizedBox(height: 7),
+          TextField(
+            controller: controlador,
+            decoration: InputDecoration(
+              hintText: sugerido.confianza == NivelConfianza.pendiente
+                  ? 'Ninguna fuente lo resolvió — cargalo a mano'
+                  : null,
+              suffixIcon: sugerido.requiereRevision
+                  ? const Icon(Icons.edit_note, size: 19, color: Paleta.warning)
+                  : null,
+            ),
+          ),
+          if (sugerido.alternativas.length > 1) ...[
+            const SizedBox(height: 8),
+            const Text('Las fuentes no coinciden. Elegí cuál vale:',
+                style: TextStyle(color: Paleta.pink, fontSize: 12)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final alt in sugerido.alternativas)
+                  ActionChip(
+                    label: Text('${alt.valor}  ·  ${alt.nombreFuente}',
+                        style: const TextStyle(fontSize: 11.5)),
+                    onPressed: () => onElegirAlternativa(alt.valor),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
