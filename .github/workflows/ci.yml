@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'claude/**']
+    # Un tag vX.Y.Z publica un release con el APK descargable.
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# La app Flutter vive en app/; en la raíz queda el prototipo HTML original.
+defaults:
+  run:
+    working-directory: app
+
+env:
+  # Fijada a propósito: el código usa withOpacity, que 3.27+ reemplaza por
+  # withValues. Subir de versión requiere migrar esas llamadas.
+  FLUTTER_VERSION: 3.24.5
+
+jobs:
+  calidad:
+    name: Formato, análisis y tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Análisis estático
+        run: flutter analyze
+
+      - name: Tests con cobertura
+        run: flutter test --coverage
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura
+          path: app/coverage/lcov.info
+          if-no-files-found: warn
+
+  build-web:
+    name: Build web
+    runs-on: ubuntu-latest
+    needs: calidad
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Compilar para web
+        run: flutter build web --release
+
+      - name: Publicar artefacto web
+        uses: actions/upload-artifact@v4
+        with:
+          name: bibliotech-web
+          path: app/build/web
+          retention-days: 14
+
+  build-android:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: calidad
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Release, no debug: es el APK que se instala en un teléfono para la
+      # demo. Va firmado con las claves de debug que trae el template de
+      # Flutter, así que se puede instalar de costado pero no publicar en
+      # Play Store — suficiente para el TP.
+      - name: Compilar APK de release
+        run: flutter build apk --release
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bibliotech-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+
+  desplegar-pages:
+    name: Publicar en GitHub Pages
+    runs-on: ubuntu-latest
+    needs: calidad
+    # Solo desde main: develop es la rama de integración y no debería dejar
+    # trabajo a medias publicado. Se promueve con un PR develop -> main.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    # Dos deploys simultáneos se pisan; el último en entrar gana.
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Compilación propia, distinta de la del job build-web: Pages sirve el
+      # sitio bajo /<repo>/, así que sin este base-href la página carga en
+      # blanco porque busca los assets en la raíz del dominio. El artefacto
+      # de build-web se deja sin base-href para que sirva en cualquier hosting.
+      - name: Compilar para web con el base-href de Pages
+        run: flutter build web --release --base-href /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/build/web
+
+      - id: despliegue
+        uses: actions/deploy-pages@v4
+
+  publicar-release:
+    name: Publicar release con el APK
+    runs-on: ubuntu-latest
+    needs: [build-web, build-android]
+    # Solo al empujar un tag vX.Y.Z. Los artefactos de los jobs anteriores
+    # caducan y exigen estar logueado en GitHub; un release da un link de
+    # descarga público y permanente, que es lo que se cita en el informe.
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar el APK compilado
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotech-apk
+          path: apk
+
+      - name: Descargar el build web
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotech-web
+          path: web
+
+      - name: Empaquetar el build web
+        run: zip -r bibliotech-web.zip web
+        working-directory: ${{ github.workspace }}
+
+      - name: Crear el release
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "BiblioTech $GITHUB_REF_NAME" \
+            --notes "Aplicación BiblioTech compilada desde el tag \`$GITHUB_REF_NAME\`.
+
+          - \`app-release.apk\` — instalable en Android. Hay que habilitar la
+            instalación desde orígenes desconocidos: está firmado con las claves
+            de debug de Flutter, no con una clave de publicación.
+          - \`bibliotech-web.zip\` — build web estático, servible desde cualquier
+            hosting.
+
+          Los datos son de demostración y se guardan en el dispositivo." \
+            apk/app-release.apk \
+            bibliotech-web.zip
