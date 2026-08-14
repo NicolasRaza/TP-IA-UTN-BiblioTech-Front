@@ -117,8 +117,29 @@ en PR a `main` y `develop`:
    `flutter test --coverage` (sube el `lcov.info` como artefacto).
 2. **Build web** — sube `build/web` como artefacto.
 3. **Build APK** — compila el APK de release y lo sube como artefacto.
-4. **Publicar release** — solo al empujar un tag `vX.Y.Z`: crea un release de
+4. **Publicar en Pages** — solo desde `main`.
+5. **Publicar release** — solo al empujar un tag `vX.Y.Z`: crea un release de
    GitHub con el APK y el build web adjuntos.
+
+### Ramas y publicación
+
+Cada disparador tiene un significado distinto:
+
+| Evento | Qué pasa |
+|---|---|
+| push a `develop` | Corre CI (calidad y builds). No publica nada |
+| push a `main` | Publica la app en GitHub Pages |
+| tag `vX.Y.Z` | Crea el release con el APK descargable |
+
+`develop` es la rama de integración y `main` es lo que está publicado. Se
+promueve con un PR `develop` → `main` cuando la versión está lista para que
+la vean desde afuera; así un merge a medias nunca queda en vivo.
+
+La URL es `https://nicolasraza.github.io/TP-IA-UTN-BiblioTech-Front/`. El job
+de Pages compila aparte del job `build-web` porque necesita
+`--base-href /<repo>/`: Pages sirve el sitio en un subdirectorio y sin eso la
+página carga en blanco. El artefacto de `build-web` se deja sin `base-href`
+para que sirva en cualquier hosting.
 
 ### Distribución del APK
 

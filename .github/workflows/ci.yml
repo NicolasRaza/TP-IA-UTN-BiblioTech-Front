@@ -111,6 +111,48 @@ jobs:
           path: app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 90
 
+  desplegar-pages:
+    name: Publicar en GitHub Pages
+    runs-on: ubuntu-latest
+    needs: calidad
+    # Solo desde main: develop es la rama de integración y no debería dejar
+    # trabajo a medias publicado. Se promueve con un PR develop -> main.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    # Dos deploys simultáneos se pisan; el último en entrar gana.
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Compilación propia, distinta de la del job build-web: Pages sirve el
+      # sitio bajo /<repo>/, así que sin este base-href la página carga en
+      # blanco porque busca los assets en la raíz del dominio. El artefacto
+      # de build-web se deja sin base-href para que sirva en cualquier hosting.
+      - name: Compilar para web con el base-href de Pages
+        run: flutter build web --release --base-href /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/build/web
+
+      - id: despliegue
+        uses: actions/deploy-pages@v4
+
   publicar-release:
     name: Publicar release con el APK
     runs-on: ubuntu-latest
