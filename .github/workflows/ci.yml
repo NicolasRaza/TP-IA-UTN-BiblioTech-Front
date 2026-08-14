@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main, develop, 'claude/**']
+    # Un tag vX.Y.Z publica un release con el APK descargable.
+    tags: ['v*']
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -95,12 +97,64 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Compilar APK de debug
-        run: flutter build apk --debug
+      # Release, no debug: es el APK que se instala en un teléfono para la
+      # demo. Va firmado con las claves de debug que trae el template de
+      # Flutter, así que se puede instalar de costado pero no publicar en
+      # Play Store — suficiente para el TP.
+      - name: Compilar APK de release
+        run: flutter build apk --release
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
           name: bibliotech-apk
-          path: app/build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 14
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+
+  publicar-release:
+    name: Publicar release con el APK
+    runs-on: ubuntu-latest
+    needs: [build-web, build-android]
+    # Solo al empujar un tag vX.Y.Z. Los artefactos de los jobs anteriores
+    # caducan y exigen estar logueado en GitHub; un release da un link de
+    # descarga público y permanente, que es lo que se cita en el informe.
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar el APK compilado
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotech-apk
+          path: apk
+
+      - name: Descargar el build web
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotech-web
+          path: web
+
+      - name: Empaquetar el build web
+        run: zip -r bibliotech-web.zip web
+        working-directory: ${{ github.workspace }}
+
+      - name: Crear el release
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "BiblioTech $GITHUB_REF_NAME" \
+            --notes "Aplicación BiblioTech compilada desde el tag \`$GITHUB_REF_NAME\`.
+
+          - \`app-release.apk\` — instalable en Android. Hay que habilitar la
+            instalación desde orígenes desconocidos: está firmado con las claves
+            de debug de Flutter, no con una clave de publicación.
+          - \`bibliotech-web.zip\` — build web estático, servible desde cualquier
+            hosting.
+
+          Los datos son de demostración y se guardan en el dispositivo." \
+            apk/app-release.apk \
+            bibliotech-web.zip

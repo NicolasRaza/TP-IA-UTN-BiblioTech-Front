@@ -116,7 +116,26 @@ en PR a `main` y `develop`:
 1. **Calidad** — `dart format --set-exit-if-changed`, `flutter analyze`,
    `flutter test --coverage` (sube el `lcov.info` como artefacto).
 2. **Build web** — sube `build/web` como artefacto.
-3. **Build APK** — sube el APK de debug.
+3. **Build APK** — compila el APK de release y lo sube como artefacto.
+4. **Publicar release** — solo al empujar un tag `vX.Y.Z`: crea un release de
+   GitHub con el APK y el build web adjuntos.
+
+### Distribución del APK
+
+El APK de release se firma con las claves de debug que trae el template de
+Flutter (`android/app/build.gradle` deja `signingConfig = signingConfigs.debug`).
+Eso alcanza para instalarlo de costado en un teléfono habilitando orígenes
+desconocidos, pero no para publicarlo en Play Store: para eso haría falta
+generar un keystore propio y guardarlo como secret del repositorio.
+
+Los artefactos de Actions caducan y exigen estar logueado en GitHub, así que
+para el informe conviene citar el link del **release**, que es público y
+permanente. Para generarlo:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Pendiente
 
