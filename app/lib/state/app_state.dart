@@ -80,7 +80,9 @@ class AppState extends ChangeNotifier {
 
   ResultadoOperacion<Reserva> reservar(String libroId) {
     final u = _usuario;
-    if (u == null) return const ResultadoOperacion.error('No hay sesión activa');
+    if (u == null) {
+      return const ResultadoOperacion.error('No hay sesión activa');
+    }
     final r = repo.crearReserva(lectorId: u.id, libroId: libroId);
     if (r.exito) {
       repo.registrarClic(u.id, libroId, 'reserva');
@@ -212,7 +214,8 @@ class AppState extends ChangeNotifier {
 
   List<Prestamo> get misPrestamos => _usuario == null
       ? []
-      : repo.prestamosDeLector(_usuario!.id)
+      : repo
+          .prestamosDeLector(_usuario!.id)
           .where((p) => p.estaAbierto)
           .toList()
     ..sort((a, b) => a.fechaVencimiento.compareTo(b.fechaVencimiento));

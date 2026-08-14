@@ -14,8 +14,7 @@ abstract class KeyValueStore {
 }
 
 class MemoryStore implements KeyValueStore {
-  MemoryStore([Map<String, String>? inicial])
-      : _data = {...?inicial};
+  MemoryStore([Map<String, String>? inicial]) : _data = {...?inicial};
 
   final Map<String, String> _data;
 

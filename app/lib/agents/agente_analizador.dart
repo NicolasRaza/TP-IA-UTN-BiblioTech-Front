@@ -116,10 +116,29 @@ class AgenteAnalizador {
   const AgenteAnalizador();
 
   static const _editorialesConocidas = <String>[
-    'sudamericana', 'emecé', 'emece', 'planeta', 'alfaguara', 'anagrama',
-    'seix barral', 'tusquets', 'debolsillo', 'salamandra', 'fondo de cultura',
-    'debate', 'crítica', 'critica', 'lumen', 'alba', 'suma', 'random house',
-    'siglo xxi', 'losada', 'cátedra', 'catedra', 'minotauro',
+    'sudamericana',
+    'emecé',
+    'emece',
+    'planeta',
+    'alfaguara',
+    'anagrama',
+    'seix barral',
+    'tusquets',
+    'debolsillo',
+    'salamandra',
+    'fondo de cultura',
+    'debate',
+    'crítica',
+    'critica',
+    'lumen',
+    'alba',
+    'suma',
+    'random house',
+    'siglo xxi',
+    'losada',
+    'cátedra',
+    'catedra',
+    'minotauro',
   ];
 
   /// Estructura el texto crudo del OCR en campos editoriales.
@@ -308,8 +327,8 @@ class AgenteAnalizador {
 
       if (distintos.length == 1) {
         // Todas las fuentes coinciden.
-        final mejor = propuestas
-            .reduce((a, b) => a.fuente.peso >= b.fuente.peso ? a : b);
+        final mejor =
+            propuestas.reduce((a, b) => a.fuente.peso >= b.fuente.peso ? a : b);
         campos[nombre] = CampoSugerido(
           valor: mejor.valor.trim(),
           confianza: NivelConfianza.alta,

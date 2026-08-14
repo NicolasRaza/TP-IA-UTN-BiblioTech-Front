@@ -64,7 +64,8 @@ class AgentePlanificador {
         return ResultadoEjecucion(
           decision: d,
           ejecutada: false,
-          detalle: 'Informado en el panel; requiere intervención del bibliotecario',
+          detalle:
+              'Informado en el panel; requiere intervención del bibliotecario',
         );
     }
   }

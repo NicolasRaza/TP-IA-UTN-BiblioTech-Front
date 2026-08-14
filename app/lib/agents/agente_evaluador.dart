@@ -74,7 +74,8 @@ class AgenteEvaluador {
       }
     }
 
-    for (final r in repo.reservas.where((r) => r.estado == EstadoReserva.lista)) {
+    for (final r
+        in repo.reservas.where((r) => r.estado == EstadoReserva.lista)) {
       final limite = r.fechaVencimientoRetiro;
       if (limite == null || !ahora.isAfter(limite)) continue;
       final libro = repo.libro(r.libroId);
@@ -127,8 +128,7 @@ class AgenteEvaluador {
   }
 
   /// Resumen de decisiones agrupadas, para el dashboard del bibliotecario.
-  ({int vencidos, int proximos, int reservasPorLiberar, int multas})
-      resumen() {
+  ({int vencidos, int proximos, int reservasPorLiberar, int multas}) resumen() {
     final d = decidir();
     return (
       vencidos: d
@@ -166,7 +166,8 @@ class AgenteEvaluador {
 
     // Cold start: 100% popularidad. Con historial: 70/30 configurable.
     final pesoHistorial = esColdStart ? 0.0 : cfg.pesoHistorialRecomendacion;
-    final pesoPopularidad = esColdStart ? 1.0 : cfg.pesoPopularidadRecomendacion;
+    final pesoPopularidad =
+        esColdStart ? 1.0 : cfg.pesoPopularidadRecomendacion;
 
     final excluidos = {
       ...prestamosDelLector.map((p) => p.libroId),
@@ -177,16 +178,17 @@ class AgenteEvaluador {
         .map((p) => repo.libro(p.libroId))
         .whereType<Libro>()
         .toList();
-    final autoresLeidos =
-        leidos.map((l) => l.autor.toLowerCase()).where((a) => a.isNotEmpty).toSet();
+    final autoresLeidos = leidos
+        .map((l) => l.autor.toLowerCase())
+        .where((a) => a.isNotEmpty)
+        .toSet();
     final generosLeidos =
         leidos.map((l) => l.genero).where((g) => g.isNotEmpty).toSet();
     final generosInteres = lector.generosInteres.toSet();
 
     final todosPrestamos = repo.prestamos;
-    final maxPrestamos = todosPrestamos.isEmpty
-        ? 1
-        : _maxPrestamosPorLibro(todosPrestamos);
+    final maxPrestamos =
+        todosPrestamos.isEmpty ? 1 : _maxPrestamosPorLibro(todosPrestamos);
 
     final candidatos =
         repo.catalogoPublico.where((l) => !excluidos.contains(l.id)).toList();
@@ -299,8 +301,18 @@ class AgenteEvaluador {
       ..sort((a, b) => b.prestamos.compareTo(a.prestamos));
 
     const nombresMes = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
     ];
     final porMes = <({String mes, int total, int tardios})>[];
     final ahora = repo.ahora;

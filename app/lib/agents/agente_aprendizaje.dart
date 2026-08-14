@@ -30,11 +30,15 @@ class AgenteAprendizaje {
   ({List<PatronCorreccion> patrones, int totalCorrecciones, double mejora})
       analizarCorrecciones() {
     final data = repo.aprendizaje;
-    final correcciones =
-        (data['correcciones'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+    final correcciones = (data['correcciones'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
 
     if (correcciones.isEmpty) {
-      return (patrones: <PatronCorreccion>[], totalCorrecciones: 0, mejora: 0.0);
+      return (
+        patrones: <PatronCorreccion>[],
+        totalCorrecciones: 0,
+        mejora: 0.0
+      );
     }
 
     final porCampo = <String, int>{};
@@ -66,8 +70,11 @@ class AgenteAprendizaje {
   }
 
   /// Analiza qué recomendaciones terminaron en una reserva concreta.
-  ({List<({String libroId, String titulo, int conversiones})> masEfectivas, int totalClics, double tasaConversion})
-      analizarRecomendaciones() {
+  ({
+    List<({String libroId, String titulo, int conversiones})> masEfectivas,
+    int totalClics,
+    double tasaConversion
+  }) analizarRecomendaciones() {
     final data = repo.aprendizaje;
     final clics =
         (data['clics'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
@@ -98,8 +105,12 @@ class AgenteAprendizaje {
   }
 
   /// Reporte consolidado para el panel de administración.
-  ({String resumen, List<PatronCorreccion> patrones, double mejora, double tasaConversion})
-      generarReporte() {
+  ({
+    String resumen,
+    List<PatronCorreccion> patrones,
+    double mejora,
+    double tasaConversion
+  }) generarReporte() {
     final ocr = analizarCorrecciones();
     final reco = analizarRecomendaciones();
     return (

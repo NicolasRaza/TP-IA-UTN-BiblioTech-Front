@@ -62,12 +62,12 @@ ThemeData construirTema() {
     canvasColor: Paleta.bgSurface,
     dividerColor: Paleta.border,
     textTheme: const TextTheme(
-      displaySmall: TextStyle(
-          color: Paleta.textPrimary, fontWeight: FontWeight.w700),
-      headlineMedium: TextStyle(
-          color: Paleta.textPrimary, fontWeight: FontWeight.w700),
-      headlineSmall: TextStyle(
-          color: Paleta.textPrimary, fontWeight: FontWeight.w700),
+      displaySmall:
+          TextStyle(color: Paleta.textPrimary, fontWeight: FontWeight.w700),
+      headlineMedium:
+          TextStyle(color: Paleta.textPrimary, fontWeight: FontWeight.w700),
+      headlineSmall:
+          TextStyle(color: Paleta.textPrimary, fontWeight: FontWeight.w700),
       titleLarge:
           TextStyle(color: Paleta.textPrimary, fontWeight: FontWeight.w600),
       titleMedium:
@@ -99,8 +99,7 @@ ThemeData construirTema() {
       fillColor: Paleta.bgInput,
       hintStyle: const TextStyle(color: Paleta.textMuted),
       labelStyle: const TextStyle(color: Paleta.textSecondary),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(Radios.base),
         borderSide: const BorderSide(color: Paleta.border),
@@ -175,8 +174,8 @@ ThemeData construirTema() {
       backgroundColor: Paleta.bgSurface,
       selectedIconTheme: IconThemeData(color: Paleta.primaryLight),
       unselectedIconTheme: IconThemeData(color: Paleta.textMuted),
-      selectedLabelTextStyle: TextStyle(
-          color: Paleta.primaryLight, fontWeight: FontWeight.w600),
+      selectedLabelTextStyle:
+          TextStyle(color: Paleta.primaryLight, fontWeight: FontWeight.w600),
       unselectedLabelTextStyle: TextStyle(color: Paleta.textMuted),
     ),
     dialogTheme: DialogTheme(

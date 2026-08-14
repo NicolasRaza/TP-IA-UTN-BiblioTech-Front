@@ -77,8 +77,8 @@ void main() {
         expect(r.exito, isTrue, reason: 'el préstamo ${i + 1} debe entrar');
       }
 
-      final excedente =
-          repo.crearPrestamo(lectorId: 'lec-005', libroId: disponibles[limite].id);
+      final excedente = repo.crearPrestamo(
+          lectorId: 'lec-005', libroId: disponibles[limite].id);
       expect(excedente.exito, isFalse);
       expect(excedente.motivo, contains('límite'));
     });
@@ -140,7 +140,8 @@ void main() {
 
       expect(r.exito, isTrue);
       expect(r.valor!.id, ejemplar.id, reason: 'el ID interno nunca cambia');
-      expect(r.valor!.qr, qrOriginal, reason: 'la etiqueta reimpresa es idéntica');
+      expect(r.valor!.qr, qrOriginal,
+          reason: 'la etiqueta reimpresa es idéntica');
       expect(r.valor!.reimpresionesQr, 1);
     });
 
@@ -174,7 +175,7 @@ void main() {
     test('la cola respeta el orden cronológico estricto', () {
       // lib-013 tiene un ejemplar prestado y otros disponibles; se usa un
       // título sin disponibilidad para que la cola se forme.
-      final libroId = 'lib-003'; // un solo ejemplar
+      const libroId = 'lib-003'; // un solo ejemplar
       final prestamo =
           repo.crearPrestamo(lectorId: 'lec-001', libroId: libroId).valor!;
       expect(repo.libro(libroId)!.hayDisponible, isFalse);

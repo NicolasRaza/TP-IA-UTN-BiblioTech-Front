@@ -53,7 +53,8 @@ class Repositorio {
     return data.map((e) => desde(e as Map<String, dynamic>)).toList();
   }
 
-  void _guardarLista<T>(String key, List<T> lista, Map<String, dynamic> Function(T) aJson) {
+  void _guardarLista<T>(
+      String key, List<T> lista, Map<String, dynamic> Function(T) aJson) {
     _store.write(key, jsonEncode(lista.map(aJson).toList()));
   }
 
@@ -71,9 +72,10 @@ class Repositorio {
     _guardarLista(
         _Keys.notificaciones, seed.notificaciones(), (n) => n.toJson());
     _guardarLista(_Keys.auditoria, seed.auditoria(), (a) => a.toJson());
-    _store.write(_Keys.config, jsonEncode(const ConfiguracionBiblioteca().toJson()));
-    _store.write(_Keys.aprendizaje,
-        jsonEncode({'correcciones': [], 'clics': []}));
+    _store.write(
+        _Keys.config, jsonEncode(const ConfiguracionBiblioteca().toJson()));
+    _store.write(
+        _Keys.aprendizaje, jsonEncode({'correcciones': [], 'clics': []}));
     _store.write(_Keys.inicializado, 'true');
     procesarVencimientos();
   }
@@ -112,8 +114,7 @@ class Repositorio {
   ///
   /// Regla de Validación Estricta (spec v2 §7): solo los libros aprobados
   /// explícitamente por el bibliotecario llegan acá.
-  List<Libro> get catalogoPublico =>
-      libros.where((l) => l.validado).toList();
+  List<Libro> get catalogoPublico => libros.where((l) => l.validado).toList();
 
   List<Libro> get pendientesValidacion =>
       libros.where((l) => !l.validado).toList();
@@ -183,8 +184,8 @@ class Repositorio {
       condicion: condicion,
       estado: EstadoEjemplar.disponible,
     );
-    actualizarLibro(libroId,
-        (x) => x.copyWith(ejemplares: [...x.ejemplares, nuevo]),
+    actualizarLibro(
+        libroId, (x) => x.copyWith(ejemplares: [...x.ejemplares, nuevo]),
         auditar: false);
     return nuevo;
   }
@@ -192,9 +193,8 @@ class Repositorio {
   void actualizarEjemplar(
       String libroId, String ejemplarId, Ejemplar Function(Ejemplar) cambio) {
     actualizarLibro(libroId, (l) {
-      final ejs = l.ejemplares
-          .map((e) => e.id == ejemplarId ? cambio(e) : e)
-          .toList();
+      final ejs =
+          l.ejemplares.map((e) => e.id == ejemplarId ? cambio(e) : e).toList();
       return l.copyWith(ejemplares: ejs);
     }, auditar: false);
   }
@@ -226,9 +226,8 @@ class Repositorio {
       'Reimpresión de etiqueta ${ej.qr} ("${l.titulo}"). Motivo: $motivo',
       usuarioId,
     );
-    final actualizado = libro(libroId)!
-        .ejemplares
-        .firstWhere((e) => e.id == ejemplarId);
+    final actualizado =
+        libro(libroId)!.ejemplares.firstWhere((e) => e.id == ejemplarId);
     return ResultadoOperacion.ok(actualizado);
   }
 
@@ -356,7 +355,8 @@ class Repositorio {
 
   static int _edadEnAnios(DateTime nacimiento, DateTime ahora) {
     var edad = ahora.year - nacimiento.year;
-    final cumpleEsteAnio = DateTime(ahora.year, nacimiento.month, nacimiento.day);
+    final cumpleEsteAnio =
+        DateTime(ahora.year, nacimiento.month, nacimiento.day);
     if (ahora.isBefore(cumpleEsteAnio)) edad--;
     return edad;
   }
@@ -377,8 +377,12 @@ class Repositorio {
   /// ¿Puede el lector llevarse un ejemplar más? (spec v2 §7)
   ResultadoOperacion<Lector> puedePedirPrestado(String lectorId) {
     final l = lector(lectorId);
-    if (l == null) return const ResultadoOperacion.error('Lector no encontrado');
-    if (!l.activo) return const ResultadoOperacion.error('La cuenta está inactiva');
+    if (l == null) {
+      return const ResultadoOperacion.error('Lector no encontrado');
+    }
+    if (!l.activo) {
+      return const ResultadoOperacion.error('La cuenta está inactiva');
+    }
     if (l.multasPendientes > 0) {
       return ResultadoOperacion.error(
           'Multa pendiente de \$${l.multasPendientes}. Saldala en el mostrador.');
@@ -406,8 +410,12 @@ class Repositorio {
   /// de devolución vencida o multas impagas").
   ResultadoOperacion<Lector> puedeReservar(String lectorId) {
     final l = lector(lectorId);
-    if (l == null) return const ResultadoOperacion.error('Lector no encontrado');
-    if (!l.activo) return const ResultadoOperacion.error('La cuenta está inactiva');
+    if (l == null) {
+      return const ResultadoOperacion.error('Lector no encontrado');
+    }
+    if (!l.activo) {
+      return const ResultadoOperacion.error('La cuenta está inactiva');
+    }
     if (l.multasPendientes > 0) {
       return ResultadoOperacion.error(
           'Multa pendiente de \$${l.multasPendientes}. Saldala en el mostrador.');
@@ -430,7 +438,8 @@ class Repositorio {
 
   // ────────────────────────────── Préstamos ──────────────────────────────
 
-  List<Prestamo> get prestamos => _leerLista(_Keys.prestamos, Prestamo.fromJson);
+  List<Prestamo> get prestamos =>
+      _leerLista(_Keys.prestamos, Prestamo.fromJson);
 
   Prestamo? prestamo(String id) {
     for (final p in prestamos) {
@@ -485,13 +494,13 @@ class Repositorio {
     );
 
     _guardarPrestamos(prestamos..add(nuevo));
-    actualizarEjemplar(libroId, ej.id,
-        (e) => e.copyWith(estado: EstadoEjemplar.prestado));
+    actualizarEjemplar(
+        libroId, ej.id, (e) => e.copyWith(estado: EstadoEjemplar.prestado));
 
     // Si el préstamo satisface una reserva del lector, se cierra la reserva.
     final lista = reservas;
-    final i = lista.indexWhere((r) =>
-        r.lectorId == lectorId && r.libroId == libroId && r.esActiva);
+    final i = lista.indexWhere(
+        (r) => r.lectorId == lectorId && r.libroId == libroId && r.esActiva);
     if (i >= 0) {
       lista[i] = lista[i].copyWith(estado: EstadoReserva.completada);
       _guardarReservas(lista);
@@ -518,7 +527,8 @@ class Repositorio {
   ///
   /// Al liberarlo, el primero de la cola de reservas pasa a "lista para
   /// retirar" con el plazo de 48 hs corriendo (spec v2 §7).
-  ResultadoOperacion<Prestamo> devolver(String prestamoId, {String? usuarioId}) {
+  ResultadoOperacion<Prestamo> devolver(String prestamoId,
+      {String? usuarioId}) {
     final lista = prestamos;
     final i = lista.indexWhere((p) => p.id == prestamoId);
     if (i < 0) return const ResultadoOperacion.error('El préstamo no existe');
@@ -593,7 +603,9 @@ class Repositorio {
 
   /// Cola de espera de un título, en orden estrictamente cronológico (§7).
   List<Reserva> colaDeReservas(String libroId) {
-    final cola = reservas.where((r) => r.libroId == libroId && r.esActiva).toList()
+    final cola = reservas
+        .where((r) => r.libroId == libroId && r.esActiva)
+        .toList()
       ..sort((a, b) => a.fechaReserva.compareTo(b.fechaReserva));
     return cola;
   }
@@ -610,8 +622,8 @@ class Repositorio {
       return const ResultadoOperacion.error(
           'El libro no está disponible en el catálogo');
     }
-    final duplicada = reservas.any((r) =>
-        r.lectorId == lectorId && r.libroId == libroId && r.esActiva);
+    final duplicada = reservas.any(
+        (r) => r.lectorId == lectorId && r.libroId == libroId && r.esActiva);
     if (duplicada) {
       return const ResultadoOperacion.error(
           'Ya tenés una reserva activa para este libro');
@@ -684,8 +696,7 @@ class Repositorio {
       lectorId: primera.lectorId,
       tipo: TipoNotificacion.reservaDisponible,
       titulo: '¡Tu reserva está lista!',
-      descripcion:
-          '"${l!.titulo}" ya está disponible para retirar. Tenés '
+      descripcion: '"${l!.titulo}" ya está disponible para retirar. Tenés '
           '${primera.plazoRetiroHorasAlReservar} horas para buscarlo.',
     );
     return lista[i];
@@ -802,12 +813,14 @@ class Repositorio {
       descripcion: descripcion,
       fecha: ahora,
     );
-    _guardarLista(_Keys.notificaciones, notificaciones..add(n), (x) => x.toJson());
+    _guardarLista(
+        _Keys.notificaciones, notificaciones..add(n), (x) => x.toJson());
     return n;
   }
 
   /// Evita apilar avisos repetidos del mismo tipo para el mismo libro.
-  bool existeNotificacion(String lectorId, TipoNotificacion tipo, String textoClave) {
+  bool existeNotificacion(
+      String lectorId, TipoNotificacion tipo, String textoClave) {
     return notificaciones.any((n) =>
         n.lectorId == lectorId &&
         n.tipo == tipo &&
@@ -879,7 +892,8 @@ class Repositorio {
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 
-  void registrarCorreccion(String campo, String valorSugerido, String valorFinal) {
+  void registrarCorreccion(
+      String campo, String valorSugerido, String valorFinal) {
     final data = aprendizaje;
     final correcciones = (data['correcciones'] as List<dynamic>? ?? []).toList()
       ..add({

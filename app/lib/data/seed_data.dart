@@ -651,8 +651,7 @@ class SeedData {
           lectorId: 'lec-001',
           tipo: TipoNotificacion.vencimientoProximo,
           titulo: 'Préstamo próximo a vencer',
-          descripcion:
-              'Tu préstamo de "Cien años de soledad" vence en 9 días.',
+          descripcion: 'Tu préstamo de "Cien años de soledad" vence en 9 días.',
           fecha: ahora,
         ),
         Notificacion(

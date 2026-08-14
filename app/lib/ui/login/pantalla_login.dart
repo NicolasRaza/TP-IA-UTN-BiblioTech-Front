@@ -181,8 +181,7 @@ class _TarjetaRol extends StatelessWidget {
                 child: Icon(rol.icono, size: 28, color: rol.color),
               ),
               const SizedBox(height: 16),
-              Text(rol.nombre,
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(rol.nombre, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               Text(
                 rol.descripcion,
@@ -201,8 +200,8 @@ class _TarjetaRol extends StatelessWidget {
                 ),
                 child: Text(
                   'Ingresar',
-                  style: TextStyle(
-                      color: rol.color, fontWeight: FontWeight.w700),
+                  style:
+                      TextStyle(color: rol.color, fontWeight: FontWeight.w700),
                 ),
               ),
             ],

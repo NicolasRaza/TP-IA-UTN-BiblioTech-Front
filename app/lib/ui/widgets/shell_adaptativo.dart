@@ -138,7 +138,9 @@ class _ShellAdaptativoState extends State<ShellAdaptativo> {
           const SizedBox(width: 11),
           Flexible(
             child: Text(
-              context.esCompacto ? widget.titulo : 'BiblioTech · ${widget.titulo}',
+              context.esCompacto
+                  ? widget.titulo
+                  : 'BiblioTech · ${widget.titulo}',
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
@@ -225,8 +227,8 @@ class Seccion extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: anchoMaximo),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(
-              context.esCompacto ? 16 : 28, 22, context.esCompacto ? 16 : 28, 40),
+          padding: EdgeInsets.fromLTRB(context.esCompacto ? 16 : 28, 22,
+              context.esCompacto ? 16 : 28, 40),
           children: children,
         ),
       ),

@@ -7,7 +7,8 @@ class Formato {
   static final _fechaLarga = DateFormat("d 'de' MMMM 'de' y", 'es');
 
   static String fecha(DateTime? d) => d == null ? '—' : _fecha.format(d);
-  static String fechaHora(DateTime? d) => d == null ? '—' : _fechaHora.format(d);
+  static String fechaHora(DateTime? d) =>
+      d == null ? '—' : _fechaHora.format(d);
   static String fechaLarga(DateTime? d) =>
       d == null ? '—' : _fechaLarga.format(d);
 

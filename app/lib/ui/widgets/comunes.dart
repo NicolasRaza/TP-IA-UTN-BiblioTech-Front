@@ -137,21 +137,31 @@ class Portada extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(Radios.base),
       ),
+      // El placeholder se usa en portadas de 60 px (fila de historial) y de
+      // 190 px (ficha): el contenido se adapta para no desbordar en las chicas.
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(alto < 110 ? 4 : 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.menu_book_outlined,
-                size: 30, color: Paleta.textMuted),
-            const SizedBox(height: 6),
-            Text(
-              libro.titulo,
-              maxLines: 3,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: Paleta.textMuted),
+            Icon(
+              Icons.menu_book_outlined,
+              size: alto < 110 ? 20 : 30,
+              color: Paleta.textMuted,
             ),
+            if (alto >= 110) ...[
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  libro.titulo,
+                  maxLines: alto >= 160 ? 3 : 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: Paleta.textMuted),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -299,8 +309,10 @@ class EncabezadoSeccion extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(titulo,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontSize: 22, fontWeight: FontWeight.w700)),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontSize: 22, fontWeight: FontWeight.w700)),
                 if (subtitulo.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(subtitulo,

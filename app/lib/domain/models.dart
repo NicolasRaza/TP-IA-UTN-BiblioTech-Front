@@ -350,7 +350,8 @@ class Prestamo {
   int diasRestantes(DateTime ahora) =>
       fechaVencimiento.difference(ahora).inDays;
 
-  bool estaVencido(DateTime ahora) => estaAbierto && ahora.isAfter(fechaVencimiento);
+  bool estaVencido(DateTime ahora) =>
+      estaAbierto && ahora.isAfter(fechaVencimiento);
 
   Prestamo copyWith({
     DateTime? fechaVencimiento,
@@ -403,8 +404,7 @@ class Prestamo {
         tardio: json['tardio'] as bool? ?? false,
         categoriaAlPrestar:
             CategoriaLector.fromCode(json['categoriaAlPrestar'] as String?),
-        plazoDiasAlPrestar:
-            (json['plazoDiasAlPrestar'] as num?)?.toInt() ?? 14,
+        plazoDiasAlPrestar: (json['plazoDiasAlPrestar'] as num?)?.toInt() ?? 14,
         multaAplicada: (json['multaAplicada'] as num?)?.toInt() ?? 0,
       );
 }
