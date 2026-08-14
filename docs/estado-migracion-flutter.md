@@ -3,125 +3,136 @@
 Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile).
 Rama de trabajo: `claude/flutter-migration`.
 
-**Última actualización:** sesión del 13/08/2026.
+**Última actualización:** sesión del 14/08/2026.
 
 ## Dónde está cada cosa
 
 | Ruta | Qué es |
 |---|---|
 | `app/` | Proyecto Flutter (web, android, ios) |
-| `index.html`, `lector.html`, `bibliotecario.html`, `admin.html`, `js/`, `css/` | Prototipo original, se conserva como referencia de la migración |
+| `.github/workflows/ci.yml` | CI: formato, análisis, tests y builds |
+| `index.html`, `lector.html`, `bibliotecario.html`, `admin.html`, `js/`, `css/` | Prototipo original, se conserva como referencia |
 | `docs/tp1-sistema-gestion-bibliotecas-v2.md` | Especificación funcional canónica |
 
 El prototipo no se tocó: la app Flutter vive en `app/` y se puede comparar
-pantalla por pantalla contra el HTML mientras dure la migración.
+pantalla por pantalla contra el HTML.
 
-## Hecho
+## Estado: la migración funcional está completa
+
+Las tres interfaces de la spec v2 §9 están portadas y operativas. Verificado
+con Flutter 3.24.5: `dart format` y `flutter analyze` limpios, **39 tests en
+verde** y build de web exitoso.
 
 ### Base del proyecto
-- Scaffold Flutter con los tres targets: `web`, `android`, `ios`.
+- Scaffold con los tres targets: `web`, `android`, `ios`.
 - Tema portado de `css/main.css` (misma paleta, radios y tipografía).
 - Shell adaptativo: barra inferior en celular, riel lateral en tablet,
   sidebar expandido en escritorio. Un solo árbol de widgets para las tres.
-- Build de web verificado; `flutter analyze` sin issues.
 
 ### Dominio y persistencia (portado de `js/db.js`)
 - Modelos inmutables con serialización JSON manual, sin codegen.
 - `KeyValueStore` abstrae el almacenamiento: `SharedPrefsStore` en la app,
   `MemoryStore` en los tests.
-- Reloj y generador de IDs inyectables en el repositorio, para que los tests
-  fijen el tiempo y obtengan identificadores predecibles.
-- Datos semilla completos: 21 libros con sus ejemplares, 5 lectores, un
-  bibliotecario, un administrador, préstamos, reservas y auditoría.
+- Reloj y generador de IDs inyectables, para fijar el tiempo en los tests.
+- Datos semilla completos: 21 libros, 5 lectores, bibliotecario, administrador,
+  préstamos, reservas y auditoría.
 
-### Reglas de la spec v2 §7 que el prototipo no cubría
+### Reglas de la spec v2 que el prototipo no cubría
 
-Estas son las que se implementaron de cero durante la migración:
+Implementadas de cero durante la migración:
 
-- **Transición de categoría.** Préstamos y reservas congelan el plazo y la
-  categoría vigentes al momento de crearse. Si el lector cambia de categoría,
-  lo ya generado conserva sus condiciones y solo lo nuevo usa las nuevas.
-- **Continuidad de identidad ante reimpresión de QR.** El contenido del QR se
-  deriva del ID interno, así que reimprimir produce una etiqueta idéntica.
-  Nunca se genera un ID nuevo; queda registro en auditoría con el motivo.
-- **Priorización de reservas.** Cola por orden cronológico estricto, retención
-  de 48 hs configurable, y pase automático al siguiente cuando vence el plazo
-  o se cancela.
+- **Transición de categoría (§7).** Préstamos y reservas congelan plazo y
+  categoría al crearse. Si el lector cambia de categoría, lo ya generado
+  conserva sus condiciones y solo lo nuevo usa las nuevas.
+- **Continuidad de identidad ante reimpresión de QR (§7).** El QR se deriva del
+  ID interno, así que reimprimir da una etiqueta idéntica. Nunca se genera un
+  ID nuevo; queda registro en auditoría con el motivo.
+- **Priorización de reservas (§7).** Cola cronológica estricta, retención de
+  48 hs configurable, y pase automático al siguiente al vencer o cancelarse.
 - **Resolución de fuentes externas (§4.2).** Sin resultados el campo queda
-  `pendiente` de carga manual; ante discrepancia desempata la autoridad
-  editorial; si empatan, el campo queda `enConflicto` y decide el bibliotecario.
-  Ningún campo de baja confianza se completa sin quedar marcado.
-- **Ponderación de recomendaciones (§2).** 70% historial / 30% popularidad,
-  con inversión a 100% popularidad para lectores sin historial suficiente.
+  `pendiente`; ante discrepancia desempata la autoridad editorial; si empatan,
+  queda `enConflicto` y decide el bibliotecario. Ningún campo de baja confianza
+  se completa sin quedar marcado.
+- **Ponderación de recomendaciones (§2).** 70% historial / 30% popularidad, con
+  inversión a 100% popularidad en *cold start*.
 
 ### Agentes (portado de `js/agents.js`)
-- **Analizador:** parser OCR (ISBN, año, páginas, editorial, autor, título) y
-  resolución de fuentes externas.
+- **Analizador:** parser OCR y resolución de fuentes externas.
 - **Evaluador:** decide y devuelve una lista de `Decision` sin tocar el sistema.
-  Produce además recomendaciones e indicadores de negocio.
+  Produce además recomendaciones e indicadores.
 - **Planificador:** solo ejecuta las decisiones que recibe.
 - **Aprendizaje:** patrones de corrección y conversión de recomendaciones.
 
 La separación Evaluador-decide / Planificador-ejecuta de la §4.3 está
-implementada en serio: `Decision` es el contrato entre ambos.
+implementada en serio: `Decision` es el contrato entre ambos, y la UI del
+dashboard permite disparar el ciclo y ver qué se ejecutó.
 
-### Tests — 19, todos en verde
-`app/test/reglas_negocio_test.dart` cubre validación estricta, límites y
-bloqueos por multa o vencimiento, transición de categoría, reimpresión de QR,
-cola de reservas con el plazo de 48 hs, y cálculo idempotente de multas.
-`app/test/widget_test.dart` cubre el arranque sin sesión y el ingreso al portal.
+### Pantallas
+
+**Lector** (`lector.html`) — las siete secciones del prototipo agrupadas en
+cinco destinos, para que la barra inferior siga siendo usable en un celular:
+- Catálogo con búsqueda por título, autor, ISBN o género, filtro por género y
+  por disponibilidad, y ficha con reserva.
+- Recomendaciones que explican el criterio y avisan del cold start.
+- Mi actividad: solapas de préstamos, reservas e historial. Cada préstamo
+  muestra el plazo y la categoría con la que se generó; cada reserva, su
+  posición en la cola o el plazo de retiro corriendo.
+- Notificaciones y perfil con límites de la categoría y QR de credencial.
+
+**Bibliotecario** (`bibliotecario.html`) — las siete secciones:
+- Dashboard con métricas y las decisiones abiertas del Evaluador, con botón
+  para que el Planificador ejecute el lote.
+- Alta de libro: se pega el texto reconocido, el Analizador propone la ficha
+  con el nivel de confianza por campo, y hay que confirmar explícitamente para
+  publicar. "Guardar sin publicar" deja el libro fuera del catálogo.
+- Catálogo e inventario: ejemplares por título, alta de ejemplares y etiqueta
+  QR con reimpresión.
+- Préstamo y devolución, con identificación del lector y del ejemplar.
+- Lectores con cambio de categoría y registro de pago de multas.
+- Alertas agrupadas por tipo, con el motivo de cada decisión.
+
+**Admin** (`admin.html`) — las seis secciones:
+- Reportes con gráfico de préstamos por mes y rankings.
+- Parámetros: plazos y límites por categoría, retención de reservas, multa
+  diaria y ponderación del motor de recomendaciones.
+- Auditoría filtrable por tipo de evento.
+- Aprendizaje, sugerencias estratégicas y "acerca de" con la bitácora de la
+  sesión y el reinicio de datos.
+
+### Tests — 39, todos en verde
+
+| Archivo | Qué cubre |
+|---|---|
+| `reglas_negocio_test.dart` | Reglas de la §7: validación estricta, límites, bloqueos, transición de categoría, reimpresión de QR, cola de reservas con 48 hs, multas idempotentes |
+| `portal_lector_test.dart` | Catálogo, filtro de búsqueda, alta de reserva, cold start, préstamos vigentes, límites del perfil, avisos |
+| `paneles_gestion_test.dart` | Decisiones del Evaluador, análisis de ficha, publicar vs. guardar sin publicar, devolución, alertas, parámetros, auditoría |
+| `widget_test.dart` | Arranque sin sesión e ingreso al portal |
+
+### CI/CD
+
+`.github/workflows/ci.yml` corre en push a `main`, `develop` y `claude/**`, y
+en PR a `main` y `develop`:
+
+1. **Calidad** — `dart format --set-exit-if-changed`, `flutter analyze`,
+   `flutter test --coverage` (sube el `lcov.info` como artefacto).
+2. **Build web** — sube `build/web` como artefacto.
+3. **Build APK** — sube el APK de debug.
 
 ## Pendiente
 
-### 1. Cuerpo de las pantallas (lo más grande)
-
-El esqueleto de navegación de los tres roles está armado y refleja las
-secciones del prototipo, pero **cada sección muestra hoy un marcador**
-(`SeccionPendiente`) en lugar de su contenido. Falta portar:
-
-**Lector** — `lector.html`
-- Catálogo: búsqueda, filtro por género, ficha del libro, botón de reserva.
-- Recomendaciones: tarjetas con el motivo y el aviso de cold start.
-- Mi actividad: solapas de préstamos, reservas e historial.
-- Notificaciones: lista, marcar leída, contador.
-- Perfil: datos, categoría y límites, multas, géneros de interés, QR propio.
-
-**Bibliotecario** — `bibliotecario.html`
-- Dashboard con métricas y decisiones abiertas del Evaluador.
-- Alta de libro: las tres fotos, ficha sugerida con confianza por campo,
-  resolución de conflictos entre fuentes y confirmación explícita.
-- Catálogo e inventario: ejemplares, alta y reimpresión de etiquetas.
-- Préstamo y devolución con identificación por QR.
-- Lectores: alta, edición y cambio de categoría.
-- Alertas operativas.
-
-**Admin** — `admin.html`
-- Reportes con gráficos (`fl_chart` ya está en `pubspec.yaml`).
-- Parámetros de la biblioteca.
-- Auditoría, aprendizaje, sugerencias y "acerca de".
-
-La lógica que alimenta todas estas pantallas ya existe y está testeada: falta
-la capa visual. `AppState` expone las operaciones y consultas necesarias.
-
-### 2. CI/CD
-No se llegó a configurar. La idea era `.github/workflows/ci.yml` con:
-`flutter format --set-exit-if-changed`, `flutter analyze`,
-`flutter test --coverage` y `flutter build web`, más un job de APK.
-Los tres comandos ya corren limpios en local, así que el workflow debería
-pasar en verde apenas se agregue.
-
-### 3. Escaneo de QR con cámara
-Hoy el QR se resuelve por texto, igual que en el prototipo. Para escaneo real
-haría falta `mobile_scanner` y permisos de cámara en Android e iOS.
-
-### 4. Enriquecimiento contra Open Library
-`AgenteAnalizador.resolverFuentes` ya acepta varias fuentes con su autoridad,
-pero falta el cliente HTTP que consulte Open Library y arme esos resultados.
-`http` ya está en `pubspec.yaml`.
-
-### 5. Publicación
-El TP pide la app publicada con links en vivo. `flutter build web` genera
-`app/build/web`, listo para GitHub Pages o similar. Falta decidir dónde.
+1. **Escaneo real de QR con cámara.** Hoy el QR se resuelve por texto, igual
+   que en el prototipo. Haría falta `mobile_scanner` y permisos en Android/iOS.
+2. **Enriquecimiento contra Open Library.** `AgenteAnalizador.resolverFuentes`
+   ya acepta varias fuentes con su autoridad y resuelve conflictos, pero falta
+   el cliente HTTP que consulte la API y arme esos resultados. Hoy la ficha se
+   arma solo con el texto del OCR. `http` ya está en `pubspec.yaml`.
+3. **Alta de lectores desde la UI.** El repositorio y `AppState` ya la
+   soportan; falta el formulario en la sección de lectores.
+4. **Publicación.** El TP pide la app publicada con links en vivo.
+   `flutter build web` genera `app/build/web` y el CI ya lo sube como
+   artefacto; falta decidir dónde alojarlo (GitHub Pages es lo más directo).
+5. **Captura de fotos.** La spec v2 §3 habla de tres fotos por libro. La UI
+   trabaja sobre el texto reconocido; falta la captura en sí.
 
 ## Cómo levantar el proyecto
 
@@ -130,7 +141,7 @@ cd app
 flutter pub get
 flutter run -d chrome        # web
 flutter run                  # mobile con dispositivo conectado
-flutter test                 # 19 tests
+flutter test                 # 39 tests
 flutter analyze
 ```
 
@@ -142,5 +153,6 @@ Usuarios de demostración (precargados en cada tarjeta de rol):
 | Bibliotecario | bibliotecario@demo.com | 0000 |
 | Administrador | admin@demo.com | 9999 |
 
-Se probó con Flutter 3.24.5 / Dart 3.5.4. Ojo con la versión: el código usa
-`withOpacity`, no `withValues`, que recién existe desde 3.27.
+Probado con Flutter 3.24.5 / Dart 3.5.4, la versión fijada en el CI. Ojo al
+subir de versión: el código usa `withOpacity`, que 3.27+ reemplaza por
+`withValues`.
