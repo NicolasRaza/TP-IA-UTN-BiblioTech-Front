@@ -78,7 +78,7 @@
     </div>
   </aside>
 
-  <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+  <button class="hamburger" aria-label="Abrir menú" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
   <main class="main-content">
 
@@ -228,7 +228,7 @@
       <div class="page-body">
         <div class="search-bar mb-3">
           <span class="search-icon">🔍</span>
-          <input type="text" id="audBusqueda" placeholder="Buscar en el registro..." oninput="renderAuditoria()">
+          <input type="text" id="audBusqueda" aria-label="Buscar en auditoría" placeholder="Buscar en el registro..." oninput="renderAuditoria()">
         </div>
         <div class="table-wrap">
           <table class="table">

@@ -106,7 +106,7 @@
   </aside>
 
   <!-- Hamburger -->
-  <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+  <button class="hamburger" aria-label="Abrir menú" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
   <!-- Main -->
   <main class="main-content">
@@ -124,7 +124,7 @@
         <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center;">
           <div class="search-bar" style="flex:1;min-width:240px;">
             <span class="search-icon">🔍</span>
-            <input type="text" id="catalogoBusqueda" placeholder="Buscar por título, autor, ISBN..." oninput="filtrarCatalogo()">
+            <input type="text" id="catalogoBusqueda" aria-label="Buscar en catálogo" placeholder="Buscar por título, autor, ISBN..." oninput="filtrarCatalogo()">
           </div>
           <select class="form-control" id="catalogoGenero" onchange="filtrarCatalogo()" style="width:auto;min-width:160px;">
             <option value="">Todos los géneros</option>
@@ -279,7 +279,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3 class="modal-title" id="modalLibroTitulo">Título del libro</h3>
-      <button class="modal-close" onclick="closeModal('modalLibro')">✕</button>
+      <button class="modal-close" aria-label="Cerrar modal" onclick="closeModal('modalLibro')">✕</button>
     </div>
     <div class="flex gap-3" style="align-items:flex-start;flex-wrap:wrap;">
       <div class="book-detail-cover-wrap" id="modalLibroCoverWrap"></div>
