@@ -8,6 +8,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../domain/entities/decision.dart';
 import '../../../prestamos/presentation/bloc/prestamos_bloc.dart';
 import '../bloc/agentes_bloc.dart';
+
 /// Dashboard del bibliotecario, portado de `bibliotecario.html #s-dashboard`.
 class SeccionDashboard extends StatelessWidget {
   const SeccionDashboard({super.key});

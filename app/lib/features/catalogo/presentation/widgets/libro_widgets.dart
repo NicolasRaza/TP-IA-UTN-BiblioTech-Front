@@ -149,8 +149,7 @@ class _FichaLibro extends StatelessWidget {
     final usuario = context.watch<SesionCubit>().state.usuario;
     final reservas = context.watch<ReservasBloc>().state;
     final cola = reservas.colaDe(libro.id);
-    final yaReservado =
-        reservas.activas.any((r) => r.libroId == libro.id);
+    final yaReservado = reservas.activas.any((r) => r.libroId == libro.id);
 
     return Dialog(
       insetPadding: const EdgeInsets.all(20),

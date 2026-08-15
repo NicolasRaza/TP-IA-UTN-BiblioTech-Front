@@ -45,8 +45,7 @@ class EstadoDelSistema extends Equatable {
   final Map<String, Lector> _lectoresPorId;
 
   /// Catálogo visible para el lector (spec v2 §7).
-  List<Libro> get catalogoPublico =>
-      libros.where((l) => l.validado).toList();
+  List<Libro> get catalogoPublico => libros.where((l) => l.validado).toList();
 
   Libro? libro(String id) => _librosPorId[id];
   Lector? lector(String id) => _lectoresPorId[id];

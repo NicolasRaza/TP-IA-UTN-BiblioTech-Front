@@ -91,15 +91,15 @@ class CrearReserva implements UseCase<Reserva, CrearReservaParams> {
     // Regla de Validación Estricta: un libro sin validar no está en el
     // catálogo, así que tampoco se puede reservar.
     if (!libro.validado) {
-      return const Fallo(ReglaDeNegocioFailure(
-          'El libro no está disponible en el catálogo'));
+      return const Fallo(
+          ReglaDeNegocioFailure('El libro no está disponible en el catálogo'));
     }
 
-    final duplicada = reservasDelLector
-        .any((r) => r.libroId == params.libroId && r.esActiva);
+    final duplicada =
+        reservasDelLector.any((r) => r.libroId == params.libroId && r.esActiva);
     if (duplicada) {
-      return const Fallo(ReglaDeNegocioFailure(
-          'Ya tenés una reserva activa para este libro'));
+      return const Fallo(
+          ReglaDeNegocioFailure('Ya tenés una reserva activa para este libro'));
     }
 
     final creada = await _reservas.crear(

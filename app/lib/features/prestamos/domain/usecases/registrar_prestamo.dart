@@ -47,8 +47,7 @@ class RegistrarPrestamoParams extends Equatable {
 /// diseño anterior es que ahora esa coordinación está explícita en un solo
 /// lugar y contra interfaces, en vez de escondida como efecto secundario
 /// dentro de un repositorio de 946 líneas.
-class RegistrarPrestamo
-    implements UseCase<Prestamo, RegistrarPrestamoParams> {
+class RegistrarPrestamo implements UseCase<Prestamo, RegistrarPrestamoParams> {
   const RegistrarPrestamo({
     required PrestamoRepository prestamoRepository,
     required LectorRepository lectorRepository,

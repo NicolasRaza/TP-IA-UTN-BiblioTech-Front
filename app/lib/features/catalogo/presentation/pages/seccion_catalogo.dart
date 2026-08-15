@@ -6,6 +6,7 @@ import '../widgets/libro_widgets.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
 import '../bloc/catalogo_bloc.dart';
+
 /// Catálogo público (spec v2 §9), portado de `lector.html #s-catalogo`.
 ///
 /// Solo lista libros validados por el bibliotecario: la Regla de Validación

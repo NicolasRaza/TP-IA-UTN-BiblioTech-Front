@@ -45,8 +45,7 @@ class GeneradorIdPorTiempo implements GeneradorId {
   int _contador = 0;
 
   @override
-  String generar() =>
-      '${_reloj.ahora.microsecondsSinceEpoch}-${_contador++}';
+  String generar() => '${_reloj.ahora.microsecondsSinceEpoch}-${_contador++}';
 }
 
 /// IDs secuenciales: '0', '1', '2'... Sólo para tests.

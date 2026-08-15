@@ -40,7 +40,9 @@ class AprendizajeLocalDataSourceImpl implements AprendizajeLocalDataSource {
   Result<void> guardarCorrecciones(List<Correccion> correcciones) =>
       _guardarLista(
         _claveCorrecciones,
-        correcciones.map((c) => CorreccionModel.fromEntity(c).toJson()).toList(),
+        correcciones
+            .map((c) => CorreccionModel.fromEntity(c).toJson())
+            .toList(),
       );
 
   @override

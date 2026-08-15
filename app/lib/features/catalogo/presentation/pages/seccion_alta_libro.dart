@@ -5,6 +5,7 @@ import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../agentes/domain/entities/ficha_sugerida.dart';
 import '../cubit/alta_libro_cubit.dart';
+
 /// Alta de libro con reconocimiento asistido.
 ///
 /// Porta `bibliotecario.html #s-agregar-libro`. El flujo respeta la Regla de
@@ -54,15 +55,13 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
     });
   }
 
-  String _valor(String campo) => _controles[campo]?.text.trim() ?? '';
-
   void _guardar({required bool publicar}) {
     context.read<AltaLibroCubit>().guardar(
-          valores: {
-            for (final e in _controles.entries) e.key: e.value.text,
-          },
-          publicar: publicar,
-        );
+      valores: {
+        for (final e in _controles.entries) e.key: e.value.text,
+      },
+      publicar: publicar,
+    );
   }
 
   @override

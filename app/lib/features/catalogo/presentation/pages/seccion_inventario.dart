@@ -7,6 +7,7 @@ import '../../../../core/theme/tema.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
 import '../bloc/catalogo_bloc.dart';
+
 /// Catálogo e inventario, portado de `bibliotecario.html #s-catalogo-bib`.
 class SeccionInventario extends StatefulWidget {
   const SeccionInventario({super.key});
@@ -30,9 +31,7 @@ class _SeccionInventarioState extends State<SeccionInventario> {
     final q = _busqueda.text.trim();
     // El inventario del bibliotecario incluye lo no validado, así que filtra
     // sobre todosLosLibros y no sobre el catálogo público del bloc.
-    final libros = estado.todosLosLibros
-        .where((l) => l.coincideCon(q))
-        .toList()
+    final libros = estado.todosLosLibros.where((l) => l.coincideCon(q)).toList()
       ..sort((a, b) => a.titulo.compareTo(b.titulo));
 
     final pendientes = estado.pendientesValidacion;
@@ -41,8 +40,7 @@ class _SeccionInventarioState extends State<SeccionInventario> {
       children: [
         EncabezadoSeccion(
           'Catálogo e inventario',
-          subtitulo:
-              '${estado.todosLosLibros.length} títulos · '
+          subtitulo: '${estado.todosLosLibros.length} títulos · '
               '${estado.todosLosLibros.fold<int>(0, (s, l) => s + l.totalEjemplares)} ejemplares',
         ),
         if (pendientes.isNotEmpty) ...[

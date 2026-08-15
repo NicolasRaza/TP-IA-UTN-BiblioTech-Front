@@ -148,8 +148,7 @@ class PrestamosBloc extends Bloc<PrestamosEvent, PrestamosState> {
     Emitter<PrestamosState> emit,
     String lectorId,
   ) async {
-    final activos =
-        await _obtenerActivos(PrestamosDeLectorParams(lectorId));
+    final activos = await _obtenerActivos(PrestamosDeLectorParams(lectorId));
     final historial =
         await _obtenerHistorial(PrestamosDeLectorParams(lectorId));
     final todos = await _obtenerTodos(const SinParametros());

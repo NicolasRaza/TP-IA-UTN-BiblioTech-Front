@@ -19,8 +19,7 @@ class ConfiguracionBibliotecaModel extends ConfiguracionBiblioteca {
     super.edadMayoriaEdad,
   });
 
-  factory ConfiguracionBibliotecaModel.fromEntity(
-          ConfiguracionBiblioteca c) =>
+  factory ConfiguracionBibliotecaModel.fromEntity(ConfiguracionBiblioteca c) =>
       ConfiguracionBibliotecaModel(
         plazoPrestamoDias: c.plazoPrestamoDias,
         limiteEjemplares: c.limiteEjemplares,

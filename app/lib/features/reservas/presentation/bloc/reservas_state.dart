@@ -30,9 +30,7 @@ class ReservasState extends Equatable {
 
   /// Cola de un título, ordenada cronológicamente.
   List<Reserva> colaDe(String libroId) {
-    final cola = todas
-        .where((r) => r.libroId == libroId && r.esActiva)
-        .toList()
+    final cola = todas.where((r) => r.libroId == libroId && r.esActiva).toList()
       ..sort((a, b) => a.fechaReserva.compareTo(b.fechaReserva));
     return cola;
   }

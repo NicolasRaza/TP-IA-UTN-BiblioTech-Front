@@ -8,6 +8,7 @@ import '../../domain/entities/evento_auditoria.dart';
 import '../../../agentes/presentation/bloc/agentes_bloc.dart';
 import '../cubit/administracion_cubit.dart';
 import '../../../agentes/domain/services/agente_evaluador.dart';
+
 /// Registro de auditoría, portado de `admin.html #s-auditoria`.
 class SeccionAuditoria extends StatefulWidget {
   const SeccionAuditoria({super.key});
@@ -132,7 +133,8 @@ class SeccionAprendizaje extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reporte = context.watch<AdministracionCubit>().state.reporteAprendizaje;
+    final reporte =
+        context.watch<AdministracionCubit>().state.reporteAprendizaje;
     if (reporte == null) {
       return const Center(child: CircularProgressIndicator());
     }

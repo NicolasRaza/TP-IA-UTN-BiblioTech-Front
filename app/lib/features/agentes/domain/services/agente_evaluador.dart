@@ -88,8 +88,7 @@ class AgenteEvaluador {
   }
 
   /// Títulos con ejemplar libre y gente esperando en la cola.
-  Iterable<Decision> _decidirSobreColasConStock(
-      EstadoDelSistema estado) sync* {
+  Iterable<Decision> _decidirSobreColasConStock(EstadoDelSistema estado) sync* {
     for (final libro in estado.catalogoPublico) {
       if (!libro.hayDisponible) continue;
       final cola = estado.colaDe(libro.id);
@@ -371,7 +370,8 @@ class AgenteEvaluador {
     if (nuncaPrestados > 0) {
       sugerencias.add(Sugerencia(
         tipo: TipoSugerencia.promocion,
-        texto: '$nuncaPrestados ${nuncaPrestados == 1 ? 'libro nunca fue prestado' : 'libros nunca fueron prestados'}. '
+        texto:
+            '$nuncaPrestados ${nuncaPrestados == 1 ? 'libro nunca fue prestado' : 'libros nunca fueron prestados'}. '
             'Se podrían promocionar o evaluar para baja.',
       ));
     }

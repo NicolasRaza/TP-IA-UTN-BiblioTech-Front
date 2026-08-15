@@ -64,8 +64,7 @@ class RegistrarDevolucion
     final prestamo = prestamoResult.valorONull!;
 
     if (prestamo.estado == EstadoPrestamo.devuelto) {
-      return const Fallo(
-          ReglaDeNegocioFailure('El préstamo ya fue devuelto'));
+      return const Fallo(ReglaDeNegocioFailure('El préstamo ya fue devuelto'));
     }
 
     final configResult = await _configuracion.obtener();

@@ -51,8 +51,8 @@ class CambiarCategoria implements UseCase<Lector, CambiarCategoriaParams> {
 
     if (actual.categoria == params.nueva) return Exito(actual);
 
-    final actualizado = await _lectores
-        .actualizar(actual.copyWith(categoria: params.nueva));
+    final actualizado =
+        await _lectores.actualizar(actual.copyWith(categoria: params.nueva));
     if (actualizado case Fallo(:final failure)) return Fallo(failure);
 
     await _auditoria.registrar(

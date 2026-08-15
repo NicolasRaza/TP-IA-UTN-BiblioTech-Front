@@ -36,8 +36,7 @@ class ObtenerRecomendaciones
   final AgenteEvaluador _evaluador;
 
   @override
-  Future<Result<List<Recomendacion>>> call(
-      RecomendacionesParams params) async {
+  Future<Result<List<Recomendacion>>> call(RecomendacionesParams params) async {
     final estado = await _observador.observar();
     return estado.map((e) => _evaluador.recomendarPara(
           e,

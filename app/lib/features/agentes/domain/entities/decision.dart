@@ -47,7 +47,8 @@ class Decision extends Equatable {
   final int dias;
 
   @override
-  List<Object?> get props => [tipo, motivo, prestamo, reserva, lector, libro, dias];
+  List<Object?> get props =>
+      [tipo, motivo, prestamo, reserva, lector, libro, dias];
 }
 
 /// Resultado de ejecutar una decisión.

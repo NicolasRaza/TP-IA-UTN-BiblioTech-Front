@@ -80,12 +80,22 @@ final sl = GetIt.instance;
 ///
 /// El registro va de adentro hacia afuera: infraestructura → datasources →
 /// repositorios → servicios de dominio → casos de uso → presentación.
-Future<void> configurarInyeccion({KeyValueStore? store}) async {
+///
+/// Los tres parámetros existen para los tests: pasando un [MemoryStore], un
+/// [RelojFijo] y un [GeneradorIdSecuencial] se obtiene el grafo real de la
+/// app —los mismos casos de uso y repositorios que corren en producción— pero
+/// determinista y sin plugins de Flutter.
+Future<void> configurarInyeccion({
+  KeyValueStore? store,
+  Reloj? reloj,
+  GeneradorId? generadorId,
+}) async {
   // ─────────────────────────── Infraestructura ───────────────────────────
 
   sl.registerSingleton<KeyValueStore>(store ?? await SharedPrefsStore.abrir());
-  sl.registerLazySingleton<Reloj>(() => const RelojDelSistema());
-  sl.registerLazySingleton<GeneradorId>(() => GeneradorIdPorTiempo(sl()));
+  sl.registerLazySingleton<Reloj>(() => reloj ?? const RelojDelSistema());
+  sl.registerLazySingleton<GeneradorId>(
+      () => generadorId ?? GeneradorIdPorTiempo(sl()));
 
   _registrarDataSources();
   _registrarRepositorios();

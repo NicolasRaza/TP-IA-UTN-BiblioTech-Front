@@ -57,7 +57,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
     await _recargar();
   }
 
-  Future<void> guardarConfiguracion(ConfiguracionBiblioteca configuracion) async {
+  Future<void> guardarConfiguracion(
+      ConfiguracionBiblioteca configuracion) async {
     final resultado = await _guardarConfiguracion(GuardarConfiguracionParams(
       configuracion: configuracion,
       usuarioId: _usuarioActualId(),

@@ -8,6 +8,7 @@ import '../../domain/entities/lector.dart';
 import '../../../agentes/presentation/bloc/agentes_bloc.dart';
 import '../../../prestamos/presentation/bloc/prestamos_bloc.dart';
 import '../bloc/lectores_bloc.dart';
+
 /// Gestión de lectores, portada de `bibliotecario.html #s-lectores`.
 class SeccionLectores extends StatefulWidget {
   const SeccionLectores({super.key});

@@ -1,9 +1,10 @@
 # Estado de la migración a Flutter
 
 Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile).
-Rama de trabajo: `claude/flutter-migration`.
+Rama de trabajo: `claude/flutter-architecture-structure-2grzfz`.
 
-**Última actualización:** sesión del 14/08/2026.
+**Última actualización:** sesión del 15/08/2026 — refactor a Clean
+Architecture + BLoC.
 
 ## Dónde está cada cosa
 
@@ -20,8 +21,53 @@ pantalla por pantalla contra el HTML.
 ## Estado: la migración funcional está completa
 
 Las tres interfaces de la spec v2 §9 están portadas y operativas. Verificado
-con Flutter 3.24.5: `dart format` y `flutter analyze` limpios, **39 tests en
+con Flutter 3.24.5: `dart format` y `flutter analyze` limpios, **43 tests en
 verde** y build de web exitoso.
+
+## Arquitectura: Clean Architecture + BLoC
+
+El proyecto pasó de un diseño por capas con `AppState` único y un
+`Repositorio` de 946 líneas a Clean Architecture organizada por features.
+
+```
+app/lib/
+├── core/            error/ · usecases/ · services/ · storage/ · di/ · theme/
+├── features/<f>/
+│   ├── domain/      entities · repositories (abstractas) · services · usecases
+│   ├── data/        models · datasources · repositories (impl)
+│   └── presentation/bloc|cubit · pages · widgets
+├── app/             MaterialApp, ruteo por rol y los tres shells
+└── main.dart        composition root
+```
+
+Regla de dependencia estricta: `presentation → domain ← data`. El dominio no
+importa Flutter ni conoce `data`.
+
+**Piezas clave**
+
+- `Result<T>` sellado (`Exito` / `Fallo`) en vez de `ResultadoOperacion`: el
+  `switch` es exhaustivo y lo verifica el compilador.
+- Jerarquía `Failure`: la UI nunca ve una excepción de `data`.
+- Servicios de dominio para las reglas compartidas — `PoliticaDePrestamo`,
+  `PoliticaDeReserva`, `PoliticaDeCategoria`, `AsignadorDeCola` —, que
+  centralizan lo que antes estaba repetido en tres flujos distintos.
+- Casos de uso, uno por operación. La auditoría es explícita en el caso de
+  uso en lugar de un efecto secundario oculto del repositorio.
+- Un datasource local por agregado, sobre el mismo `KeyValueStore`.
+- Inyección con `get_it` en `core/di/inyeccion.dart`: único lugar donde una
+  interfaz se ata a su implementación. Acepta store, reloj y generador de
+  ids inyectados, que es lo que usan los tests.
+
+**Estado con BLoC** — Cubit donde el estado es simple y Bloc con eventos
+donde hay varias intenciones que conviene dejar registradas:
+
+| Bloc (eventos) | Cubit |
+|---|---|
+| `CatalogoBloc`, `PrestamosBloc`, `ReservasBloc`, `LectoresBloc`, `AgentesBloc` | `SesionCubit`, `NotificacionesCubit`, `RecomendacionesCubit`, `AdministracionCubit`, `AltaLibroCubit` |
+
+Cada shell de rol provee los blocs de su panel y los descarta al cerrar
+sesión. Los mensajes de resultado viajan en el estado y un `BlocListener`
+por shell los muestra: ningún bloc necesita un `BuildContext`.
 
 ### Base del proyecto
 - Scaffold con los tres targets: `web`, `android`, `ios`.
@@ -30,9 +76,11 @@ verde** y build de web exitoso.
   sidebar expandido en escritorio. Un solo árbol de widgets para las tres.
 
 ### Dominio y persistencia (portado de `js/db.js`)
-- Modelos inmutables con serialización JSON manual, sin codegen.
+- Entidades inmutables con `Equatable`, sin serialización: el JSON vive en
+  los models de `data`, que extienden a la entidad.
 - `KeyValueStore` abstrae el almacenamiento: `SharedPrefsStore` en la app,
-  `MemoryStore` en los tests.
+  `MemoryStore` en los tests. `ColeccionJson` concentra el patrón
+  leer-decodificar-escribir que antes se repetía en cada operación.
 - Reloj y generador de IDs inyectables, para fijar el tiempo en los tests.
 - Datos semilla completos: 21 libros, 5 lectores, bibliotecario, administrador,
   préstamos, reservas y auditoría.
@@ -63,9 +111,20 @@ Implementadas de cero durante la migración:
 - **Planificador:** solo ejecuta las decisiones que recibe.
 - **Aprendizaje:** patrones de corrección y conversión de recomendaciones.
 
-La separación Evaluador-decide / Planificador-ejecuta de la §4.3 está
-implementada en serio: `Decision` es el contrato entre ambos, y la UI del
-dashboard permite disparar el ciclo y ver qué se ejecutó.
+La separación Evaluador-decide / Planificador-ejecuta de la §4.3 quedó
+garantizada por construcción:
+
+- `ObservadorDelSistema` es el único que habla con repositorios y congela un
+  `EstadoDelSistema` inmutable.
+- `AgenteEvaluador` es **puro**: recibe ese estado y devuelve decisiones. No
+  tiene acceso a nada que pueda modificar.
+- `AgentePlanificador` sólo ve decisiones, nunca el estado, así que tampoco
+  podría re-evaluar aunque quisiera.
+- `CorrerCicloDeAgentes` fija el orden Observación → Análisis → Decisión →
+  Acción en un solo lugar.
+
+Como el Evaluador es puro, sus tests se escriben armando un
+`EstadoDelSistema` a mano, sin almacenamiento ni dobles de prueba.
 
 ### Pantallas
 
@@ -99,14 +158,20 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Aprendizaje, sugerencias estratégicas y "acerca de" con la bitácora de la
   sesión y el reinicio de datos.
 
-### Tests — 39, todos en verde
+### Tests — 43, todos en verde
+
+`test/helpers/entorno_de_prueba.dart` levanta el grafo real de la app sobre
+`MemoryStore`, `RelojFijo` y `GeneradorIdSecuencial`. Los tests usan los
+mismos casos de uso y repositorios que corren en producción: lo único que
+cambia son las tres piezas de infraestructura del borde.
 
 | Archivo | Qué cubre |
 |---|---|
-| `reglas_negocio_test.dart` | Reglas de la §7: validación estricta, límites, bloqueos, transición de categoría, reimpresión de QR, cola de reservas con 48 hs, multas idempotentes |
-| `portal_lector_test.dart` | Catálogo, filtro de búsqueda, alta de reserva, cold start, préstamos vigentes, límites del perfil, avisos |
-| `paneles_gestion_test.dart` | Decisiones del Evaluador, análisis de ficha, publicar vs. guardar sin publicar, devolución, alertas, parámetros, auditoría |
-| `widget_test.dart` | Arranque sin sesión e ingreso al portal |
+| `features/reglas_negocio_test.dart` | Reglas de la §7 sobre los casos de uso: validación estricta, límites, bloqueos, transición de categoría, reimpresión de QR, cola de reservas con 48 hs, multas idempotentes |
+| `features/agentes/agente_evaluador_test.dart` | El Evaluador como función pura: decisiones sobre préstamos, reservas y lectores, y ponderación de recomendaciones |
+| `features/auth/sesion_cubit_test.dart` | Login válido, PIN incorrecto, email inexistente, cierre de sesión y validación de campos |
+| `features/reservas/reservas_bloc_test.dart` | Reserva lista vs. en espera, duplicados, cancelación, bloqueo por multa y orden de la cola |
+| `app/arranque_test.dart` | Arranque del composition root, ruteo por rol y tema |
 
 ### CI/CD
 
@@ -166,8 +231,9 @@ git push origin v1.0.0
    ya acepta varias fuentes con su autoridad y resuelve conflictos, pero falta
    el cliente HTTP que consulte la API y arme esos resultados. Hoy la ficha se
    arma solo con el texto del OCR. `http` ya está en `pubspec.yaml`.
-3. **Alta de lectores desde la UI.** El repositorio y `AppState` ya la
-   soportan; falta el formulario en la sección de lectores.
+3. **Alta de lectores desde la UI.** El caso de uso `RegistrarLector` y el
+   `LectoresBloc` ya la soportan; falta el formulario en la sección de
+   lectores.
 4. **Publicación.** El TP pide la app publicada con links en vivo.
    `flutter build web` genera `app/build/web` y el CI ya lo sube como
    artefacto; falta decidir dónde alojarlo (GitHub Pages es lo más directo).

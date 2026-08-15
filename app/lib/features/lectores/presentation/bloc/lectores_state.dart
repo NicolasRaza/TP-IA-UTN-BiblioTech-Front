@@ -23,8 +23,7 @@ class LectoresState extends Equatable {
   final String? mensajeError;
   final String? mensajeExito;
 
-  List<Lector> get conMultas =>
-      lectores.where((l) => l.tieneMultas).toList();
+  List<Lector> get conMultas => lectores.where((l) => l.tieneMultas).toList();
 
   LectoresState copyWith({
     EstadoCarga? estado,

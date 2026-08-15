@@ -6,6 +6,7 @@ import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/formato.dart';
 import '../../domain/entities/notificacion.dart';
 import '../cubit/notificaciones_cubit.dart';
+
 /// Avisos generados por el Agente Planificador (spec v2 §4.3).
 class SeccionNotificaciones extends StatelessWidget {
   const SeccionNotificaciones({super.key});
@@ -49,8 +50,9 @@ class SeccionNotificaciones extends StatelessWidget {
                 borderRadius: BorderRadius.circular(Radios.md),
                 onTap: n.leida
                     ? null
-                    : () =>
-                        context.read<NotificacionesCubit>().marcarComoLeida(n.id),
+                    : () => context
+                        .read<NotificacionesCubit>()
+                        .marcarComoLeida(n.id),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Row(

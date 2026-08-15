@@ -14,6 +14,7 @@ import '../../../catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../../../lectores/presentation/bloc/lectores_bloc.dart';
 import '../../domain/services/politica_de_prestamo.dart';
 import '../bloc/prestamos_bloc.dart';
+
 /// Registrar préstamo, portado de `bibliotecario.html #s-prestamo`.
 ///
 /// El lector se identifica por su QR o por búsqueda, y el ejemplar por el QR
@@ -325,8 +326,7 @@ class _FilaDevolucion extends StatelessWidget {
     final diasTarde =
         vencido ? ahora.difference(prestamo.fechaVencimiento).inDays : 0;
     final multaEstimada = vencido
-        ? diasTarde * cfg.multaPorDiaDemora -
-            prestamo.multaAplicada
+        ? diasTarde * cfg.multaPorDiaDemora - prestamo.multaAplicada
         : 0;
 
     return Card(

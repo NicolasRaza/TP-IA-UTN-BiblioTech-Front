@@ -6,6 +6,7 @@ import '../../../../core/theme/tema.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../../domain/entities/configuracion_biblioteca.dart';
 import '../cubit/administracion_cubit.dart';
+
 /// Parámetros de la biblioteca, portados de `admin.html #s-configuracion`.
 ///
 /// Son los "Parámetros de configuración" de la spec v2 §3, definidos por el
@@ -47,7 +48,9 @@ class _SeccionParametrosState extends State<SeccionParametros> {
           accion: haycambios
               ? FilledButton.icon(
                   onPressed: () {
-                    context.read<AdministracionCubit>().guardarConfiguracion(cfg);
+                    context
+                        .read<AdministracionCubit>()
+                        .guardarConfiguracion(cfg);
                     setState(() => _borrador = null);
                     avisar(context, 'Parámetros actualizados');
                   },

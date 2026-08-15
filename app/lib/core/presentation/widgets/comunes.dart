@@ -9,6 +9,7 @@ import '../../../features/lectores/domain/entities/lector.dart';
 import '../../../features/prestamos/domain/entities/prestamo.dart';
 import '../../../features/reservas/domain/entities/reserva.dart';
 import '../../theme/tema.dart';
+
 /// Etiqueta de estado con color, equivalente a los `.badge` del CSS.
 class Insignia extends StatelessWidget {
   const Insignia(this.texto, {super.key, required this.color, this.icono});

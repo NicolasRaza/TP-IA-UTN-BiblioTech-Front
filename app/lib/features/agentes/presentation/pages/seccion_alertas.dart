@@ -5,6 +5,7 @@ import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../domain/entities/decision.dart';
 import '../bloc/agentes_bloc.dart';
+
 /// Alertas operativas, portadas de `bibliotecario.html #s-alertas`.
 ///
 /// Cada alerta es una decisión del Agente Evaluador, con el motivo por el que

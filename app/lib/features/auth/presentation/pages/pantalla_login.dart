@@ -6,6 +6,7 @@ import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../cubit/sesion_cubit.dart';
+
 /// Pantalla de acceso: elección de rol y login, portada de `index.html`.
 class PantallaLogin extends StatelessWidget {
   const PantallaLogin({super.key});

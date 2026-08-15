@@ -9,6 +9,7 @@ import '../../../auth/presentation/cubit/sesion_cubit.dart';
 import '../../../prestamos/presentation/bloc/prestamos_bloc.dart';
 import '../../../reservas/presentation/bloc/reservas_bloc.dart';
 import '../../../agentes/presentation/cubit/recomendaciones_cubit.dart';
+
 /// Perfil del lector: datos, límites vigentes, multas, intereses y su QR.
 class SeccionPerfil extends StatelessWidget {
   const SeccionPerfil({super.key});

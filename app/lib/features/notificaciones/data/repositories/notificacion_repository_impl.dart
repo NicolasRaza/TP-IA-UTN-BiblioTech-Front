@@ -29,9 +29,8 @@ class NotificacionRepositoryImpl implements NotificacionRepository {
   @override
   Future<Result<int>> contarNoLeidas(String lectorId) async =>
       _local.leer().map(
-            (todas) => todas
-                .where((n) => n.lectorId == lectorId && !n.leida)
-                .length,
+            (todas) =>
+                todas.where((n) => n.lectorId == lectorId && !n.leida).length,
           );
 
   @override

@@ -50,8 +50,8 @@ class ReimprimirEtiqueta
   @override
   Future<Result<Ejemplar>> call(ReimprimirEtiquetaParams params) async {
     if (params.motivo.trim().isEmpty) {
-      return const Fallo(ValidacionFailure(
-          'Hay que indicar el motivo de la reimpresión'));
+      return const Fallo(
+          ValidacionFailure('Hay que indicar el motivo de la reimpresión'));
     }
 
     final libroResult = await _catalogo.obtenerPorId(params.libroId);

@@ -58,8 +58,8 @@ class GuardarConfiguracion
     final cfg = params.configuracion;
 
     if (cfg.plazoPrestamoDias.values.any((d) => d < 1)) {
-      return const Fallo(
-          ValidacionFailure('Los plazos de préstamo deben ser de al menos 1 día'));
+      return const Fallo(ValidacionFailure(
+          'Los plazos de préstamo deben ser de al menos 1 día'));
     }
     if (cfg.limiteEjemplares.values.any((n) => n < 1) ||
         cfg.limiteReservas.values.any((n) => n < 1)) {
@@ -71,13 +71,13 @@ class GuardarConfiguracion
           ValidacionFailure('La multa por día no puede ser negativa'));
     }
     if (cfg.plazoRetiroReservaHoras < 1) {
-      return const Fallo(ValidacionFailure(
-          'El plazo de retiro debe ser de al menos 1 hora'));
+      return const Fallo(
+          ValidacionFailure('El plazo de retiro debe ser de al menos 1 hora'));
     }
     if (cfg.pesoHistorialRecomendacion < 0 ||
         cfg.pesoHistorialRecomendacion > 1) {
-      return const Fallo(ValidacionFailure(
-          'El peso del historial debe estar entre 0 y 1'));
+      return const Fallo(
+          ValidacionFailure('El peso del historial debe estar entre 0 y 1'));
     }
 
     final guardada = await _configuracion.guardar(cfg);

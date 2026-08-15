@@ -37,7 +37,8 @@ class ValidacionFailure extends Failure {
 
 /// El almacenamiento local falló al leer o escribir.
 class CacheFailure extends Failure {
-  const CacheFailure([super.mensaje = 'No se pudo acceder a los datos locales']);
+  const CacheFailure(
+      [super.mensaje = 'No se pudo acceder a los datos locales']);
 }
 
 /// Credenciales incorrectas o cuenta dada de baja.

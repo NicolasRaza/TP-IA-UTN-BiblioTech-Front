@@ -42,8 +42,8 @@ class PortalLector extends StatelessWidget {
           create: (_) => sl<RecomendacionesCubit>()..cargar(lectorId),
         ),
         BlocProvider(
-          create: (_) => sl<PrestamosBloc>()
-            ..add(PrestamosDeLectorSolicitados(lectorId)),
+          create: (_) =>
+              sl<PrestamosBloc>()..add(PrestamosDeLectorSolicitados(lectorId)),
         ),
         BlocProvider(
           create: (_) =>
@@ -87,8 +87,8 @@ class _ShellDelLector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final noLeidas = context
-        .select<NotificacionesCubit, int>((c) => c.state.noLeidas);
+    final noLeidas =
+        context.select<NotificacionesCubit, int>((c) => c.state.noLeidas);
 
     return ShellAdaptativo(
       titulo: 'Portal del Lector',

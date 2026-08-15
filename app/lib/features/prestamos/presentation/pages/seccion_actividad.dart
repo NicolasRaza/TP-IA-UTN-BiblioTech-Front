@@ -12,6 +12,7 @@ import '../../../agentes/presentation/cubit/recomendaciones_cubit.dart';
 import '../../../catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../../../reservas/presentation/bloc/reservas_bloc.dart';
 import '../bloc/prestamos_bloc.dart';
+
 /// Actividad del lector: préstamos vigentes, reservas e historial.
 ///
 /// Reúne `#s-prestamos`, `#s-reservas` y `#s-historial` de `lector.html`.
@@ -35,9 +36,7 @@ class SeccionActividad extends StatelessWidget {
               unselectedLabelColor: Paleta.textMuted,
               tabs: [
                 Tab(text: 'Préstamos (${prestamos.activos.length})'),
-                Tab(
-                    text:
-                        'Reservas (${reservas.activas.length})'),
+                Tab(text: 'Reservas (${reservas.activas.length})'),
                 const Tab(text: 'Historial'),
               ],
             ),
@@ -103,14 +102,13 @@ class _TarjetaPrestamo extends StatelessWidget {
 
     final vencido = prestamo.estado == EstadoPrestamo.vencido;
     final dias = prestamo.fechaVencimiento.difference(ahora).inDays;
-    final porVencer =
-        !vencido &&
-            dias <=
-                context
-                    .watch<RecomendacionesCubit>()
-                    .state
-                    .configuracion
-                    .recordatorioAntesDias;
+    final porVencer = !vencido &&
+        dias <=
+            context
+                .watch<RecomendacionesCubit>()
+                .state
+                .configuracion
+                .recordatorioAntesDias;
 
     return Card(
       child: InkWell(

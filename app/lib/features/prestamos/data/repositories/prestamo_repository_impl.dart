@@ -81,9 +81,8 @@ class PrestamoRepositoryImpl implements PrestamoRepository {
     if (leidos case Fallo(:final failure)) return Fallo(failure);
 
     final porId = {for (final p in prestamos) p.id: p};
-    final lista = leidos.valorONull!
-        .map<Prestamo>((p) => porId[p.id] ?? p)
-        .toList();
+    final lista =
+        leidos.valorONull!.map<Prestamo>((p) => porId[p.id] ?? p).toList();
 
     return _local.guardar(lista);
   }

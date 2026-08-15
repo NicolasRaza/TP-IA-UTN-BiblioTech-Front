@@ -179,8 +179,8 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
   /// Relee catálogo, inventario, pendientes y géneros, y reaplica el filtro
   /// vigente para que la vista no se resetee después de una operación.
   Future<void> _recargar(Emitter<CatalogoState> emit) async {
-    final todos =
-        await _obtenerCatalogo(const ObtenerCatalogoParams(soloValidados: false));
+    final todos = await _obtenerCatalogo(
+        const ObtenerCatalogoParams(soloValidados: false));
     if (todos case Fallo(:final failure)) {
       emit(state.copyWith(
         estado: EstadoCarga.error,

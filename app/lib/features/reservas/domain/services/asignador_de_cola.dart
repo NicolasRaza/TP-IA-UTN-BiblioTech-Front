@@ -52,8 +52,8 @@ class AsignadorDeCola {
     final primera = cola.first;
     final promovida = primera.copyWith(
       estado: EstadoReserva.lista,
-      fechaVencimientoRetiro: _reloj.ahora
-          .add(Duration(hours: primera.plazoRetiroHorasAlReservar)),
+      fechaVencimientoRetiro:
+          _reloj.ahora.add(Duration(hours: primera.plazoRetiroHorasAlReservar)),
       ejemplarAsignadoId: disponible.id,
     );
 

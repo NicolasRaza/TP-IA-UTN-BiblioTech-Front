@@ -64,6 +64,13 @@ class AgentesState extends Equatable {
       );
 
   @override
-  List<Object?> get props =>
-      [estado, decisiones, ultimoCiclo, indicadores, configuracion, bitacora, mensajeError];
+  List<Object?> get props => [
+        estado,
+        decisiones,
+        ultimoCiclo,
+        indicadores,
+        configuracion,
+        bitacora,
+        mensajeError
+      ];
 }

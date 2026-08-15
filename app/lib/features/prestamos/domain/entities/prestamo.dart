@@ -141,14 +141,12 @@ class EstadisticasPrestamos extends Equatable {
     final tardios = prestamos.where((p) => p.tardio).length;
     return EstadisticasPrestamos(
       total: prestamos.length,
-      activos:
-          prestamos.where((p) => p.estado == EstadoPrestamo.activo).length,
+      activos: prestamos.where((p) => p.estado == EstadoPrestamo.activo).length,
       vencidos:
           prestamos.where((p) => p.estado == EstadoPrestamo.vencido).length,
       devueltos:
           prestamos.where((p) => p.estado == EstadoPrestamo.devuelto).length,
-      tasaTardia:
-          prestamos.isEmpty ? 0 : tardios * 100 / prestamos.length,
+      tasaTardia: prestamos.isEmpty ? 0 : tardios * 100 / prestamos.length,
     );
   }
 

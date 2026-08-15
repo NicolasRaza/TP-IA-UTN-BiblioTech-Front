@@ -6,6 +6,7 @@ import '../../../catalogo/presentation/widgets/libro_widgets.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
 import '../cubit/recomendaciones_cubit.dart';
+
 /// Recomendaciones del Agente Evaluador (spec v2 §2).
 ///
 /// Muestra el motivo de cada sugerencia y avisa cuando el lector todavía no

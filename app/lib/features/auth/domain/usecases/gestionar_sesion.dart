@@ -47,8 +47,7 @@ class CerrarSesion implements UseCase<void, SinParametros> {
   final SesionRepository _repository;
 
   @override
-  Future<Result<void>> call(SinParametros params) =>
-      _repository.cerrarSesion();
+  Future<Result<void>> call(SinParametros params) => _repository.cerrarSesion();
 }
 
 /// Recupera la sesión persistida al arrancar la app.

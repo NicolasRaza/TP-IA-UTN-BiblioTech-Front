@@ -119,8 +119,7 @@ class RegistrarLector implements UseCase<Lector, RegistrarLectorParams> {
 
     final existente = await _lectores.obtenerPorEmail(lector.email);
     if (existente.esExito) {
-      return const Fallo(
-          ValidacionFailure('Ya hay una cuenta con ese email'));
+      return const Fallo(ValidacionFailure('Ya hay una cuenta con ese email'));
     }
 
     final creado = await _lectores.crear(lector);

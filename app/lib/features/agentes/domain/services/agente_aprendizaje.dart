@@ -109,8 +109,7 @@ class AgenteAprendizaje {
     required List<Libro> libros,
   }) {
     final titulos = {for (final l in libros) l.id: l.titulo};
-    final reservas =
-        interacciones.where((i) => i.tipo == 'reserva').toList();
+    final reservas = interacciones.where((i) => i.tipo == 'reserva').toList();
 
     final porLibro = <String, int>{};
     for (final i in reservas) {
