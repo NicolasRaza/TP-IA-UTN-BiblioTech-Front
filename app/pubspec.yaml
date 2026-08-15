@@ -14,6 +14,8 @@ dependencies:
   shared_preferences: ^2.3.2
   # Estado de la aplicación: BLoC/Cubit en la capa de presentación
   flutter_bloc: ^8.1.6
+  # Transformers de eventos (restartable/droppable) para los blocs
+  bloc_concurrency: ^0.2.5
   # Igualdad por valor en estados y eventos
   equatable: ^2.0.5
   # Service locator para la inyección de dependencias (composition root)
