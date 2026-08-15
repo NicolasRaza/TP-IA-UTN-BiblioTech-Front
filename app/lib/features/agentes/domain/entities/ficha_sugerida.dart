@@ -77,18 +77,74 @@ class CampoSugerido extends Equatable {
     this.alternativas = const [],
   });
 
+  /// Campo sin resolver: ninguna fuente respondió (spec v2 §4.2).
+  const CampoSugerido.pendiente()
+      : valor = '',
+        confianza = NivelConfianza.pendiente,
+        porcentaje = 0,
+        fuente = null,
+        alternativas = const [];
+
   final String valor;
   final NivelConfianza confianza;
   final int porcentaje;
-  final DatoDeFuente? fuente;
 
-  /// Valores descartados de otras fuentes, para que el bibliotecario pueda
-  /// ver contra qué se resolvió el conflicto.
+  /// Nombre legible de la fuente que aportó el valor.
+  final String? fuente;
+
+  /// Valores alternativos cuando hay discrepancia sin desempate claro.
+  /// El bibliotecario elige cuál queda.
   final List<DatoDeFuente> alternativas;
 
   bool get requiereRevision => confianza.requiereRevision;
+  bool get tieneConflicto => confianza == NivelConfianza.enConflicto;
+
+  CampoSugerido copyWith({
+    String? valor,
+    NivelConfianza? confianza,
+    int? porcentaje,
+    String? fuente,
+  }) =>
+      CampoSugerido(
+        valor: valor ?? this.valor,
+        confianza: confianza ?? this.confianza,
+        porcentaje: porcentaje ?? this.porcentaje,
+        fuente: fuente ?? this.fuente,
+        alternativas: alternativas,
+      );
 
   @override
   List<Object?> get props =>
       [valor, confianza, porcentaje, fuente, alternativas];
+}
+
+/// Ficha propuesta por el agente, previa a la validación del bibliotecario.
+class FichaSugerida extends Equatable {
+  const FichaSugerida({required this.campos});
+
+  final Map<String, CampoSugerido> campos;
+
+  CampoSugerido campo(String nombre) =>
+      campos[nombre] ?? const CampoSugerido.pendiente();
+
+  /// Campos que ninguna fuente pudo completar y quedan para carga manual.
+  List<String> get camposPendientes => campos.entries
+      .where((e) => e.value.confianza == NivelConfianza.pendiente)
+      .map((e) => e.key)
+      .toList();
+
+  /// Campos donde dos fuentes discrepan y hace falta que decida una persona.
+  List<String> get camposEnConflicto => campos.entries
+      .where((e) => e.value.tieneConflicto)
+      .map((e) => e.key)
+      .toList();
+
+  /// Campos que el bibliotecario debería mirar antes de aprobar.
+  List<String> get camposARevisar => campos.entries
+      .where((e) => e.value.requiereRevision)
+      .map((e) => e.key)
+      .toList();
+
+  @override
+  List<Object?> get props => [campos];
 }
