@@ -1,5 +1,10 @@
-import '../domain/enums.dart';
-import '../domain/models.dart';
+import '../../../catalogo/domain/entities/ejemplar.dart';
+import '../../../catalogo/domain/entities/libro.dart';
+import '../../../lectores/domain/entities/lector.dart';
+import '../../../notificaciones/domain/entities/notificacion.dart';
+import '../../../prestamos/domain/entities/prestamo.dart';
+import '../../../reservas/domain/entities/reserva.dart';
+import '../../domain/entities/evento_auditoria.dart';
 
 /// Datos de demostración, portados del prototipo HTML/JS.
 ///
