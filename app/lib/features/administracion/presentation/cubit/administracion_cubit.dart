@@ -6,6 +6,10 @@ import '../../../../core/usecases/usecase.dart';
 import '../../../agentes/domain/services/agente_aprendizaje.dart';
 import '../../../agentes/domain/services/agente_evaluador.dart';
 import '../../../agentes/domain/usecases/consultas_agentes.dart';
+import '../../../lectores/domain/entities/lector.dart';
+import '../../../lectores/domain/usecases/gestionar_lectores.dart';
+import '../../../prestamos/domain/entities/prestamo.dart';
+import '../../../prestamos/domain/usecases/consultas_prestamos.dart';
 import '../../domain/entities/configuracion_biblioteca.dart';
 import '../../domain/entities/evento_auditoria.dart';
 import '../../domain/usecases/gestionar_configuracion.dart';
@@ -22,6 +26,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
     required ObtenerIndicadores obtenerIndicadores,
     required ObtenerSugerencias obtenerSugerencias,
     required ObtenerReporteAprendizaje obtenerReporteAprendizaje,
+    required ObtenerEstadisticasPrestamos obtenerEstadisticas,
+    required ObtenerUsuarios obtenerUsuarios,
     required String? Function() usuarioActualId,
   })  : _obtenerConfiguracion = obtenerConfiguracion,
         _guardarConfiguracion = guardarConfiguracion,
@@ -30,6 +36,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
         _obtenerIndicadores = obtenerIndicadores,
         _obtenerSugerencias = obtenerSugerencias,
         _obtenerReporte = obtenerReporteAprendizaje,
+        _obtenerEstadisticas = obtenerEstadisticas,
+        _obtenerUsuarios = obtenerUsuarios,
         _usuarioActualId = usuarioActualId,
         super(const AdministracionState());
 
@@ -40,6 +48,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
   final ObtenerIndicadores _obtenerIndicadores;
   final ObtenerSugerencias _obtenerSugerencias;
   final ObtenerReporteAprendizaje _obtenerReporte;
+  final ObtenerEstadisticasPrestamos _obtenerEstadisticas;
+  final ObtenerUsuarios _obtenerUsuarios;
   final String? Function() _usuarioActualId;
 
   Future<void> cargar() async {
@@ -85,6 +95,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
     final indicadores = await _obtenerIndicadores(const SinParametros());
     final sugerencias = await _obtenerSugerencias(const SinParametros());
     final reporte = await _obtenerReporte(const SinParametros());
+    final estadisticas = await _obtenerEstadisticas(const SinParametros());
+    final usuarios = await _obtenerUsuarios(const SinParametros());
 
     configuracion.fold(
       (failure) => emit(state.copyWith(
@@ -98,6 +110,8 @@ class AdministracionCubit extends Cubit<AdministracionState> {
         indicadores: indicadores.valorONull,
         sugerencias: sugerencias.valorONull ?? const [],
         reporteAprendizaje: reporte.valorONull,
+        estadisticas: estadisticas.valorONull,
+        usuarios: usuarios.valorONull ?? const [],
       )),
     );
   }

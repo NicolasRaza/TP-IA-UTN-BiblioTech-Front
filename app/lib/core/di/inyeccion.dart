@@ -225,6 +225,7 @@ void _registrarCasosDeUso() {
 
   // ── Lectores ──
   sl.registerLazySingleton(() => ObtenerLectores(sl()));
+  sl.registerLazySingleton(() => ObtenerUsuarios(sl()));
   sl.registerLazySingleton(() => ObtenerLector(sl()));
   sl.registerLazySingleton(() => BuscarLectorPorQr(sl()));
   sl.registerLazySingleton(() => RegistrarLector(
@@ -416,11 +417,16 @@ void _registrarPresentacion() {
         marcarTodasLeidas: sl(),
       ));
 
-  sl.registerFactory(() => RecomendacionesCubit(obtenerRecomendaciones: sl()));
+  sl.registerFactory(() => RecomendacionesCubit(
+        obtenerRecomendaciones: sl(),
+        obtenerConfiguracion: sl(),
+      ));
 
   sl.registerFactory(() => AgentesBloc(
         correrCiclo: sl(),
         obtenerDecisiones: sl(),
+        obtenerIndicadores: sl(),
+        obtenerConfiguracion: sl(),
         reloj: sl(),
       ));
 
@@ -432,6 +438,8 @@ void _registrarPresentacion() {
         obtenerIndicadores: sl(),
         obtenerSugerencias: sl(),
         obtenerReporteAprendizaje: sl(),
+        obtenerEstadisticas: sl(),
+        obtenerUsuarios: sl(),
         usuarioActualId: usuarioActualId,
       ));
 

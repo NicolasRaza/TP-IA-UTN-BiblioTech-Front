@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart';
 
-import 'app.dart';
-import 'data/repositorio.dart';
-import 'data/store.dart';
-import 'state/app_state.dart';
+import 'app/app.dart';
+import 'core/di/inyeccion.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
 
-  final store = await SharedPrefsStore.abrir();
-  final estado = AppState(Repositorio(store: store))..arrancar();
+  // Composition root: se arma el grafo de dependencias antes de levantar la
+  // interfaz. A partir de acá nada resuelve dependencias por su cuenta.
+  await configurarInyeccion();
 
-  runApp(
-    ChangeNotifierProvider.value(value: estado, child: const BiblioTechApp()),
-  );
+  runApp(const BiblioTechApp());
 }

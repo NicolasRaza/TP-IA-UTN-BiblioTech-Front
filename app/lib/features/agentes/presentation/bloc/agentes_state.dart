@@ -5,6 +5,8 @@ class AgentesState extends Equatable {
     this.estado = EstadoCarga.inicial,
     this.decisiones = const [],
     this.ultimoCiclo,
+    this.indicadores,
+    this.configuracion = const ConfiguracionBiblioteca(),
     this.bitacora = const [],
     this.mensajeError,
   });
@@ -15,6 +17,12 @@ class AgentesState extends Equatable {
   final List<Decision> decisiones;
 
   final CicloDeAgentes? ultimoCiclo;
+
+  /// Indicadores de negocio del Evaluador (spec v2 §6).
+  final Indicadores? indicadores;
+
+  /// Parámetros vigentes, para explicar los umbrales en pantalla.
+  final ConfiguracionBiblioteca configuracion;
 
   /// Registro legible de lo que hicieron los agentes en esta sesión.
   /// Alimenta el "log de sesión real de uso" que pide el TP.
@@ -40,6 +48,8 @@ class AgentesState extends Equatable {
     EstadoCarga? estado,
     List<Decision>? decisiones,
     CicloDeAgentes? ultimoCiclo,
+    Indicadores? indicadores,
+    ConfiguracionBiblioteca? configuracion,
     List<String>? bitacora,
     String? mensajeError,
   }) =>
@@ -47,11 +57,13 @@ class AgentesState extends Equatable {
         estado: estado ?? this.estado,
         decisiones: decisiones ?? this.decisiones,
         ultimoCiclo: ultimoCiclo ?? this.ultimoCiclo,
+        indicadores: indicadores ?? this.indicadores,
+        configuracion: configuracion ?? this.configuracion,
         bitacora: bitacora ?? this.bitacora,
         mensajeError: mensajeError,
       );
 
   @override
   List<Object?> get props =>
-      [estado, decisiones, ultimoCiclo, bitacora, mensajeError];
+      [estado, decisiones, ultimoCiclo, indicadores, configuracion, bitacora, mensajeError];
 }

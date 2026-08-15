@@ -8,6 +8,8 @@ class AdministracionState extends Equatable {
     this.indicadores,
     this.sugerencias = const [],
     this.reporteAprendizaje,
+    this.estadisticas,
+    this.usuarios = const [],
     this.mensajeError,
     this.mensajeExito,
   });
@@ -25,6 +27,20 @@ class AdministracionState extends Equatable {
   /// Reporte del Agente de Aprendizaje (spec v2 §5).
   final ReporteAprendizaje? reporteAprendizaje;
 
+  /// Indicadores de circulación (total, activos, vencidos, tasa de demora).
+  final EstadisticasPrestamos? estadisticas;
+
+  /// Padrón completo, para resolver el nombre del autor de cada evento de
+  /// auditoría sin exponer el id crudo.
+  final List<Lector> usuarios;
+
+  String nombreDeUsuario(String usuarioId) {
+    for (final u in usuarios) {
+      if (u.id == usuarioId) return u.nombreCompleto;
+    }
+    return usuarioId;
+  }
+
   final String? mensajeError;
   final String? mensajeExito;
 
@@ -35,6 +51,8 @@ class AdministracionState extends Equatable {
     Indicadores? indicadores,
     List<Sugerencia>? sugerencias,
     ReporteAprendizaje? reporteAprendizaje,
+    EstadisticasPrestamos? estadisticas,
+    List<Lector>? usuarios,
     String? mensajeError,
     String? mensajeExito,
     bool limpiarMensajes = false,
@@ -46,6 +64,8 @@ class AdministracionState extends Equatable {
         indicadores: indicadores ?? this.indicadores,
         sugerencias: sugerencias ?? this.sugerencias,
         reporteAprendizaje: reporteAprendizaje ?? this.reporteAprendizaje,
+        estadisticas: estadisticas ?? this.estadisticas,
+        usuarios: usuarios ?? this.usuarios,
         mensajeError: limpiarMensajes ? null : mensajeError,
         mensajeExito: limpiarMensajes ? null : mensajeExito,
       );
@@ -58,6 +78,8 @@ class AdministracionState extends Equatable {
         indicadores,
         sugerencias,
         reporteAprendizaje,
+        estadisticas,
+        usuarios,
         mensajeError,
         mensajeExito,
       ];

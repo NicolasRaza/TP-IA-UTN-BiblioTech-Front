@@ -35,6 +35,7 @@ class ReporteAprendizaje {
     required this.mejora,
     required this.tasaConversion,
     required this.totalCorrecciones,
+    required this.masEfectivas,
   });
 
   final String resumen;
@@ -42,6 +43,9 @@ class ReporteAprendizaje {
   final double mejora;
   final double tasaConversion;
   final int totalCorrecciones;
+
+  /// Títulos cuyas recomendaciones más terminaron en una reserva concreta.
+  final List<ConversionRecomendacion> masEfectivas;
 }
 
 /// Agente 5 — Aprendizaje continuo (spec v2 §5).
@@ -153,6 +157,7 @@ class AgenteAprendizaje {
       mejora: ocr.mejora,
       tasaConversion: reco.tasaConversion,
       totalCorrecciones: ocr.totalCorrecciones,
+      masEfectivas: reco.masEfectivas,
     );
   }
 }

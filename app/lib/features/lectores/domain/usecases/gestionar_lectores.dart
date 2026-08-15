@@ -25,6 +25,18 @@ class ObtenerLectores implements UseCase<List<Lector>, SinParametros> {
       _repository.obtenerLectores();
 }
 
+/// Todas las personas registradas, personal incluido. La auditoría lo usa
+/// para resolver el nombre de quien ejecutó cada acción.
+class ObtenerUsuarios implements UseCase<List<Lector>, SinParametros> {
+  const ObtenerUsuarios(this._repository);
+
+  final LectorRepository _repository;
+
+  @override
+  Future<Result<List<Lector>>> call(SinParametros params) =>
+      _repository.obtenerUsuarios();
+}
+
 class ObtenerLectorParams extends Equatable {
   const ObtenerLectorParams(this.lectorId);
 
