@@ -12,8 +12,12 @@ dependencies:
 
   # Persistencia local multiplataforma (web: localStorage, mobile: SharedPreferences)
   shared_preferences: ^2.3.2
-  # Estado de la aplicación
-  provider: ^6.1.2
+  # Estado de la aplicación: BLoC/Cubit en la capa de presentación
+  flutter_bloc: ^8.1.6
+  # Igualdad por valor en estados y eventos
+  equatable: ^2.0.5
+  # Service locator para la inyección de dependencias (composition root)
+  get_it: ^7.7.0
   # Formato de fechas y números en es-AR
   intl: ^0.19.0
   # Generación de códigos QR de ejemplares y lectores
@@ -27,6 +31,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # Tests de blocs con la tríada arrange/act/expect
+  bloc_test: ^9.1.7
+  # Dobles de prueba para los contratos de repositorio
+  mocktail: ^1.0.4
 
 flutter:
   uses-material-design: true
