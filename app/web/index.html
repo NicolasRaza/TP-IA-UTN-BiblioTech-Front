@@ -31,6 +31,15 @@
 
   <title>bibliotech</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Notificaciones push. `firebase-config.js` lo comparten esta página y el
+    service worker; `firebase-push.js` publica window.sgbPush, que es lo que
+    llama la app desde Dart. Ninguno de los dos descarga el SDK de Firebase
+    hasta que el lector aprieta "Activar notificaciones".
+  -->
+  <script src="firebase-config.js"></script>
+  <script src="firebase-push.js" defer></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

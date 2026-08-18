@@ -6,6 +6,7 @@ import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/formato.dart';
 import '../../domain/entities/notificacion.dart';
 import '../cubit/notificaciones_cubit.dart';
+import '../widgets/tarjeta_push.dart';
 
 /// Avisos generados por el Agente Planificador (spec v2 §4.3).
 class SeccionNotificaciones extends StatelessWidget {
@@ -16,15 +17,6 @@ class SeccionNotificaciones extends StatelessWidget {
     final estado = context.watch<NotificacionesCubit>().state;
     final notificaciones = estado.notificaciones;
     final ahora = DateTime.now();
-
-    if (notificaciones.isEmpty) {
-      return const EstadoVacio(
-        icono: Icons.notifications_none,
-        titulo: 'No tenés avisos',
-        detalle:
-            'Acá van a llegar los recordatorios de vencimiento y reservas.',
-      );
-    }
 
     return Seccion(
       anchoMaximo: 760,
@@ -42,6 +34,18 @@ class SeccionNotificaciones extends StatelessWidget {
                   label: const Text('Marcar todo'),
                 ),
         ),
+        // La activación del push va arriba del buzón y no en Perfil: es el
+        // mismo tema, y así el lector la encuentra cuando viene a mirar por
+        // qué no le llegó un aviso.
+        const TarjetaPush(),
+        const SizedBox(height: 18),
+        if (notificaciones.isEmpty)
+          const EstadoVacio(
+            icono: Icons.notifications_none,
+            titulo: 'No tenés avisos',
+            detalle:
+                'Acá van a llegar los recordatorios de vencimiento y reservas.',
+          ),
         for (final n in notificaciones)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),

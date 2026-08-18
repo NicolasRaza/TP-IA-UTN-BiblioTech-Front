@@ -45,3 +45,15 @@ class CacheFailure extends Failure {
 class AutenticacionFailure extends Failure {
   const AutenticacionFailure(super.mensaje);
 }
+
+/// No se pudo hablar con el backend: sin conexión, timeout, o una respuesta
+/// que la API no debería haber devuelto.
+class RedFailure extends Failure {
+  const RedFailure([super.mensaje = 'No se pudo conectar con el servidor']);
+}
+
+/// El servicio de notificaciones push del dispositivo falló o fue rechazado
+/// por el usuario.
+class PushFailure extends Failure {
+  const PushFailure(super.mensaje);
+}

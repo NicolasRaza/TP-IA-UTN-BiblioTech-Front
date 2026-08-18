@@ -11,6 +11,7 @@ import '../features/catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../features/catalogo/presentation/pages/seccion_catalogo.dart';
 import '../features/lectores/presentation/pages/seccion_perfil.dart';
 import '../features/notificaciones/presentation/cubit/notificaciones_cubit.dart';
+import '../features/notificaciones/presentation/cubit/push_cubit.dart';
 import '../features/notificaciones/presentation/pages/seccion_notificaciones.dart';
 import '../features/prestamos/presentation/bloc/prestamos_bloc.dart';
 import '../features/prestamos/presentation/pages/seccion_actividad.dart';
@@ -52,6 +53,7 @@ class PortalLector extends StatelessWidget {
         BlocProvider(
           create: (_) => sl<NotificacionesCubit>()..cargar(lectorId),
         ),
+        BlocProvider(create: (_) => sl<PushCubit>()),
       ],
       child: MultiBlocListener(
         listeners: [

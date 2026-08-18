@@ -22,6 +22,7 @@ import '../../features/agentes/domain/usecases/correr_ciclo_de_agentes.dart';
 import '../../features/agentes/domain/usecases/procesar_vencimientos.dart';
 import '../../features/agentes/presentation/bloc/agentes_bloc.dart';
 import '../../features/agentes/presentation/cubit/recomendaciones_cubit.dart';
+import '../../features/auth/data/datasources/auth_api_datasource.dart';
 import '../../features/auth/data/repositories/sesion_repository_impl.dart';
 import '../../features/auth/domain/repositories/sesion_repository.dart';
 import '../../features/auth/domain/usecases/gestionar_sesion.dart';
@@ -46,9 +47,13 @@ import '../../features/lectores/domain/usecases/gestionar_lectores.dart';
 import '../../features/lectores/presentation/bloc/lectores_bloc.dart';
 import '../../features/notificaciones/data/datasources/notificacion_local_datasource.dart';
 import '../../features/notificaciones/data/repositories/notificacion_repository_impl.dart';
+import '../../features/notificaciones/data/repositories/push_repository_impl.dart';
 import '../../features/notificaciones/domain/repositories/notificacion_repository.dart';
+import '../../features/notificaciones/domain/repositories/push_repository.dart';
+import '../../features/notificaciones/domain/usecases/activar_notificaciones_push.dart';
 import '../../features/notificaciones/domain/usecases/gestionar_notificaciones.dart';
 import '../../features/notificaciones/presentation/cubit/notificaciones_cubit.dart';
+import '../../features/notificaciones/presentation/cubit/push_cubit.dart';
 import '../../features/prestamos/data/datasources/prestamo_local_datasource.dart';
 import '../../features/prestamos/data/repositories/prestamo_repository_impl.dart';
 import '../../features/prestamos/domain/repositories/prestamo_repository.dart';
@@ -64,6 +69,8 @@ import '../../features/reservas/domain/usecases/cancelar_reserva.dart';
 import '../../features/reservas/domain/usecases/consultas_reservas.dart';
 import '../../features/reservas/domain/usecases/crear_reserva.dart';
 import '../../features/reservas/presentation/bloc/reservas_bloc.dart';
+import '../push/fabrica_push.dart';
+import '../push/servicio_push.dart';
 import '../services/reloj.dart';
 import '../storage/key_value_store.dart';
 
@@ -119,6 +126,12 @@ void _registrarDataSources() {
       () => AdministracionLocalDataSourceImpl(sl()));
   sl.registerLazySingleton<AprendizajeLocalDataSource>(
       () => AprendizajeLocalDataSourceImpl(sl()));
+
+  // Los dos bordes remotos: la API del backend y el SDK de Firebase del
+  // dispositivo. Son lazy, así que un test que arma el grafo no abre sockets
+  // ni toca plugins mientras no los pida.
+  sl.registerLazySingleton<AuthApiDataSource>(() => AuthApiDataSourceHttp());
+  sl.registerLazySingleton<ServicioPush>(crearServicioPush);
 }
 
 void _registrarRepositorios() {
@@ -163,6 +176,11 @@ void _registrarRepositorios() {
   sl.registerLazySingleton<SesionRepository>(() => SesionRepositoryImpl(
         store: sl(),
         lectorRepository: sl(),
+      ));
+
+  sl.registerLazySingleton<PushRepository>(() => PushRepositoryImpl(
+        servicio: sl(),
+        api: sl(),
       ));
 
   sl.registerLazySingleton<MantenimientoRepository>(
@@ -306,6 +324,7 @@ void _registrarCasosDeUso() {
   sl.registerLazySingleton(() => ContarNoLeidas(sl()));
   sl.registerLazySingleton(() => MarcarNotificacionLeida(sl()));
   sl.registerLazySingleton(() => MarcarTodasLeidas(sl()));
+  sl.registerLazySingleton(() => ActivarNotificacionesPush(sl()));
 
   // ── Sesión ──
   sl.registerLazySingleton(() => IniciarSesion(sl()));
@@ -425,6 +444,11 @@ void _registrarPresentacion() {
         contarNoLeidas: sl(),
         marcarLeida: sl(),
         marcarTodasLeidas: sl(),
+      ));
+
+  sl.registerFactory(() => PushCubit(
+        activarNotificacionesPush: sl(),
+        repository: sl(),
       ));
 
   sl.registerFactory(() => RecomendacionesCubit(

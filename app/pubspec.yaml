@@ -28,6 +28,8 @@ dependencies:
   http: ^1.2.2
   # Gráficos del dashboard e informes
   fl_chart: ^0.69.0
+  firebase_core: 3.8.0
+  firebase_messaging: 15.1.5
 
 dev_dependencies:
   flutter_test:
