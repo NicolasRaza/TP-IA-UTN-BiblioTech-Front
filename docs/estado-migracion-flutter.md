@@ -183,8 +183,9 @@ en PR a `main` y `develop`:
 2. **Build web** — sube `build/web` como artefacto.
 3. **Build APK** — compila el APK de release y lo sube como artefacto.
 4. **Publicar en Pages** — solo desde `main`.
-5. **Publicar release** — solo al empujar un tag `vX.Y.Z`: crea un release de
-   GitHub con el APK y el build web adjuntos.
+5. **Etiquetar y publicar el release** — en cada push a `main`: calcula la
+   versión siguiente, empuja el tag `vX.Y.Z` y crea un release de GitHub con
+   el APK y el build web adjuntos.
 
 ### Ramas y publicación
 
@@ -193,8 +194,8 @@ Cada disparador tiene un significado distinto:
 | Evento | Qué pasa |
 |---|---|
 | push a `develop` | Corre CI (calidad y builds). No publica nada |
-| push a `main` | Publica la app en GitHub Pages |
-| tag `vX.Y.Z` | Crea el release con el APK descargable |
+| push a `main` | Publica en GitHub Pages, etiqueta la versión y crea el release con el APK |
+| tag `vX.Y.Z` a mano | Crea el release con esa versión exacta (única forma de subir la mayor) |
 
 `develop` es la rama de integración y `main` es lo que está publicado. Se
 promueve con un PR `develop` → `main` cuando la versión está lista para que
@@ -216,12 +217,38 @@ generar un keystore propio y guardarlo como secret del repositorio.
 
 Los artefactos de Actions caducan y exigen estar logueado en GitHub, así que
 para el informe conviene citar el link del **release**, que es público y
-permanente. Para generarlo:
+permanente.
+
+### Versionado automático
+
+No hace falta etiquetar a mano: cada push a `main` calcula la versión, empuja
+el tag y publica el release. El número sale del último tag `vX.Y.Z` y de la
+rama que se mergeó:
+
+| Rama mergeada a `main` | Sube | Ejemplo |
+|---|---|---|
+| `fix/…`, `hotfix/…`, `bugfix/…` | parche (Z) | `v1.2.3` → `v1.2.4` |
+| `develop` o cualquier otra | menor (Y), resetea Z | `v1.2.3` → `v1.3.0` |
+| — sin ningún tag previo | primera publicación | `v1.0.0` |
+
+La rama se resuelve por la API a partir del PR del commit, así que funciona
+igual con merge commit, squash o rebase; si el commit no tiene PR asociado
+—un commit suelto empujado a `main`— se lee del mensaje del merge commit y,
+si tampoco está, cuenta como versión menor.
+
+La versión **mayor** (X) nunca sube sola: un cambio que rompe compatibilidad
+es una decisión, no algo que se deduzca del nombre de una rama. Para eso se
+empuja el tag a mano y el workflow respeta ese nombre exacto:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
+
+El tag automático se empuja con el `GITHUB_TOKEN`, que a propósito **no**
+dispara otro run del workflow —GitHub lo bloquea para evitar loops infinitos—.
+Por eso el release se crea en la misma corrida que empuja el tag, en vez de
+esperar a que el push del tag levante un run nuevo.
 
 ## Pendiente
 
