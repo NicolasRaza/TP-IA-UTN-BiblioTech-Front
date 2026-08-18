@@ -3,7 +3,8 @@ name: CI
 on:
   push:
     branches: [main, develop, 'claude/**']
-    # Un tag vX.Y.Z publica un release con el APK descargable.
+    # Cada push a main etiqueta y publica un release con el APK; un tag
+    # vX.Y.Z empujado a mano fuerza esa versión exacta.
     tags: ['v*']
   pull_request:
     branches: [main, develop]
@@ -154,17 +155,88 @@ jobs:
         uses: actions/deploy-pages@v4
 
   publicar-release:
-    name: Publicar release con el APK
+    name: Etiquetar y publicar el release
     runs-on: ubuntu-latest
     needs: [build-web, build-android]
-    # Solo al empujar un tag vX.Y.Z. Los artefactos de los jobs anteriores
-    # caducan y exigen estar logueado en GitHub; un release da un link de
-    # descarga público y permanente, que es lo que se cita en el informe.
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Dos caminos hacia el mismo release. Cada push a main calcula la versión
+    # siguiente, empuja el tag y publica; un tag vX.Y.Z empujado a mano respeta
+    # ese nombre exacto, que es la única forma de subir el número mayor.
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Historial completo: la versión siguiente sale de los tags que ya
+          # existen, y el clon superficial por defecto no los trae.
+          fetch-depth: 0
+
+      # Numeración: se parte del último tag vX.Y.Z y se mira de qué rama vino
+      # el merge. fix/, hotfix/ y bugfix/ suben el parche (Z); develop —y
+      # cualquier otra cosa que caiga en main— sube la menor (Y) y resetea Z.
+      # La mayor (X) nunca se toca sola: para eso se empuja el tag a mano.
+      - name: Calcular la versión
+        id: version
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "Tag empujado a mano: $GITHUB_REF_NAME"
+            echo "version=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # sed -n 1p en vez de head: head cierra el pipe antes de tiempo y con
+          # pipefail eso haría fallar el paso.
+          ultimo=$(git tag --list 'v*.*.*' --sort=-v:refname | sed -n 1p)
+
+          if [[ -z "$ultimo" ]]; then
+            echo "No hay tags todavía: primera publicación."
+            echo "version=v1.0.0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Primero por la API, que resuelve el PR del commit aunque el merge
+          # haya sido squash o rebase; si el commit no tiene PR asociado, se
+          # lee la rama del mensaje del merge commit.
+          rama=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+                   --jq '.[0].head.ref // ""' 2>/dev/null || echo "")
+          if [[ -z "$rama" ]]; then
+            rama=$(git log -1 --pretty=%s \
+                     | sed -n 's|^Merge pull request #[0-9]\+ from [^/]\+/||p')
+          fi
+
+          IFS=. read -r mayor menor parche <<< "${ultimo#v}"
+
+          case "$rama" in
+            fix/*|hotfix/*|bugfix/*) parche=$((parche + 1)) ;;
+            *)                       menor=$((menor + 1)); parche=0 ;;
+          esac
+
+          echo "Último tag: $ultimo — rama mergeada: ${rama:-desconocida}"
+          echo "version=v$mayor.$menor.$parche" >> "$GITHUB_OUTPUT"
+
+      - name: Empujar el tag
+        if: github.ref == 'refs/heads/main'
+        working-directory: ${{ github.workspace }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # El push va con el GITHUB_TOKEN, que a propósito no dispara otro run
+          # del workflow. Por eso el release se crea acá abajo, en esta misma
+          # corrida, y no en un run disparado por el tag.
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "El tag $VERSION ya existe; no se vuelve a crear."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$VERSION" -m "BiblioTech $VERSION"
+          git push origin "$VERSION"
 
       - name: Descargar el APK compilado
         uses: actions/download-artifact@v4
@@ -182,14 +254,18 @@ jobs:
         run: zip -r bibliotech-web.zip web
         working-directory: ${{ github.workspace }}
 
+      # Los artefactos de los jobs anteriores caducan y exigen estar logueado
+      # en GitHub; un release da un link de descarga público y permanente, que
+      # es lo que se cita en el informe.
       - name: Crear el release
         working-directory: ${{ github.workspace }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "BiblioTech $GITHUB_REF_NAME" \
-            --notes "Aplicación BiblioTech compilada desde el tag \`$GITHUB_REF_NAME\`.
+          gh release create "$VERSION" \
+            --title "BiblioTech $VERSION" \
+            --notes "Aplicación BiblioTech compilada desde el tag \`$VERSION\`.
 
           - \`app-release.apk\` — instalable en Android. Hay que habilitar la
             instalación desde orígenes desconocidos: está firmado con las claves
