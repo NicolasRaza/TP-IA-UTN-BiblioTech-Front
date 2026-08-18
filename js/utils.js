@@ -281,6 +281,18 @@ function diasDesde(iso) {
   return Math.floor((Date.now() - new Date(iso)) / 86400000);
 }
 
+/* ── Debounce UI ──
+   Evita bloqueos del hilo principal al agrupar llamadas repetidas (ej. inputs de búsqueda)
+   que terminan leyendo de db.js (parseos síncronos de localStorage). */
+const _debounceTimeouts = {};
+function debounceUI(id, fn, delay = 300) {
+  if (_debounceTimeouts[id]) clearTimeout(_debounceTimeouts[id]);
+  _debounceTimeouts[id] = setTimeout(() => {
+    delete _debounceTimeouts[id];
+    fn();
+  }, delay);
+}
+
 /* ── Store global para callbacks onclick seguros ──
    Evita serializar JSON/objetos en atributos HTML (bug con caracteres especiales). */
 const _clickStore = {};

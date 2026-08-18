@@ -225,7 +225,7 @@
               <!-- Portada preview -->
               <div style="flex-shrink:0;">
                 <div id="confirmPortadaPreview" style="width:120px;height:170px;background:var(--bg-surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;">📖</div>
-                <input type="url" id="inputPortada" class="form-control mt-1" placeholder="URL de portada" style="width:120px;font-size:0.7rem;" oninput="previewPortada(this.value)">
+                <input type="url" id="inputPortada" class="form-control mt-1" placeholder="URL de portada" style="width:120px;font-size:0.7rem;" oninput="debounceUI('bib-portada', () => previewPortada(this.value))">
               </div>
               <!-- Campos -->
               <div style="flex:1;min-width:200px;">
@@ -343,7 +343,7 @@
       <div class="page-body">
         <div class="search-bar mb-3">
           <span class="search-icon">🔍</span>
-          <input type="text" id="bibBusqueda" aria-label="Buscar en catálogo" placeholder="Buscar por título, autor o ISBN..." oninput="renderCatalogoBib()">
+          <input type="text" id="bibBusqueda" aria-label="Buscar en catálogo" placeholder="Buscar por título, autor o ISBN..." oninput="debounceUI('bib-cat', renderCatalogoBib)">
         </div>
         <div class="table-wrap">
           <table class="table">
@@ -392,7 +392,7 @@
             <div id="tab-manual-lector" style="display:none">
               <div class="input-group mb-2">
                 <span class="input-icon">🔍</span>
-                <input type="text" id="buscarLectorInput" class="form-control" placeholder="Buscar por nombre o DNI..." oninput="buscarLector()">
+                <input type="text" id="buscarLectorInput" class="form-control" placeholder="Buscar por nombre o DNI..." oninput="debounceUI('bib-buscarLector', buscarLector)">
               </div>
               <div id="resultadosBusqLector"></div>
             </div>
@@ -419,7 +419,7 @@
             <div id="tab-manual-libro" style="display:none">
               <div class="input-group mb-2">
                 <span class="input-icon">🔍</span>
-                <input type="text" id="buscarLibroInput" class="form-control" placeholder="Buscar título o autor..." oninput="buscarLibroPrestamo()">
+                <input type="text" id="buscarLibroInput" class="form-control" placeholder="Buscar título o autor..." oninput="debounceUI('bib-buscarLibro', buscarLibroPrestamo)">
               </div>
               <div id="resultadosBusqLibro"></div>
             </div>
@@ -464,7 +464,7 @@
             <h5 class="mb-2">O buscar préstamo activo</h5>
             <div class="input-group">
               <span class="input-icon">🔍</span>
-              <input type="text" id="buscarDevolucionInput" class="form-control" placeholder="Nombre del lector..." oninput="buscarDevolucion()">
+              <input type="text" id="buscarDevolucionInput" class="form-control" placeholder="Nombre del lector..." oninput="debounceUI('bib-buscarDevolucion', buscarDevolucion)">
             </div>
             <div id="resultadosDevolucion" class="mt-2"></div>
           </div>
@@ -492,7 +492,7 @@
       <div class="page-body">
         <div class="search-bar mb-3">
           <span class="search-icon">🔍</span>
-          <input type="text" id="buscarLectoresInput" aria-label="Buscar lectores" placeholder="Buscar por nombre, DNI o email..." oninput="renderLectores()">
+          <input type="text" id="buscarLectoresInput" aria-label="Buscar lectores" placeholder="Buscar por nombre, DNI o email..." oninput="debounceUI('bib-renderLectores', renderLectores)">
         </div>
         <div class="table-wrap">
           <table class="table">
@@ -602,7 +602,7 @@
             </div>
             <div>
               <label class="text-xs text-muted mb-1 block">O ingresar URL de portada:</label>
-              <input type="url" id="editCampoPortada" class="form-control" placeholder="https://ejemplo.com/portada.jpg" oninput="previewPortadaEdit(this.value)">
+              <input type="url" id="editCampoPortada" class="form-control" placeholder="https://ejemplo.com/portada.jpg" oninput="debounceUI('bib-editPortada', () => previewPortadaEdit(this.value))">
             </div>
             <div class="flex gap-2 flex-wrap mt-1">
               <button type="button" class="btn btn-xs btn-ghost" onclick="buscarPortadaEditOpenLibrary()">

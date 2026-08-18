@@ -124,7 +124,7 @@
         <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center;">
           <div class="search-bar" style="flex:1;min-width:240px;">
             <span class="search-icon">🔍</span>
-            <input type="text" id="catalogoBusqueda" aria-label="Buscar en catálogo" placeholder="Buscar por título, autor, ISBN..." oninput="filtrarCatalogo()">
+            <input type="text" id="catalogoBusqueda" aria-label="Buscar en catálogo" placeholder="Buscar por título, autor, ISBN..." oninput="debounceUI('lector-cat', filtrarCatalogo)">
           </div>
           <select class="form-control" id="catalogoGenero" onchange="filtrarCatalogo()" style="width:auto;min-width:160px;">
             <option value="">Todos los géneros</option>
