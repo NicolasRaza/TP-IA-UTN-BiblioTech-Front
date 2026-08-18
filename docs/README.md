@@ -11,6 +11,7 @@ Equipo: Tomás Bacchetta · Julio Flores · Matías Ledesma · Alex Raza
 |---|---|---|
 | [`tp1-sistema-gestion-bibliotecas-v2.md`](./tp1-sistema-gestion-bibliotecas-v2.md) | Entrega del TP 1: problema, objetivo, entradas, agentes, memoria persistente, reglas de negocio, frenos/aceleradores e interfaces. | **Canónico** — usar este como fuente de verdad |
 | [`tp1-sistema-gestion-bibliotecas-v1.md`](./tp1-sistema-gestion-bibliotecas-v1.md) | Versión original del mismo documento, previa a la revisión. | Histórico — solo consulta |
+| [`firebase-notificaciones-push.md`](./firebase-notificaciones-push.md) | Cómo está conectada la app con Firebase Cloud Messaging: flujo, archivos, cómo demostrarlo y qué quedó afuera. | Vigente |
 
 ### Qué cambió de v1 a v2
 

@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Desde Android 13 el aviso push necesita permiso explícito del usuario.
+         Lo pide FirebaseMessaging.requestPermission() cuando el lector activa
+         las notificaciones; en versiones anteriores se concede solo. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="bibliotech"
         android:name="${applicationName}"
