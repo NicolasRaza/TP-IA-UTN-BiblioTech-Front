@@ -1313,7 +1313,7 @@
     const canBorrow = check.ok;
     document.getElementById('lectorSelInfo').innerHTML = `
       ${!canBorrow ? `<div class="alert alert-danger mb-2">${check.razon}</div>` : ''}
-      👤 <strong>${lector.nombre} ${lector.apellido}</strong> · ${categoriaBadge(lector.categoria)} · DNI: ${lector.dni}`;
+      👤 <strong>${escapeHtml(lector.nombre)} ${escapeHtml(lector.apellido)}</strong> · ${categoriaBadge(lector.categoria)} · DNI: ${escapeHtml(lector.dni)}`;
     document.getElementById('lectorSeleccionado').classList.remove('hidden');
     if (!canBorrow) { lectorSelId = null; }
     buscarLibroPrestamo();
@@ -1346,8 +1346,8 @@
     ).slice(0, 5);
     document.getElementById('resultadosBusqLector').innerHTML = lectores.map(l =>
       `<div class="flex items-center gap-2 p-2 mb-1" style="background:var(--bg-surface);border-radius:var(--radius);cursor:pointer;" onclick="seleccionarLector(${JSON.stringify(l).replace(/"/g,'&quot;')})">
-        <div class="user-avatar" style="width:28px;height:28px;font-size:0.7rem;">${getInicial(l.nombre, l.apellido)}</div>
-        <div><div class="fw-600 text-sm">${l.nombre} ${l.apellido}</div><div class="text-xs text-muted">DNI: ${l.dni}</div></div>
+        <div class="user-avatar" style="width:28px;height:28px;font-size:0.7rem;">${escapeHtml(getInicial(l.nombre, l.apellido))}</div>
+        <div><div class="fw-600 text-sm">${escapeHtml(l.nombre)} ${escapeHtml(l.apellido)}</div><div class="text-xs text-muted">DNI: ${escapeHtml(l.dni)}</div></div>
       </div>`).join('') || '<div class="text-muted text-sm p-2">Sin resultados</div>';
   }
 
@@ -1395,7 +1395,7 @@
       const fechaVenc = new Date(); fechaVenc.setDate(fechaVenc.getDate() + plazo);
       document.getElementById('prestamoResumen').innerHTML = `
         <div class="flex flex-col gap-1">
-          <div class="flex justify-between"><span class="text-muted">Lector:</span><strong>${lector?.nombre} ${lector?.apellido}</strong></div>
+          <div class="flex justify-between"><span class="text-muted">Lector:</span><strong>${escapeHtml(lector?.nombre)} ${escapeHtml(lector?.apellido)}</strong></div>
           <div class="flex justify-between"><span class="text-muted">Libro:</span><strong>${escapeHtml(libro?.titulo)}</strong></div>
           <div class="flex justify-between"><span class="text-muted">Categoría:</span>${categoriaBadge(lector?.categoria)}</div>
           <div class="flex justify-between"><span class="text-muted">Plazo:</span><strong>${plazo} días</strong></div>
@@ -1456,7 +1456,7 @@
       const lector = DB.lectores.get(p.lectorId);
       return `<div class="flex items-center gap-2 p-2 mb-1" style="background:var(--bg-surface);border-radius:var(--radius);cursor:pointer;" onclick="mostrarDevolucion(${JSON.stringify(p).replace(/"/g,'&quot;')})">
         <span>📚</span>
-        <div><div class="fw-600 text-sm">${escapeHtml(libro?.titulo)}</div><div class="text-xs text-muted">${lector?.nombre} ${lector?.apellido} · Vence: ${formatFecha(p.fechaVencimiento)}</div></div>
+        <div><div class="fw-600 text-sm">${escapeHtml(libro?.titulo)}</div><div class="text-xs text-muted">${escapeHtml(lector?.nombre)} ${escapeHtml(lector?.apellido)} · Vence: ${formatFecha(p.fechaVencimiento)}</div></div>
         ${estadoPrestamoBadge(p.estado)}
       </div>`;
     }).join('') || '<div class="text-muted text-sm p-2">Sin resultados</div>';
@@ -1474,7 +1474,7 @@
     document.getElementById('devolucionDetalle').innerHTML = `
       <div class="flex flex-col gap-2">
         <div class="flex justify-between"><span class="text-muted">Libro:</span><strong>${escapeHtml(libro?.titulo)}</strong></div>
-        <div class="flex justify-between"><span class="text-muted">Lector:</span><strong>${lector?.nombre} ${lector?.apellido}</strong></div>
+        <div class="flex justify-between"><span class="text-muted">Lector:</span><strong>${escapeHtml(lector?.nombre)} ${escapeHtml(lector?.apellido)}</strong></div>
         <div class="flex justify-between"><span class="text-muted">Prestado:</span><strong>${formatFecha(prestamo.fechaPrestamo)}</strong></div>
         <div class="flex justify-between"><span class="text-muted">Vencía:</span><strong>${formatFecha(prestamo.fechaVencimiento)}</strong></div>
         ${tardio ? `<div class="alert alert-danger">⚠️ Devolución tardía — ${dias} días de demora. Multa: <strong>$${multa}</strong></div>` : '<div class="alert alert-success">✅ Devolución en término</div>'}
@@ -1504,8 +1504,8 @@
       return `<tr>
         <td>
           <div class="flex items-center gap-2">
-            <div class="user-avatar" style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0;">${getInicial(l.nombre, l.apellido)}</div>
-            <div><div class="fw-600 text-sm">${l.nombre} ${l.apellido}</div><div class="text-xs text-muted">${l.email}</div></div>
+            <div class="user-avatar" style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0;">${escapeHtml(getInicial(l.nombre, l.apellido))}</div>
+            <div><div class="fw-600 text-sm">${escapeHtml(l.nombre)} ${escapeHtml(l.apellido)}</div><div class="text-xs text-muted">${escapeHtml(l.email)}</div></div>
           </div>
         </td>
         <td>${categoriaBadge(l.categoria)}</td>

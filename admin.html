@@ -424,8 +424,8 @@
       <div class="metric-row">
         <div class="flex items-center gap-2">
           <span class="fw-700 text-muted" style="width:20px;">${i+1}</span>
-          <div class="user-avatar" style="width:28px;height:28px;font-size:0.7rem;">${getInicial(item.lector?.nombre, item.lector?.apellido)}</div>
-          <div><div class="fw-600 text-sm">${item.lector?.nombre} ${item.lector?.apellido}</div><div class="text-xs text-muted">${item.lector?.email}</div></div>
+          <div class="user-avatar" style="width:28px;height:28px;font-size:0.7rem;">${escapeHtml(getInicial(item.lector?.nombre, item.lector?.apellido))}</div>
+          <div><div class="fw-600 text-sm">${escapeHtml(item.lector?.nombre)} ${escapeHtml(item.lector?.apellido)}</div><div class="text-xs text-muted">${escapeHtml(item.lector?.email)}</div></div>
         </div>
         <span class="badge badge-teal">${item.prestamos} préstamos</span>
       </div>`).join('') || '<div class="text-muted text-sm p-2">Sin datos</div>';
@@ -600,7 +600,7 @@
         <td class="text-sm">${formatFechaHora(r.fecha)}</td>
         <td><span class="badge ${t.badge}">${t.label}</span></td>
         <td>${escapeHtml(r.descripcion)}</td>
-        <td class="text-sm text-muted">${usuario ? `${usuario.nombre} ${usuario.apellido}` : r.usuario}</td>
+        <td class="text-sm text-muted">${usuario ? `${escapeHtml(usuario.nombre)} ${escapeHtml(usuario.apellido)}` : escapeHtml(r.usuario)}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Sin registros</td></tr>';
   }
