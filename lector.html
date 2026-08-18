@@ -367,7 +367,7 @@
   function renderGenerosFiltro() {
     const generos = DB.libros.getGeneros();
     const sel = document.getElementById('catalogoGenero');
-    generos.forEach(g => { sel.innerHTML += `<option value="${g}">${g}</option>`; });
+    generos.forEach(g => { sel.innerHTML += `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`; });
   }
 
   function filtrarCatalogo() {
