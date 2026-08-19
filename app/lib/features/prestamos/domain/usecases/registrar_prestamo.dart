@@ -15,6 +15,7 @@ import '../../../notificaciones/domain/repositories/notificacion_repository.dart
 import '../../../reservas/domain/entities/reserva.dart';
 import '../../../reservas/domain/repositories/reserva_repository.dart';
 import '../entities/prestamo.dart';
+import '../repositories/prestamo_remoto.dart';
 import '../repositories/prestamo_repository.dart';
 import '../services/politica_de_prestamo.dart';
 
@@ -23,6 +24,7 @@ class RegistrarPrestamoParams extends Equatable {
     required this.lectorId,
     required this.libroId,
     this.ejemplarId,
+    this.qrEjemplar,
     this.usuarioId,
   });
 
@@ -32,11 +34,19 @@ class RegistrarPrestamoParams extends Equatable {
   /// Ejemplar puntual. Si es `null` se toma el primero disponible.
   final String? ejemplarId;
 
+  /// Etiqueta escaneada en el mostrador.
+  ///
+  /// Es lo único que el backend acepta para identificar el ejemplar, así que
+  /// contra la API es obligatoria. Con el almacenamiento local alcanza con
+  /// [ejemplarId] y puede venir en `null`.
+  final String? qrEjemplar;
+
   /// Quién opera el mostrador, para la traza de auditoría.
   final String? usuarioId;
 
   @override
-  List<Object?> get props => [lectorId, libroId, ejemplarId, usuarioId];
+  List<Object?> get props =>
+      [lectorId, libroId, ejemplarId, qrEjemplar, usuarioId];
 }
 
 /// Registra un préstamo, congelando plazo y categoría vigentes.
@@ -58,7 +68,9 @@ class RegistrarPrestamo implements UseCase<Prestamo, RegistrarPrestamoParams> {
     required AuditoriaRepository auditoriaRepository,
     required Reloj reloj,
     PoliticaDePrestamo politica = const PoliticaDePrestamo(),
-  })  : _prestamos = prestamoRepository,
+    PrestamoRemoto? remoto,
+  })  : _remoto = remoto,
+        _prestamos = prestamoRepository,
         _lectores = lectorRepository,
         _catalogo = catalogoRepository,
         _reservas = reservaRepository,
@@ -78,8 +90,25 @@ class RegistrarPrestamo implements UseCase<Prestamo, RegistrarPrestamoParams> {
   final Reloj _reloj;
   final PoliticaDePrestamo _politica;
 
+  /// Cuando la app corre contra el backend, la transacción entera es del
+  /// servidor y este caso de uso sólo la despacha: repetir acá los límites y
+  /// el movimiento del ejemplar duplicaría reglas que el backend ya aplica
+  /// dentro del mismo commit.
+  final PrestamoRemoto? _remoto;
+
   @override
   Future<Result<Prestamo>> call(RegistrarPrestamoParams params) async {
+    final remoto = _remoto;
+    if (remoto != null) {
+      final qr = params.qrEjemplar;
+      if (qr == null || qr.trim().isEmpty) {
+        return const Fallo(ValidacionFailure(
+          'Escaneá la etiqueta del ejemplar para registrar el préstamo',
+        ));
+      }
+      return remoto.prestar(lectorId: params.lectorId, qrEjemplar: qr.trim());
+    }
+
     final lectorResult = await _lectores.obtenerPorId(params.lectorId);
     if (lectorResult case Fallo(:final failure)) return Fallo(failure);
     final lector = lectorResult.valorONull!;

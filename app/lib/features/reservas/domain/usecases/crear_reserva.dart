@@ -11,6 +11,7 @@ import '../../../catalogo/domain/repositories/catalogo_repository.dart';
 import '../../../lectores/domain/repositories/lector_repository.dart';
 import '../../../prestamos/domain/repositories/prestamo_repository.dart';
 import '../entities/reserva.dart';
+import '../repositories/reserva_remota.dart';
 import '../repositories/reserva_repository.dart';
 import '../services/asignador_de_cola.dart';
 import '../services/politica_de_reserva.dart';
@@ -41,7 +42,9 @@ class CrearReserva implements UseCase<Reserva, CrearReservaParams> {
     required AsignadorDeCola asignadorDeCola,
     required Reloj reloj,
     PoliticaDeReserva politica = const PoliticaDeReserva(),
-  })  : _reservas = reservaRepository,
+    ReservaRemota? remota,
+  })  : _remota = remota,
+        _reservas = reservaRepository,
         _lectores = lectorRepository,
         _prestamos = prestamoRepository,
         _catalogo = catalogoRepository,
@@ -61,8 +64,15 @@ class CrearReserva implements UseCase<Reserva, CrearReservaParams> {
   final Reloj _reloj;
   final PoliticaDeReserva _politica;
 
+  /// Contra el backend, el cupo, las multas, el duplicado y la posición en la
+  /// cola los resuelve el servidor.
+  final ReservaRemota? _remota;
+
   @override
   Future<Result<Reserva>> call(CrearReservaParams params) async {
+    final remota = _remota;
+    if (remota != null) return remota.reservar(params.libroId);
+
     final lectorResult = await _lectores.obtenerPorId(params.lectorId);
     if (lectorResult case Fallo(:final failure)) return Fallo(failure);
 

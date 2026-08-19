@@ -45,6 +45,7 @@ class Ejemplar extends Equatable {
     required this.condicion,
     required this.estado,
     this.reimpresionesQr = 0,
+    this.qrAsignado,
   });
 
   final String id;
@@ -55,9 +56,20 @@ class Ejemplar extends Equatable {
   /// Cuántas veces se reimprimió la etiqueta. El QR en sí nunca cambia.
   final int reimpresionesQr;
 
+  /// Etiqueta que asignó el backend al dar de alta el ejemplar.
+  ///
+  /// Cuando los datos vienen de la API, el código lo emite el servidor y no se
+  /// puede derivar del id: hay que conservarlo tal cual o la etiqueta impresa
+  /// no resolvería contra `GET /catalogo/ejemplares/qr/{codigo}`. Queda `null`
+  /// con el almacenamiento local, donde el QR sí se deriva.
+  final String? qrAsignado;
+
   /// El contenido del QR se deriva del ID interno, nunca se almacena aparte.
   /// Así una reimpresión produce siempre exactamente la misma etiqueta.
-  String get qr => 'BT-$libroId-$id';
+  ///
+  /// La regla vale igual para el código que asigna el backend: se conserva
+  /// entre reimpresiones en lugar de recalcularse (spec v2 §7).
+  String get qr => qrAsignado ?? 'BT-$libroId-$id';
 
   bool get estaDisponible => estado == EstadoEjemplar.disponible;
 
@@ -72,8 +84,10 @@ class Ejemplar extends Equatable {
         condicion: condicion ?? this.condicion,
         estado: estado ?? this.estado,
         reimpresionesQr: reimpresionesQr ?? this.reimpresionesQr,
+        qrAsignado: qrAsignado,
       );
 
   @override
-  List<Object?> get props => [id, libroId, condicion, estado, reimpresionesQr];
+  List<Object?> get props =>
+      [id, libroId, condicion, estado, reimpresionesQr, qrAsignado];
 }
