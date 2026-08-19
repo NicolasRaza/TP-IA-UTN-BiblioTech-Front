@@ -5,6 +5,7 @@ import '../../../../core/usecases/usecase.dart';
 import '../../../catalogo/domain/entities/ejemplar.dart';
 import '../../../catalogo/domain/repositories/catalogo_repository.dart';
 import '../entities/reserva.dart';
+import '../repositories/reserva_remota.dart';
 import '../repositories/reserva_repository.dart';
 import '../services/asignador_de_cola.dart';
 
@@ -26,7 +27,9 @@ class CancelarReserva implements UseCase<Reserva, CancelarReservaParams> {
     required ReservaRepository reservaRepository,
     required CatalogoRepository catalogoRepository,
     required AsignadorDeCola asignadorDeCola,
-  })  : _reservas = reservaRepository,
+    ReservaRemota? remota,
+  })  : _remota = remota,
+        _reservas = reservaRepository,
         _catalogo = catalogoRepository,
         _asignador = asignadorDeCola;
 
@@ -34,8 +37,28 @@ class CancelarReserva implements UseCase<Reserva, CancelarReservaParams> {
   final CatalogoRepository _catalogo;
   final AsignadorDeCola _asignador;
 
+  /// Contra el backend, cancelar libera la retención y corre la cola del lado
+  /// del servidor.
+  final ReservaRemota? _remota;
+
   @override
   Future<Result<Reserva>> call(CancelarReservaParams params) async {
+    final remota = _remota;
+    if (remota != null) {
+      // Se lee antes de cancelar: `GET /reservas/lector/{id}` sólo devuelve
+      // las activas, así que después de la baja la reserva ya no aparece y no
+      // habría con qué contestar.
+      final previa = await _reservas.obtenerPorId(params.reservaId);
+      if (previa case Fallo(:final failure)) return Fallo(failure);
+
+      final cancelada = await remota.cancelar(params.reservaId);
+      if (cancelada case Fallo(:final failure)) return Fallo(failure);
+
+      return Exito(
+        previa.valorONull!.copyWith(estado: EstadoReserva.cancelada),
+      );
+    }
+
     final reservaResult = await _reservas.obtenerPorId(params.reservaId);
     if (reservaResult case Fallo(:final failure)) return Fallo(failure);
     final reserva = reservaResult.valorONull!;

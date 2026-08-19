@@ -15,7 +15,7 @@ import '../bloc/prestamos_bloc.dart';
 
 /// Actividad del lector: préstamos vigentes, reservas e historial.
 ///
-/// Reúne `#s-prestamos`, `#s-reservas` y `#s-historial` de `lector.html`.
+/// Reúne préstamos, reservas e historial en tres solapas.
 class SeccionActividad extends StatelessWidget {
   const SeccionActividad({super.key});
 

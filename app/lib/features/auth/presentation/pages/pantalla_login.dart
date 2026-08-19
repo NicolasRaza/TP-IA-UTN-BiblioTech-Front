@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/entorno.dart';
 import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../cubit/sesion_cubit.dart';
 
-/// Pantalla de acceso: elección de rol y login, portada de `index.html`.
+/// Pantalla de acceso: elección de rol y login.
 class PantallaLogin extends StatelessWidget {
   const PantallaLogin({super.key});
 
@@ -124,6 +125,12 @@ class _DatosRol {
   final Color color;
   final String emailDemo;
   final String pinDemo;
+
+  /// Con el backend montado, las credenciales de la demo local no existen: las
+  /// cuentas viven en el servidor. Se deja el formulario vacío en vez de
+  /// prellenarlo con un usuario que no va a entrar.
+  String get emailInicial => Entorno.usarBackend ? '' : emailDemo;
+  String get claveInicial => Entorno.usarBackend ? '' : pinDemo;
 }
 
 class _TarjetaRol extends StatelessWidget {
@@ -228,16 +235,19 @@ class _DialogoLogin extends StatefulWidget {
   State<_DialogoLogin> createState() => _DialogoLoginState();
 }
 
+/// "Contraseña" contra el backend, "PIN" contra el padrón local.
+const _etiquetaClave = Entorno.usarBackend ? 'Contraseña' : 'PIN';
+
 class _DialogoLoginState extends State<_DialogoLogin> {
-  late final _email = TextEditingController(text: widget.rol.emailDemo);
-  late final _pin = TextEditingController(text: widget.rol.pinDemo);
+  late final _email = TextEditingController(text: widget.rol.emailInicial);
+  late final _clave = TextEditingController(text: widget.rol.claveInicial);
   final _form = GlobalKey<FormState>();
   String? _error;
 
   @override
   void dispose() {
     _email.dispose();
-    _pin.dispose();
+    _clave.dispose();
     super.dispose();
   }
 
@@ -247,7 +257,7 @@ class _DialogoLoginState extends State<_DialogoLogin> {
     final sesion = context.read<SesionCubit>();
     await sesion.iniciarSesion(
       email: _email.text.trim(),
-      pin: _pin.text.trim(),
+      clave: _clave.text.trim(),
     );
     if (!mounted) return;
 
@@ -257,7 +267,8 @@ class _DialogoLoginState extends State<_DialogoLogin> {
     if (estado.haySesion) {
       Navigator.of(context).pop();
     } else {
-      setState(() => _error = estado.mensajeError ?? 'Email o PIN incorrectos');
+      setState(() => _error =
+          estado.mensajeError ?? 'Email o $_etiquetaClave incorrectos');
     }
   }
 
@@ -296,13 +307,19 @@ class _DialogoLoginState extends State<_DialogoLogin> {
               ),
               const SizedBox(height: 14),
               TextFormField(
-                controller: _pin,
-                decoration: const InputDecoration(labelText: 'PIN'),
+                controller: _clave,
+                decoration: const InputDecoration(labelText: _etiquetaClave),
                 obscureText: true,
-                keyboardType: TextInputType.number,
+                // Contra el backend la credencial es una contraseña y puede
+                // tener cualquier carácter; el PIN local es sólo numérico.
+                keyboardType: Entorno.usarBackend
+                    ? TextInputType.text
+                    : TextInputType.number,
+                autofillHints: const [AutofillHints.password],
                 onFieldSubmitted: (_) => _entrar(),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Ingresá tu PIN' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Ingresá tu $_etiquetaClave'.toLowerCase()
+                    : null,
               ),
               if (_error != null) ...[
                 const SizedBox(height: 14),

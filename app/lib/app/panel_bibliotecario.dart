@@ -18,7 +18,7 @@ import '../features/prestamos/presentation/pages/seccion_mostrador.dart';
 import '../features/reservas/presentation/bloc/reservas_bloc.dart';
 import 'shell_adaptativo.dart';
 
-/// Panel del bibliotecario (spec v2 §9), portado de `bibliotecario.html`.
+/// Panel del bibliotecario (spec v2 §9).
 class PanelBibliotecario extends StatelessWidget {
   const PanelBibliotecario({super.key});
 

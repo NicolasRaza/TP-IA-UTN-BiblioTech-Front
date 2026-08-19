@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-/// Formateo de fechas y montos en es-AR, equivalente a `js/utils.js`.
+/// Formateo de fechas y montos en es-AR.
 class Formato {
   static final _fecha = DateFormat('dd/MM/yyyy');
   static final _fechaHora = DateFormat('dd/MM/yyyy HH:mm');

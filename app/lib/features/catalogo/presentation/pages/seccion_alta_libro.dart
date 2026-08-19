@@ -8,7 +8,7 @@ import '../cubit/alta_libro_cubit.dart';
 
 /// Alta de libro con reconocimiento asistido.
 ///
-/// Porta `bibliotecario.html #s-agregar-libro`. El flujo respeta la Regla de
+/// Alta de libro (spec v2 §9). El flujo respeta la Regla de
 /// Validación Estricta (spec v2 §7): el libro se crea sin validar y solo se
 /// publica cuando el bibliotecario confirma explícitamente.
 class SeccionAltaLibro extends StatefulWidget {

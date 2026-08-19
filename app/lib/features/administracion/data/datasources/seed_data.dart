@@ -6,7 +6,7 @@ import '../../../prestamos/domain/entities/prestamo.dart';
 import '../../../reservas/domain/entities/reserva.dart';
 import '../../domain/entities/evento_auditoria.dart';
 
-/// Datos de demostración, portados del prototipo HTML/JS.
+/// Datos de demostración del modo local.
 ///
 /// Todas las fechas son relativas a [ahora] para que el catálogo se vea
 /// consistente sin importar cuándo se instale la app.

@@ -36,7 +36,7 @@ void main() {
     final sesion = entorno<SesionCubit>();
     expect(sesion.state.haySesion, isFalse);
 
-    await sesion.iniciarSesion(email: 'laura@demo.com', pin: '1234');
+    await sesion.iniciarSesion(email: 'laura@demo.com', clave: '1234');
     expect(sesion.state.haySesion, isTrue,
         reason: 'la raíz de la app rutea a partir de este estado');
   });

@@ -11,7 +11,7 @@ import '../features/administracion/presentation/pages/secciones_varias.dart';
 import '../features/agentes/presentation/bloc/agentes_bloc.dart';
 import 'shell_adaptativo.dart';
 
-/// Panel de administración (spec v2 §9), portado de `admin.html`.
+/// Panel de administración (spec v2 §9).
 class PanelAdmin extends StatelessWidget {
   const PanelAdmin({super.key});
 

@@ -18,9 +18,9 @@ import '../features/prestamos/presentation/pages/seccion_actividad.dart';
 import '../features/reservas/presentation/bloc/reservas_bloc.dart';
 import 'shell_adaptativo.dart';
 
-/// Portal del lector (spec v2 §9), portado de `lector.html`.
+/// Portal del lector (spec v2 §9).
 ///
-/// Las siete secciones del prototipo se agrupan en cinco destinos: préstamos,
+/// Las siete secciones de la spec se agrupan en cinco destinos: préstamos,
 /// reservas e historial comparten "Mi actividad" con solapas, para que la
 /// barra inferior siga siendo cómoda en un celular.
 ///

@@ -10,13 +10,15 @@ import '../../../lectores/domain/entities/lector.dart';
 import '../repositories/sesion_repository.dart';
 
 class IniciarSesionParams extends Equatable {
-  const IniciarSesionParams({required this.email, required this.pin});
+  const IniciarSesionParams({required this.email, required this.clave});
 
   final String email;
-  final String pin;
+
+  /// PIN o contraseña, según contra qué esté corriendo la app.
+  final String clave;
 
   @override
-  List<Object?> get props => [email, pin];
+  List<Object?> get props => [email, clave];
 }
 
 /// Valida credenciales y abre la sesión.
@@ -30,13 +32,13 @@ class IniciarSesion implements UseCase<Lector, IniciarSesionParams> {
     if (params.email.trim().isEmpty) {
       return const Fallo(ValidacionFailure('Ingresá tu email'));
     }
-    if (params.pin.trim().isEmpty) {
-      return const Fallo(ValidacionFailure('Ingresá tu PIN'));
+    if (params.clave.trim().isEmpty) {
+      return const Fallo(ValidacionFailure('Ingresá tu clave'));
     }
 
     return _repository.iniciarSesion(
       email: params.email.trim(),
-      pin: params.pin.trim(),
+      clave: params.clave.trim(),
     );
   }
 }
