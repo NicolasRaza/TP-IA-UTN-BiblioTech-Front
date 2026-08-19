@@ -37,11 +37,15 @@ String categoriaHaciaApi(CategoriaLector categoria) => switch (categoria) {
 
 // ── Estado del lector ────────────────────────────────────────────────────────
 //
-// El backend distingue `suspendido` de `baja`; el dominio sólo tiene un
-// booleano `activo`. Ambos estados dejan al lector sin operar, que es lo que
-// el booleano representa.
+// Las dos escalas coinciden código a código —`pendiente`, `activo`,
+// `suspendido`, `baja`—, así que la conversión es directa. Un código que el
+// backend agregue y la app no conozca se lee como `activo`, que es el estado
+// que no bloquea nada: inventar una suspensión sería peor que ignorarla.
 
-bool lectorActivoDesdeApi(String? estado) => estado == 'activo';
+EstadoLector estadoLectorDesdeApi(String? estado) =>
+    EstadoLector.fromCode(estado);
+
+String estadoLectorHaciaApi(EstadoLector estado) => estado.code;
 
 // ── Rol ──────────────────────────────────────────────────────────────────────
 

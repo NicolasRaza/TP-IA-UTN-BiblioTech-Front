@@ -2,6 +2,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/services/reloj.dart';
 import '../../domain/entities/lector.dart';
+import '../../domain/entities/solicitud_de_registro.dart';
 import '../../domain/repositories/lector_repository.dart';
 import '../datasources/lector_local_datasource.dart';
 
@@ -10,11 +11,14 @@ class LectorRepositoryImpl implements LectorRepository {
   const LectorRepositoryImpl({
     required LectorLocalDataSource localDataSource,
     required GeneradorId generadorId,
+    required Reloj reloj,
   })  : _local = localDataSource,
-        _generadorId = generadorId;
+        _generadorId = generadorId,
+        _reloj = reloj;
 
   final LectorLocalDataSource _local;
   final GeneradorId _generadorId;
+  final Reloj _reloj;
 
   @override
   Future<Result<List<Lector>>> obtenerUsuarios() async =>
@@ -55,6 +59,42 @@ class LectorRepositoryImpl implements LectorRepository {
     if (guardado case Fallo(:final failure)) return Fallo(failure);
 
     return Exito(nuevo);
+  }
+
+  /// Autorregistro sobre el padrón del dispositivo.
+  ///
+  /// Espeja lo que hace el backend: documento y email únicos, contraseña
+  /// inicial igual al documento —acá, el PIN— y estado pendiente hasta que un
+  /// bibliotecario verifique los datos.
+  @override
+  Future<Result<Lector>> registrar(SolicitudDeRegistro solicitud) async {
+    final leidos = _local.leer();
+    if (leidos case Fallo(:final failure)) return Fallo(failure);
+
+    final padron = leidos.valorONull!;
+    final email = solicitud.email.trim().toLowerCase();
+    if (padron.any((l) => l.email.toLowerCase() == email)) {
+      return const Fallo(ValidacionFailure('Ya hay una cuenta con ese email'));
+    }
+    if (padron.any((l) => l.dni.isNotEmpty && l.dni == solicitud.documento)) {
+      return const Fallo(
+          ValidacionFailure('Ya hay una cuenta con ese documento'));
+    }
+
+    return crear(Lector(
+      id: '',
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      email: solicitud.email.trim(),
+      dni: solicitud.documento,
+      telefono: solicitud.telefono,
+      categoria: solicitud.categoria,
+      tutor: solicitud.tutorNombre.isEmpty ? null : solicitud.tutorNombre,
+      fechaAlta: _reloj.ahora,
+      estado: EstadoLector.pendiente,
+      pin: solicitud.documento,
+      fechaNacimiento: solicitud.fechaNacimiento,
+    ));
   }
 
   @override
@@ -116,7 +156,7 @@ class LectorRepositoryImpl implements LectorRepository {
         categoria: l.categoria,
         tutor: l.tutor,
         fechaAlta: l.fechaAlta,
-        activo: l.activo,
+        estado: l.estado,
         pin: l.pin,
         generosInteres: l.generosInteres,
         multasPendientes: l.multasPendientes,

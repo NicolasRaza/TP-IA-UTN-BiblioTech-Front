@@ -2,6 +2,7 @@ import '../../../../core/api/sesion_api.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../domain/entities/lector.dart';
+import '../../domain/entities/solicitud_de_registro.dart';
 import '../../domain/repositories/lector_repository.dart';
 import '../datasources/lector_api_datasource.dart';
 
@@ -71,6 +72,10 @@ class LectorRepositoryApi implements LectorRepository {
 
   @override
   Future<Result<Lector>> crear(Lector lector) => _api.crear(lector);
+
+  @override
+  Future<Result<Lector>> registrar(SolicitudDeRegistro solicitud) =>
+      _api.registrar(solicitud);
 
   @override
   Future<Result<Lector>> actualizar(Lector lector) => _api.actualizar(lector);

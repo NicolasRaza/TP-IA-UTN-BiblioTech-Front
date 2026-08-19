@@ -51,8 +51,23 @@ class SesionRepositoryApi implements SesionRepository {
       _sesion.cerrar();
       return Fallo(failure);
     }
+
+    // El backend deja entrar a un lector sin verificar —el login sólo mira
+    // que la cuenta esté habilitada—, pero adentro no podría hacer nada: todo
+    // préstamo y toda reserva le vuelven con un 403. Se le explica acá, en vez
+    // de dejarlo chocar contra la primera operación.
+    if (_estaPendiente(usuario.valorONull!)) {
+      _sesion.cerrar();
+      return const Fallo(CuentaPendienteFailure());
+    }
+
     return usuario;
   }
+
+  /// Un lector que se registró y todavía no verificó nadie. El personal nunca
+  /// lo está: no tiene ficha de lector, y por lo tanto tampoco estado.
+  static bool _estaPendiente(Lector usuario) =>
+      !usuario.esPersonal && usuario.pendienteDeVerificacion;
 
   @override
   Future<Result<Lector?>> obtenerSesionActiva() async {
@@ -76,6 +91,16 @@ class SesionRepositoryApi implements SesionRepository {
     _sesion.abrir(token: token, usuario: perfil);
 
     final usuario = await _resolver(perfil);
+    if (usuario case Fallo(:final failure)) return Fallo(failure);
+
+    // Una cuenta que volvió a quedar pendiente entre dos arranques no sigue
+    // con la sesión abierta: se descarta y la app abre en el login, que es
+    // donde el aviso tiene sentido.
+    if (_estaPendiente(usuario.valorONull!)) {
+      _sesion.cerrar();
+      return const Exito(null);
+    }
+
     return usuario.map<Lector?>((l) => l);
   }
 
@@ -118,6 +143,7 @@ class SesionRepositoryApi implements SesionRepository {
             ? CategoriaLector.adulto
             : CategoriaLector.personal,
         fechaAlta: DateTime.now(),
+        estado: estadoLectorDesdeApi(perfil.estado),
         rol: rol,
       );
 }

@@ -7,24 +7,35 @@ import '../storage/key_value_store.dart';
 /// No es la entidad de dominio [Lector]: es lo poco que la API cuenta sobre
 /// quién está autenticado. El `lectorId` viene en `null` para bibliotecarios y
 /// administradores, que no tienen ficha de lector.
+///
+/// [estado] es el de la ficha de lector y es la única vía por la que la app
+/// puede saber si su propia cuenta está verificada: `/lectores/{id}` exige rol
+/// bibliotecario, así que un lector no puede leerse a sí mismo. Viaja como
+/// opcional porque una versión del backend que todavía no lo incluya no debe
+/// romper el login: sin el campo, la cuenta se toma como verificada y el
+/// bloqueo queda del lado del servidor, que igual responde 403 al primer
+/// préstamo o reserva.
 class UsuarioApi {
   const UsuarioApi({
     required this.id,
     required this.email,
     required this.rol,
     this.lectorId,
+    this.estado,
   });
 
   final int id;
   final String email;
   final String rol;
   final int? lectorId;
+  final String? estado;
 
   factory UsuarioApi.fromJson(Map<String, dynamic> json) => UsuarioApi(
         id: (json['id'] as num).toInt(),
         email: json['email'] as String? ?? '',
         rol: json['rol'] as String? ?? 'lector',
         lectorId: (json['lector_id'] as num?)?.toInt(),
+        estado: json['estado'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -32,6 +43,7 @@ class UsuarioApi {
         'email': email,
         'rol': rol,
         'lector_id': lectorId,
+        'estado': estado,
       };
 }
 

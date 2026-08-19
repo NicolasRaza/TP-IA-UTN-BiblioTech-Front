@@ -25,6 +25,10 @@ class LectoresState extends Equatable {
 
   List<Lector> get conMultas => lectores.where((l) => l.tieneMultas).toList();
 
+  /// Autorregistros esperando que alguien del personal los confirme.
+  List<Lector> get pendientesDeVerificacion =>
+      lectores.where((l) => l.pendienteDeVerificacion).toList();
+
   LectoresState copyWith({
     EstadoCarga? estado,
     List<Lector>? lectores,

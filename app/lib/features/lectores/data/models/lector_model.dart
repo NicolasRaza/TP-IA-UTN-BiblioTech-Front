@@ -12,7 +12,7 @@ class LectorModel extends Lector {
     required super.categoria,
     super.tutor,
     required super.fechaAlta,
-    super.activo,
+    super.estado,
     super.pin,
     super.generosInteres,
     super.multasPendientes,
@@ -30,7 +30,7 @@ class LectorModel extends Lector {
         categoria: l.categoria,
         tutor: l.tutor,
         fechaAlta: l.fechaAlta,
-        activo: l.activo,
+        estado: l.estado,
         pin: l.pin,
         generosInteres: l.generosInteres,
         multasPendientes: l.multasPendientes,
@@ -48,7 +48,13 @@ class LectorModel extends Lector {
         categoria: CategoriaLector.fromCode(json['categoria'] as String?),
         tutor: json['tutor'] as String?,
         fechaAlta: DateTime.parse(json['fechaAlta'] as String),
-        activo: json['activo'] as bool? ?? true,
+        // Las versiones anteriores guardaban un booleano `activo`; se sigue
+        // leyendo para no invalidar el padrón ya sembrado en el dispositivo.
+        estado: json.containsKey('estado')
+            ? EstadoLector.fromCode(json['estado'] as String?)
+            : ((json['activo'] as bool? ?? true)
+                ? EstadoLector.activo
+                : EstadoLector.baja),
         pin: json['pin'] as String? ?? '',
         generosInteres:
             (json['generosInteres'] as List<dynamic>? ?? []).cast<String>(),
@@ -69,7 +75,7 @@ class LectorModel extends Lector {
         'categoria': categoria.code,
         'tutor': tutor,
         'fechaAlta': fechaAlta.toIso8601String(),
-        'activo': activo,
+        'estado': estado.code,
         'pin': pin,
         'generosInteres': generosInteres,
         'multasPendientes': multasPendientes,

@@ -16,6 +16,7 @@ class LectoresBloc extends Bloc<LectoresEvent, LectoresState> {
     required ObtenerLectores obtenerLectores,
     required RegistrarLector registrarLector,
     required ActualizarLector actualizarLector,
+    required VerificarLector verificarLector,
     required CambiarCategoria cambiarCategoria,
     required ObtenerLectoresConCategoriaDesactualizada obtenerDesactualizados,
     required BuscarLectorPorQr buscarPorQr,
@@ -23,6 +24,7 @@ class LectoresBloc extends Bloc<LectoresEvent, LectoresState> {
   })  : _obtenerLectores = obtenerLectores,
         _registrarLector = registrarLector,
         _actualizarLector = actualizarLector,
+        _verificarLector = verificarLector,
         _cambiarCategoria = cambiarCategoria,
         _obtenerDesactualizados = obtenerDesactualizados,
         _buscarPorQr = buscarPorQr,
@@ -31,6 +33,7 @@ class LectoresBloc extends Bloc<LectoresEvent, LectoresState> {
     on<LectoresSolicitados>(_alSolicitarLectores);
     on<LectorRegistrado>(_alRegistrarLector);
     on<LectorActualizado>(_alActualizarLector);
+    on<LectorVerificado>(_alVerificarLector);
     on<CategoriaCambiada>(_alCambiarCategoria);
     on<LectorBuscadoPorQr>(_alBuscarPorQr);
     on<SeleccionDeLectorLimpiada>(
@@ -44,6 +47,7 @@ class LectoresBloc extends Bloc<LectoresEvent, LectoresState> {
   final ObtenerLectores _obtenerLectores;
   final RegistrarLector _registrarLector;
   final ActualizarLector _actualizarLector;
+  final VerificarLector _verificarLector;
   final CambiarCategoria _cambiarCategoria;
   final ObtenerLectoresConCategoriaDesactualizada _obtenerDesactualizados;
   final BuscarLectorPorQr _buscarPorQr;
@@ -92,6 +96,27 @@ class LectoresBloc extends Bloc<LectoresEvent, LectoresState> {
       (_) async {
         await _recargar(emit);
         emit(state.copyWith(mensajeExito: 'Datos actualizados'));
+      },
+    );
+  }
+
+  Future<void> _alVerificarLector(
+    LectorVerificado event,
+    Emitter<LectoresState> emit,
+  ) async {
+    final resultado = await _verificarLector(VerificarLectorParams(
+      lectorId: event.lectorId,
+      usuarioId: _usuarioActualId(),
+    ));
+
+    await resultado.fold(
+      (failure) async => emit(state.copyWith(mensajeError: failure.mensaje)),
+      (lector) async {
+        await _recargar(emit);
+        emit(state.copyWith(
+          mensajeExito: '${lector.nombreCompleto} quedó verificado y ya puede '
+              'pedir préstamos. Su credencial es ${lector.qr}.',
+        ));
       },
     );
   }

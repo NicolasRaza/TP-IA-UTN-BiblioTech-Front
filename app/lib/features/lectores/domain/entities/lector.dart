@@ -14,6 +14,28 @@ enum RolUsuario {
       );
 }
 
+/// Situación del lector en el padrón. Espeja `EstadoUsuario` del backend.
+///
+/// [pendiente] es el estado con el que nace toda alta nueva —venga del
+/// autorregistro o del mostrador—: la persona existe y puede entrar a la app,
+/// pero no opera hasta que un bibliotecario verifica sus datos y la pasa a
+/// [activo].
+enum EstadoLector {
+  pendiente('pendiente', 'Pendiente de verificación'),
+  activo('activo', 'Activo'),
+  suspendido('suspendido', 'Suspendido'),
+  baja('baja', 'De baja');
+
+  const EstadoLector(this.code, this.label);
+  final String code;
+  final String label;
+
+  static EstadoLector fromCode(String? code) => EstadoLector.values.firstWhere(
+        (e) => e.code == code,
+        orElse: () => EstadoLector.activo,
+      );
+}
+
 /// Categoría de lector. Determina plazos y límites (spec v2 §7).
 enum CategoriaLector {
   menor('menor', 'Menor'),
@@ -45,7 +67,7 @@ class Lector extends Equatable {
     required this.categoria,
     this.tutor,
     required this.fechaAlta,
-    this.activo = true,
+    this.estado = EstadoLector.activo,
     this.pin = '',
     this.generosInteres = const [],
     this.multasPendientes = 0,
@@ -69,7 +91,7 @@ class Lector extends Equatable {
   final String? tutor;
 
   final DateTime fechaAlta;
-  final bool activo;
+  final EstadoLector estado;
   final String pin;
   final List<String> generosInteres;
   final int multasPendientes;
@@ -86,6 +108,14 @@ class Lector extends Equatable {
 
   /// El QR del lector también deriva del ID interno e inmutable.
   String get qr => 'BTL-$id';
+
+  /// Puede operar: sacar préstamos y reservar. Es la pregunta que hacen las
+  /// políticas de la spec §7, y por eso sigue siendo un booleano aunque el
+  /// padrón guarde ahora los cuatro estados.
+  bool get activo => estado == EstadoLector.activo;
+
+  /// Se registró pero todavía no lo verificó nadie del personal.
+  bool get pendienteDeVerificacion => estado == EstadoLector.pendiente;
 
   bool get esPersonal => rol != RolUsuario.lector;
 
@@ -110,10 +140,11 @@ class Lector extends Equatable {
     String? telefono,
     CategoriaLector? categoria,
     String? tutor,
-    bool? activo,
+    EstadoLector? estado,
     String? pin,
     List<String>? generosInteres,
     int? multasPendientes,
+    RolUsuario? rol,
     DateTime? fechaNacimiento,
   }) =>
       Lector(
@@ -126,11 +157,11 @@ class Lector extends Equatable {
         categoria: categoria ?? this.categoria,
         tutor: tutor ?? this.tutor,
         fechaAlta: fechaAlta,
-        activo: activo ?? this.activo,
+        estado: estado ?? this.estado,
         pin: pin ?? this.pin,
         generosInteres: generosInteres ?? this.generosInteres,
         multasPendientes: multasPendientes ?? this.multasPendientes,
-        rol: rol,
+        rol: rol ?? this.rol,
         fechaNacimiento: fechaNacimiento ?? this.fechaNacimiento,
       );
 
@@ -145,7 +176,7 @@ class Lector extends Equatable {
         categoria,
         tutor,
         fechaAlta,
-        activo,
+        estado,
         pin,
         generosInteres,
         multasPendientes,

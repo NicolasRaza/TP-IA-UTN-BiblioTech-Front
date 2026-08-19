@@ -1,5 +1,6 @@
 import '../../../../core/error/result.dart';
 import '../entities/lector.dart';
+import '../entities/solicitud_de_registro.dart';
 
 /// Contrato de acceso al padrón de personas.
 abstract interface class LectorRepository {
@@ -16,6 +17,14 @@ abstract interface class LectorRepository {
   Future<Result<Lector>> obtenerPorQr(String qr);
 
   Future<Result<Lector>> crear(Lector lector);
+
+  /// Autorregistro: alta hecha por la propia persona, sin sesión abierta.
+  ///
+  /// El lector nace en [EstadoLector.pendiente] y no opera hasta que alguien
+  /// del personal lo verifica. Es una operación aparte de [crear] porque no
+  /// parte de un [Lector] —todavía no hay ficha— y porque es la única ruta del
+  /// padrón que no exige estar autenticado.
+  Future<Result<Lector>> registrar(SolicitudDeRegistro solicitud);
 
   Future<Result<Lector>> actualizar(Lector lector);
 

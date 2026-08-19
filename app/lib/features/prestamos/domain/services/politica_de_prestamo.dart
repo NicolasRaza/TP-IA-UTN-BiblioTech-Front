@@ -19,6 +19,12 @@ class PoliticaDePrestamo {
     required List<Prestamo> prestamosDelLector,
     required ConfiguracionBiblioteca configuracion,
   }) {
+    if (lector.pendienteDeVerificacion) {
+      return const Fallo(ReglaDeNegocioFailure(
+        'La cuenta está pendiente de verificación por un bibliotecario.',
+      ));
+    }
+
     if (!lector.activo) {
       return const Fallo(ReglaDeNegocioFailure('La cuenta está inactiva'));
     }

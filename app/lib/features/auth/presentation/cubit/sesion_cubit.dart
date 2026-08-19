@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/failures.dart';
 import '../../../../core/presentation/estado_carga.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../administracion/domain/usecases/gestionar_configuracion.dart';
@@ -64,6 +65,7 @@ class SesionCubit extends Cubit<SesionState> {
       (failure) => emit(SesionState(
         estado: EstadoCarga.error,
         mensajeError: failure.mensaje,
+        cuentaPendiente: failure is CuentaPendienteFailure,
       )),
       (usuario) => emit(SesionState(
         estado: EstadoCarga.exito,

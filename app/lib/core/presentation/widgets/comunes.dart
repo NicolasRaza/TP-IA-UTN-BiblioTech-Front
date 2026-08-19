@@ -68,6 +68,22 @@ class Insignia extends StatelessWidget {
         },
       );
 
+  factory Insignia.estadoLector(EstadoLector e) => Insignia(
+        e.label,
+        color: switch (e) {
+          EstadoLector.pendiente => Paleta.warning,
+          EstadoLector.activo => Paleta.success,
+          EstadoLector.suspendido => Paleta.danger,
+          EstadoLector.baja => Paleta.textMuted,
+        },
+        icono: switch (e) {
+          EstadoLector.pendiente => Icons.hourglass_empty,
+          EstadoLector.activo => Icons.check_circle_outline,
+          EstadoLector.suspendido => Icons.block,
+          EstadoLector.baja => Icons.person_off_outlined,
+        },
+      );
+
   /// Marca de confianza de un campo sugerido por el agente (spec v2 §4.2).
   factory Insignia.confianza(NivelConfianza n) => Insignia(
         switch (n) {
