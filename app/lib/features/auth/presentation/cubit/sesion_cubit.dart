@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/presentation/estado_carga.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../../administracion/domain/usecases/gestionar_configuracion.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../../domain/usecases/gestionar_sesion.dart';
 
@@ -20,24 +19,18 @@ class SesionCubit extends Cubit<SesionState> {
     required IniciarSesion iniciarSesion,
     required CerrarSesion cerrarSesion,
     required ObtenerSesionActiva obtenerSesionActiva,
-    required InicializarDatos inicializarDatos,
   })  : _iniciarSesion = iniciarSesion,
         _cerrarSesion = cerrarSesion,
         _obtenerSesionActiva = obtenerSesionActiva,
-        _inicializarDatos = inicializarDatos,
         super(const SesionState());
 
   final IniciarSesion _iniciarSesion;
   final CerrarSesion _cerrarSesion;
   final ObtenerSesionActiva _obtenerSesionActiva;
-  final InicializarDatos _inicializarDatos;
 
-  /// Arranque de la app: siembra los datos de demostración si hace falta y
-  /// recupera la sesión persistida.
+  /// Arranque de la app: recupera la sesión persistida.
   Future<void> arrancar() async {
     emit(state.copyWith(estado: EstadoCarga.cargando, limpiarError: true));
-
-    await _inicializarDatos(const SinParametros());
 
     final sesion = await _obtenerSesionActiva(const SinParametros());
     sesion.fold(

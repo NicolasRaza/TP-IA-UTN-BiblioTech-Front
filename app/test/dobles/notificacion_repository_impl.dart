@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/notificacion.dart';
-import '../../domain/repositories/notificacion_repository.dart';
-import '../datasources/notificacion_local_datasource.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/notificaciones/domain/entities/notificacion.dart';
+import 'package:bibliotech/features/notificaciones/domain/repositories/notificacion_repository.dart';
+import 'notificacion_local_datasource.dart';
 
 /// Implementación del [NotificacionRepository] sobre el almacenamiento local.
 class NotificacionRepositoryImpl implements NotificacionRepository {

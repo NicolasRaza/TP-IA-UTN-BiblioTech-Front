@@ -1,10 +1,10 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/coleccion_json.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/configuracion_biblioteca.dart';
-import '../../domain/entities/evento_auditoria.dart';
-import '../models/configuracion_biblioteca_model.dart';
-import '../models/evento_auditoria_model.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'coleccion_json.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/administracion/domain/entities/configuracion_biblioteca.dart';
+import 'package:bibliotech/features/administracion/domain/entities/evento_auditoria.dart';
+import 'package:bibliotech/features/administracion/data/models/configuracion_biblioteca_model.dart';
+import 'package:bibliotech/features/administracion/data/models/evento_auditoria_model.dart';
 
 /// Acceso al almacenamiento local de los parámetros y la auditoría.
 abstract interface class AdministracionLocalDataSource {

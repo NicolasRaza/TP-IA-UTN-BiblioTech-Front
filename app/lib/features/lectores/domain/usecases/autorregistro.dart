@@ -7,8 +7,6 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/services/reloj.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../../administracion/domain/entities/evento_auditoria.dart';
-import '../../../administracion/domain/repositories/auditoria_repository.dart';
 import '../entities/lector.dart';
 import '../entities/solicitud_de_registro.dart';
 import '../repositories/lector_repository.dart';
@@ -35,14 +33,11 @@ class RegistrarseComoLector
     implements UseCase<Lector, RegistrarseComoLectorParams> {
   const RegistrarseComoLector({
     required LectorRepository lectorRepository,
-    required AuditoriaRepository auditoriaRepository,
     required Reloj reloj,
   })  : _lectores = lectorRepository,
-        _auditoria = auditoriaRepository,
         _reloj = reloj;
 
   final LectorRepository _lectores;
-  final AuditoriaRepository _auditoria;
   final Reloj _reloj;
 
   @override
@@ -72,16 +67,9 @@ class RegistrarseComoLector
           'Hay que aceptar el tratamiento de los datos para registrarse'));
     }
 
-    final creado = await _lectores.registrar(s);
-    if (creado case Fallo(:final failure)) return Fallo(failure);
-
-    // Sin usuarioId: no hay nadie del personal detrás de esta alta.
-    await _auditoria.registrar(
-      tipo: TipoEventoAuditoria.altaLector,
-      descripcion: 'Autorregistro de ${s.nombreCompleto}, '
-          'pendiente de verificación',
-    );
-
-    return creado;
+    // La traza de auditoría la escribe el backend dentro de la misma
+    // transacción: el alta es pública y desde acá no hay token con el cual
+    // asentarla.
+    return _lectores.registrar(s);
   }
 }

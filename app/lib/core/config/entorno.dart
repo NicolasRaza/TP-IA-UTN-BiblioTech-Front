@@ -4,16 +4,6 @@
 /// el código: `flutter build web --dart-define=SGB_API_URL=...`. El default
 /// apunta al backend publicado en Railway, que es contra el que corre la demo.
 abstract final class Entorno {
-  /// Si la app trabaja contra el backend o contra su almacenamiento local.
-  ///
-  /// Con `true` —el valor por defecto— el catálogo, el padrón y la circulación
-  /// son los del servidor, y la sesión se abre con `POST /auth/login`. Con
-  /// `false` la app corre entera sobre los datos sembrados en el dispositivo,
-  /// que es lo que permite mostrarla sin conexión:
-  /// `flutter build web --dart-define=SGB_USAR_BACKEND=false`.
-  static const usarBackend =
-      bool.fromEnvironment('SGB_USAR_BACKEND', defaultValue: true);
-
   /// Raíz de la API del backend, sin barra final.
   static const apiBaseUrl = String.fromEnvironment(
     'SGB_API_URL',

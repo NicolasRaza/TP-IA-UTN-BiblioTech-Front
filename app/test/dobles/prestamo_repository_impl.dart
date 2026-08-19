@@ -1,9 +1,9 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/prestamo.dart';
-import '../../domain/repositories/prestamo_repository.dart';
-import '../datasources/prestamo_local_datasource.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/prestamos/domain/entities/prestamo.dart';
+import 'package:bibliotech/features/prestamos/domain/repositories/prestamo_repository.dart';
+import 'prestamo_local_datasource.dart';
 
 /// Implementación del [PrestamoRepository] sobre el almacenamiento local.
 class PrestamoRepositoryImpl implements PrestamoRepository {

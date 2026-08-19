@@ -1,9 +1,9 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/reserva.dart';
-import '../../domain/repositories/reserva_repository.dart';
-import '../datasources/reserva_local_datasource.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/reservas/domain/entities/reserva.dart';
+import 'package:bibliotech/features/reservas/domain/repositories/reserva_repository.dart';
+import 'reserva_local_datasource.dart';
 
 /// Implementación del [ReservaRepository] sobre el almacenamiento local.
 class ReservaRepositoryImpl implements ReservaRepository {

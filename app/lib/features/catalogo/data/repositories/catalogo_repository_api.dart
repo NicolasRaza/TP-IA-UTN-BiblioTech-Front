@@ -121,6 +121,16 @@ class CatalogoRepositoryApi implements CatalogoRepository {
       );
 
   @override
+  Future<Result<Ejemplar>> agregarEjemplar(
+    String libroId,
+    CondicionEjemplar condicion,
+  ) =>
+      // El alta va por su propia ruta: el backend asigna el id y el código QR
+      // de la etiqueta. Mandar el título entero con un ejemplar más no daría
+      // de alta nada, porque `PATCH /titulos/{id}` no toca los ejemplares.
+      _api.crearEjemplar(libroId: libroId, condicion: condicion);
+
+  @override
   Future<Result<Ejemplar>> cambiarEstadoEjemplar(
     String libroId,
     String ejemplarId,

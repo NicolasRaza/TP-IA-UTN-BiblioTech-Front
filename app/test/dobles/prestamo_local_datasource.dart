@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/coleccion_json.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/prestamo.dart';
-import '../models/prestamo_model.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'coleccion_json.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/prestamos/domain/entities/prestamo.dart';
+import 'package:bibliotech/features/prestamos/data/models/prestamo_model.dart';
 
 /// Acceso al almacenamiento local de los préstamos.
 abstract interface class PrestamoLocalDataSource {

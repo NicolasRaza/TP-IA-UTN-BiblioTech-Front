@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import '../error/failures.dart';
-import '../error/result.dart';
-import 'key_value_store.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
 
 /// Lectura y escritura de una lista de entidades serializada como JSON bajo
 /// una clave del [KeyValueStore].
@@ -81,4 +81,33 @@ class DocumentoJson<T> {
       return Fallo(CacheFailure('No se pudo guardar "$clave"'));
     }
   }
+}
+
+/// Claves de persistencia. Los nombres (`bt_*`) vienen del prototipo
+/// HTML/JS original y se conservan para que los datos ya guardados en un
+/// navegador sigan siendo legibles.
+abstract final class ClavesAlmacenamiento {
+  static const libros = 'bt_libros';
+  static const lectores = 'bt_lectores';
+  static const prestamos = 'bt_prestamos';
+  static const reservas = 'bt_reservas';
+  static const notificaciones = 'bt_notificaciones';
+  static const config = 'bt_config';
+  static const auditoria = 'bt_auditoria';
+  static const aprendizaje = 'bt_aprendizaje';
+  static const sesion = 'bt_sesion';
+  static const inicializado = 'bt_initialized';
+
+  static const todas = [
+    libros,
+    lectores,
+    prestamos,
+    reservas,
+    notificaciones,
+    config,
+    auditoria,
+    aprendizaje,
+    sesion,
+    inicializado,
+  ];
 }

@@ -1,10 +1,10 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/lector.dart';
-import '../../domain/entities/solicitud_de_registro.dart';
-import '../../domain/repositories/lector_repository.dart';
-import '../datasources/lector_local_datasource.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/lectores/domain/entities/solicitud_de_registro.dart';
+import 'package:bibliotech/features/lectores/domain/repositories/lector_repository.dart';
+import 'lector_local_datasource.dart';
 
 /// Implementación del [LectorRepository] sobre el almacenamiento local.
 class LectorRepositoryImpl implements LectorRepository {

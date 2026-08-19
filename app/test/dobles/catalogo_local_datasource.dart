@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/coleccion_json.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/libro.dart';
-import '../models/libro_model.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'coleccion_json.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/libro.dart';
+import 'package:bibliotech/features/catalogo/data/models/libro_model.dart';
 
 /// Acceso al almacenamiento local del catálogo.
 ///
