@@ -11,6 +11,7 @@ class EjemplarModel extends Ejemplar {
     required super.libroId,
     required super.condicion,
     required super.estado,
+    super.ubicacion,
     super.reimpresionesQr,
   });
 
@@ -19,6 +20,7 @@ class EjemplarModel extends Ejemplar {
         libroId: e.libroId,
         condicion: e.condicion,
         estado: e.estado,
+        ubicacion: e.ubicacion,
         reimpresionesQr: e.reimpresionesQr,
       );
 
@@ -27,6 +29,7 @@ class EjemplarModel extends Ejemplar {
         libroId: json['libroId'] as String,
         condicion: CondicionEjemplar.fromCode(json['condicion'] as String?),
         estado: EstadoEjemplar.fromCode(json['estado'] as String?),
+        ubicacion: json['ubicacion_fisica'] as String? ?? 'Sin asignar',
         reimpresionesQr: (json['reimpresionesQr'] as num?)?.toInt() ?? 0,
       );
 
@@ -35,6 +38,7 @@ class EjemplarModel extends Ejemplar {
         'libroId': libroId,
         'condicion': condicion.code,
         'estado': estado.code,
+        'ubicacion_fisica': ubicacion,
         'reimpresionesQr': reimpresionesQr,
       };
 }

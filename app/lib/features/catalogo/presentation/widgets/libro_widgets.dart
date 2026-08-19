@@ -166,6 +166,7 @@ class _FichaLibro extends StatelessWidget {
     );
 
     final usuario = context.watch<SesionCubit>().state.usuario;
+    final esBibliotecario = usuario?.esPersonal ?? false;
     final reservas = context.watch<ReservasBloc>().state;
     final cola = reservas.colaDe(libro.id);
     final yaReservado = reservas.activas.any((r) => r.libroId == libro.id);
@@ -265,6 +266,64 @@ class _FichaLibro extends StatelessWidget {
                                     color: Paleta.info, fontSize: 12.5),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (esBibliotecario && libro.ejemplares.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      const Text('Ejemplares en inventario',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Paleta.textPrimary)),
+                      const SizedBox(height: 7),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Paleta.bgInput,
+                          borderRadius: BorderRadius.circular(Radios.base),
+                          border: Border.all(color: Paleta.border),
+                        ),
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < libro.ejemplares.length; i++) ...[
+                              if (i > 0) const Divider(height: 1, color: Paleta.border),
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            libro.ejemplares[i].qr,
+                                            style: const TextStyle(
+                                                fontFamily: 'monospace',
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Paleta.textPrimary),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.location_on_outlined, size: 14, color: Paleta.textSecondary),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                libro.ejemplares[i].ubicacion,
+                                                style: const TextStyle(
+                                                    color: Paleta.textSecondary,
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                    Insignia.estadoEjemplar(libro.ejemplares[i].estado),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
