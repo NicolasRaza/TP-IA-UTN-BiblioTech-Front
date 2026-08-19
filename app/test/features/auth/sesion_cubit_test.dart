@@ -22,7 +22,7 @@ void main() {
     act: (cubit) => cubit.iniciarSesion(
       // Credenciales de la semilla de demostración.
       email: 'laura@demo.com',
-      pin: '1234',
+      clave: '1234',
     ),
     expect: () => [
       isA<SesionState>()
@@ -39,7 +39,7 @@ void main() {
     build: () => entorno<SesionCubit>(),
     act: (cubit) => cubit.iniciarSesion(
       email: 'laura@demo.com',
-      pin: '0000',
+      clave: '0000',
     ),
     expect: () => [
       isA<SesionState>()
@@ -57,7 +57,7 @@ void main() {
     build: () => entorno<SesionCubit>(),
     act: (cubit) => cubit.iniciarSesion(
       email: 'nadie@demo.com',
-      pin: '1234',
+      clave: '1234',
     ),
     expect: () => [
       isA<SesionState>()
@@ -74,7 +74,7 @@ void main() {
     'cerrar sesión deja el estado sin usuario',
     build: () => entorno<SesionCubit>(),
     act: (cubit) async {
-      await cubit.iniciarSesion(email: 'laura@demo.com', pin: '1234');
+      await cubit.iniciarSesion(email: 'laura@demo.com', clave: '1234');
       await cubit.cerrarSesion();
     },
     skip: 2,
@@ -86,7 +86,7 @@ void main() {
   blocTest<SesionCubit, SesionState>(
     'los campos vacíos se rechazan sin llegar al repositorio',
     build: () => entorno<SesionCubit>(),
-    act: (cubit) => cubit.iniciarSesion(email: '', pin: ''),
+    act: (cubit) => cubit.iniciarSesion(email: '', clave: ''),
     expect: () => [
       isA<SesionState>()
           .having((s) => s.estado, 'estado', EstadoCarga.cargando),

@@ -34,14 +34,14 @@ class SesionRepositoryImpl implements SesionRepository {
   @override
   Future<Result<Lector>> iniciarSesion({
     required String email,
-    required String pin,
+    required String clave,
   }) async {
     final buscado = await _lectores.obtenerPorEmail(email);
     final usuario = buscado.valorONull;
 
     // El mismo mensaje para email inexistente y PIN incorrecto: distinguirlos
     // permitiría averiguar qué cuentas existen.
-    if (usuario == null || usuario.pin != pin) {
+    if (usuario == null || usuario.pin != clave) {
       return const Fallo(AutenticacionFailure('Email o PIN incorrectos'));
     }
 

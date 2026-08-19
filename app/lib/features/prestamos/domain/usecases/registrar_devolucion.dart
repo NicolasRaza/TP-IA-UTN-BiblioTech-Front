@@ -12,16 +12,29 @@ import '../../../catalogo/domain/repositories/catalogo_repository.dart';
 import '../../../lectores/domain/repositories/lector_repository.dart';
 import '../../../reservas/domain/services/asignador_de_cola.dart';
 import '../entities/prestamo.dart';
+import '../repositories/prestamo_remoto.dart';
 import '../repositories/prestamo_repository.dart';
 
 class RegistrarDevolucionParams extends Equatable {
-  const RegistrarDevolucionParams({required this.prestamoId, this.usuarioId});
+  const RegistrarDevolucionParams({
+    required this.prestamoId,
+    this.qrEjemplar,
+    this.usuarioId,
+  });
 
   final String prestamoId;
+
+  /// Etiqueta escaneada al recibir el libro.
+  ///
+  /// El backend identifica la devolución por el QR del ejemplar y no por el id
+  /// del préstamo, así que contra la API es obligatoria. Con el almacenamiento
+  /// local alcanza con [prestamoId].
+  final String? qrEjemplar;
+
   final String? usuarioId;
 
   @override
-  List<Object?> get props => [prestamoId, usuarioId];
+  List<Object?> get props => [prestamoId, qrEjemplar, usuarioId];
 }
 
 /// Registra la devolución, aplica la multa que corresponda y libera el
@@ -41,7 +54,9 @@ class RegistrarDevolucion
     required AuditoriaRepository auditoriaRepository,
     required AsignadorDeCola asignadorDeCola,
     required Reloj reloj,
-  })  : _prestamos = prestamoRepository,
+    PrestamoRemoto? remoto,
+  })  : _remoto = remoto,
+        _prestamos = prestamoRepository,
         _lectores = lectorRepository,
         _catalogo = catalogoRepository,
         _configuracion = configuracionRepository,
@@ -57,8 +72,23 @@ class RegistrarDevolucion
   final AsignadorDeCola _asignador;
   final Reloj _reloj;
 
+  /// Contra el backend, la devolución completa —multa incluida— la resuelve el
+  /// servidor en una sola transacción.
+  final PrestamoRemoto? _remoto;
+
   @override
   Future<Result<Prestamo>> call(RegistrarDevolucionParams params) async {
+    final remoto = _remoto;
+    if (remoto != null) {
+      final qr = params.qrEjemplar;
+      if (qr == null || qr.trim().isEmpty) {
+        return const Fallo(ValidacionFailure(
+          'Escaneá la etiqueta del ejemplar para registrar la devolución',
+        ));
+      }
+      return remoto.devolver(qr.trim());
+    }
+
     final prestamoResult = await _prestamos.obtenerPorId(params.prestamoId);
     if (prestamoResult case Fallo(:final failure)) return Fallo(failure);
     final prestamo = prestamoResult.valorONull!;

@@ -40,17 +40,21 @@ el caso, dejarlo explícito en el commit o en el PR en lugar de resolverlo en si
 
 ## Mapa documento → código
 
+Todas las rutas son relativas a `app/lib/`.
+
 | Concepto en el documento | Implementación |
 |---|---|
-| Agente Analizador y de Enriquecimiento (§4.2) | `js/agents.js` → `AgenteAnalizador` |
-| Agente Planificador y de Gestión Operativa (§4.3) | `js/agents.js` → `AgentePlanificador` |
-| Agente Evaluador (ciclo Observación→Evaluación, §5) | `js/agents.js` → `AgenteEvaluador` |
-| Agente de Aprendizaje (§5) | `js/agents.js` → `AgenteAprendizaje` |
-| Memoria persistente (§6) | `js/db.js` → `DB` (localStorage + seed data) |
-| Interfaz del lector (§9) | `lector.html` |
-| Interfaz del bibliotecario (§9) | `bibliotecario.html` |
-| Parámetros de configuración (§3, §7) | `admin.html` |
-| Estilos compartidos | `css/main.css` |
+| Agente Analizador y de Enriquecimiento (§4.2) | `features/agentes/domain/services/agente_analizador.dart` |
+| Agente Planificador y de Gestión Operativa (§4.3) | `features/agentes/domain/services/agente_planificador.dart` |
+| Agente Evaluador (ciclo Observación→Evaluación, §5) | `features/agentes/domain/services/agente_evaluador.dart` y `observador_del_sistema.dart` |
+| Agente de Aprendizaje (§5) | `features/agentes/domain/services/agente_aprendizaje.dart` |
+| Orden del ciclo (§5) | `features/agentes/domain/usecases/correr_ciclo_de_agentes.dart` |
+| Memoria persistente (§6) | El backend SGB. En modo local, `core/storage/` sobre `SharedPreferences` |
+| Reglas de negocio (§7) | `features/*/domain/services/politica_*.dart` y `asignador_de_cola.dart` |
+| Interfaz del lector (§9) | `app/portal_lector.dart` |
+| Interfaz del bibliotecario (§9) | `app/panel_bibliotecario.dart` |
+| Parámetros de configuración (§3, §7) | `app/panel_admin.dart` y `features/administracion/` |
+| Estilos compartidos | `core/theme/tema.dart` |
 
 ## Pendiente para la entrega final
 

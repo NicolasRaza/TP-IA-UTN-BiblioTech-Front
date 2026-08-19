@@ -10,7 +10,7 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
-# La app Flutter vive en app/; en la raíz queda el prototipo HTML original.
+# Todo el proyecto Flutter vive en app/.
 defaults:
   run:
     working-directory: app

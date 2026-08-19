@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/di/inyeccion.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/formato.dart';
@@ -9,13 +11,13 @@ import '../../../catalogo/domain/entities/libro.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../../domain/entities/prestamo.dart';
 import '../../../agentes/presentation/bloc/agentes_bloc.dart';
-import '../../../catalogo/domain/repositories/catalogo_repository.dart';
+import '../../../catalogo/domain/usecases/consultas_catalogo.dart';
 import '../../../catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../../../lectores/presentation/bloc/lectores_bloc.dart';
 import '../../domain/services/politica_de_prestamo.dart';
 import '../bloc/prestamos_bloc.dart';
 
-/// Registrar préstamo, portado de `bibliotecario.html #s-prestamo`.
+/// Registrar préstamo (spec v2 §9).
 ///
 /// El lector se identifica por su QR o por búsqueda, y el ejemplar por el QR
 /// de su etiqueta. El repositorio valida límites, multas y vencidos.
@@ -31,6 +33,7 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
   ({Libro libro, Ejemplar ejemplar})? _ejemplar;
 
   final _qrEjemplar = TextEditingController();
+  bool _buscando = false;
 
   @override
   void dispose() {
@@ -38,25 +41,29 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
     super.dispose();
   }
 
-  void _buscarEjemplar() {
+  /// Resuelve la etiqueta contra el repositorio de catálogo.
+  ///
+  /// Antes se recorría el catálogo que el bloc tenía en memoria. Eso sólo
+  /// funciona si la app ya bajó todos los ejemplares de todos los títulos, que
+  /// es cierto con el almacenamiento local y falso contra la API: ahí el
+  /// listado trae los conteos y el ejemplar se resuelve con
+  /// `GET /catalogo/ejemplares/qr/{codigo}`. Preguntarle al repositorio
+  /// funciona igual en los dos casos.
+  Future<void> _buscarEjemplar() async {
     final qr = _qrEjemplar.text.trim();
-    final libros = context.read<CatalogoBloc>().state.todosLosLibros;
+    if (qr.isEmpty) return;
 
-    EjemplarLocalizado? encontrado;
-    for (final libro in libros) {
-      for (final ejemplar in libro.ejemplares) {
-        if (ejemplar.qr == qr) {
-          encontrado = (libro: libro, ejemplar: ejemplar);
-          break;
-        }
-      }
-      if (encontrado != null) break;
-    }
+    setState(() => _buscando = true);
+    final resultado = await sl<BuscarEjemplarPorQr>()(BuscarPorQrParams(qr));
+    if (!mounted) return;
 
-    setState(() => _ejemplar = encontrado);
-    if (encontrado == null) {
-      avisar(context, 'No se encontró ningún ejemplar con ese código',
-          esError: true);
+    setState(() {
+      _buscando = false;
+      _ejemplar = resultado.valorONull;
+    });
+
+    if (resultado case Fallo(:final failure)) {
+      avisar(context, failure.mensaje, esError: true);
     }
   }
 
@@ -69,6 +76,8 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
           lectorId: lector.id,
           libroId: ejemplar.libro.id,
           ejemplarId: ejemplar.ejemplar.id,
+          // El backend identifica el ejemplar por su etiqueta, no por su id.
+          qrEjemplar: ejemplar.ejemplar.qr,
         ));
 
     setState(() {
@@ -144,7 +153,7 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
                       child: TextField(
                         controller: _qrEjemplar,
                         decoration: const InputDecoration(
-                          hintText: 'Código QR del ejemplar (BT-lib-…-ej-…)',
+                          hintText: 'Código QR del ejemplar',
                           prefixIcon: Icon(Icons.qr_code_scanner, size: 20),
                         ),
                         onSubmitted: (_) => _buscarEjemplar(),
@@ -152,8 +161,15 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
-                      onPressed: () => _buscarEjemplar(),
-                      child: const Text('Buscar'),
+                      onPressed: _buscando ? null : _buscarEjemplar,
+                      child: _buscando
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2.2),
+                            )
+                          : const Text('Buscar'),
                     ),
                   ],
                 ),
@@ -238,7 +254,7 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
   }
 }
 
-/// Registrar devolución, portado de `bibliotecario.html #s-devolucion`.
+/// Registrar devolución (spec v2 §9).
 class SeccionDevolucion extends StatefulWidget {
   const SeccionDevolucion({super.key});
 
@@ -248,11 +264,36 @@ class SeccionDevolucion extends StatefulWidget {
 
 class _SeccionDevolucionState extends State<SeccionDevolucion> {
   final _busqueda = TextEditingController();
+  final _qrDevolucion = TextEditingController();
 
   @override
   void dispose() {
     _busqueda.dispose();
+    _qrDevolucion.dispose();
     super.dispose();
+  }
+
+  void _devolverPorQr() {
+    final qr = _qrDevolucion.text.trim();
+    if (qr.isEmpty) return;
+
+    // El préstamo lo resuelve quien recibe el evento a partir de la etiqueta:
+    // contra el backend es la única forma de identificarlo, y en local el
+    // ejemplar ya alcanza para encontrarlo.
+    context
+        .read<PrestamosBloc>()
+        .add(DevolucionRegistrada(_prestamoDeQr(qr), qrEjemplar: qr));
+    _qrDevolucion.clear();
+  }
+
+  /// El préstamo abierto del ejemplar cuya etiqueta es [qr], si la app lo tiene
+  /// a mano. Contra el backend queda vacío y decide el servidor.
+  String _prestamoDeQr(String qr) {
+    for (final p in context.read<PrestamosBloc>().state.todos) {
+      if (!p.estaAbierto) continue;
+      if (_qrDelPrestamo(context, p) == qr) return p.id;
+    }
+    return '';
   }
 
   @override
@@ -284,6 +325,26 @@ class _SeccionDevolucionState extends State<SeccionDevolucion> {
           'Registrar devolución',
           subtitulo: 'Préstamos abiertos, ordenados por vencimiento',
         ),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _qrDevolucion,
+                decoration: const InputDecoration(
+                  hintText: 'Código QR del ejemplar que se devuelve',
+                  prefixIcon: Icon(Icons.qr_code_scanner, size: 20),
+                ),
+                onSubmitted: (_) => _devolverPorQr(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            FilledButton(
+              onPressed: _devolverPorQr,
+              child: const Text('Devolver'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
         TextField(
           controller: _busqueda,
           onChanged: (_) => setState(() {}),
@@ -380,9 +441,12 @@ class _FilaDevolucion extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             FilledButton(
-              onPressed: () => context
-                  .read<PrestamosBloc>()
-                  .add(DevolucionRegistrada(prestamo.id)),
+              onPressed: () => context.read<PrestamosBloc>().add(
+                    DevolucionRegistrada(
+                      prestamo.id,
+                      qrEjemplar: _qrDelPrestamo(context, prestamo),
+                    ),
+                  ),
               child: const Text('Devolver'),
             ),
           ],
@@ -500,6 +564,22 @@ Libro? _libro(BuildContext context, String libroId) => context
     .todosLosLibros
     .where((l) => l.id == libroId)
     .firstOrNull;
+
+/// La etiqueta del ejemplar prestado, si la app la tiene cargada.
+///
+/// Con el almacenamiento local el catálogo trae todos los ejemplares y el QR
+/// sale de ahí. Contra el backend el listado sólo trae conteos, así que suele
+/// devolver `null` y hay que escanear la etiqueta: es el mismo gesto que pide
+/// el mostrador de verdad.
+String? _qrDelPrestamo(BuildContext context, Prestamo prestamo) => context
+    .read<CatalogoBloc>()
+    .state
+    .todosLosLibros
+    .where((l) => l.id == prestamo.libroId)
+    .expand((l) => l.ejemplares)
+    .where((e) => e.id == prestamo.ejemplarId)
+    .firstOrNull
+    ?.qr;
 
 /// Resuelve el lector de un préstamo desde el padrón cargado.
 Lector? _lector(BuildContext context, String lectorId) => context

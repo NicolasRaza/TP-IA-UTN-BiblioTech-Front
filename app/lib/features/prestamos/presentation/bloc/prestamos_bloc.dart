@@ -95,6 +95,7 @@ class PrestamosBloc extends Bloc<PrestamosEvent, PrestamosState> {
       lectorId: event.lectorId,
       libroId: event.libroId,
       ejemplarId: event.ejemplarId,
+      qrEjemplar: event.qrEjemplar,
       usuarioId: _usuarioActualId(),
     ));
 
@@ -122,6 +123,7 @@ class PrestamosBloc extends Bloc<PrestamosEvent, PrestamosState> {
 
     final resultado = await _registrarDevolucion(RegistrarDevolucionParams(
       prestamoId: event.prestamoId,
+      qrEjemplar: event.qrEjemplar,
       usuarioId: _usuarioActualId(),
     ));
 

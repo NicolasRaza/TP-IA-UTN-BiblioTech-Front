@@ -8,7 +8,7 @@ import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
 import '../bloc/catalogo_bloc.dart';
 
-/// Catálogo e inventario, portado de `bibliotecario.html #s-catalogo-bib`.
+/// Catálogo e inventario del bibliotecario (spec v2 §9).
 class SeccionInventario extends StatefulWidget {
   const SeccionInventario({super.key});
 

@@ -28,6 +28,7 @@ class PrestamoRegistrado extends PrestamosEvent {
     required this.lectorId,
     required this.libroId,
     this.ejemplarId,
+    this.qrEjemplar,
   });
 
   final String lectorId;
@@ -36,18 +37,25 @@ class PrestamoRegistrado extends PrestamosEvent {
   /// Ejemplar puntual. Si es `null`, se toma el primero disponible.
   final String? ejemplarId;
 
+  /// Etiqueta escaneada. Es como el backend identifica al ejemplar.
+  final String? qrEjemplar;
+
   @override
-  List<Object?> get props => [lectorId, libroId, ejemplarId];
+  List<Object?> get props => [lectorId, libroId, ejemplarId, qrEjemplar];
 }
 
 /// El lector devuelve un ejemplar.
 class DevolucionRegistrada extends PrestamosEvent {
-  const DevolucionRegistrada(this.prestamoId);
+  const DevolucionRegistrada(this.prestamoId, {this.qrEjemplar});
 
   final String prestamoId;
 
+  /// Etiqueta escaneada al recibir el libro. Es como el backend identifica la
+  /// devolución; con el almacenamiento local alcanza con [prestamoId].
+  final String? qrEjemplar;
+
   @override
-  List<Object?> get props => [prestamoId];
+  List<Object?> get props => [prestamoId, qrEjemplar];
 }
 
 class MensajePrestamosDescartado extends PrestamosEvent {

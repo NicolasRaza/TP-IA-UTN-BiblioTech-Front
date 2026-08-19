@@ -1,10 +1,16 @@
 # Estado de la migración a Flutter
 
-Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile).
-Rama de trabajo: `claude/flutter-architecture-structure-2grzfz`.
+Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile) y
+de la conexión con el backend SGB.
 
-**Última actualización:** sesión del 15/08/2026 — refactor a Clean
-Architecture + BLoC.
+El prototipo original (`index.html`, `lector.html`, `bibliotecario.html`,
+`admin.html`, `js/`, `css/`) se eliminó del repositorio una vez que la app
+Flutter quedó conectada al backend: dejarlo habría sido mantener dos
+implementaciones de la misma spec, una de ellas sin uso y sin backend. Sigue
+en el historial de git para quien quiera compararlas.
+
+**Última actualización:** sesión del 19/08/2026 — conexión con el backend SGB
+y baja del prototipo.
 
 ## Dónde está cada cosa
 
@@ -12,11 +18,114 @@ Architecture + BLoC.
 |---|---|
 | `app/` | Proyecto Flutter (web, android, ios) |
 | `.github/workflows/ci.yml` | CI: formato, análisis, tests y builds |
-| `index.html`, `lector.html`, `bibliotecario.html`, `admin.html`, `js/`, `css/` | Prototipo original, se conserva como referencia |
 | `docs/tp1-sistema-gestion-bibliotecas-v2.md` | Especificación funcional canónica |
 
-El prototipo no se tocó: la app Flutter vive en `app/` y se puede comparar
-pantalla por pantalla contra el HTML.
+## Conexión con el backend
+
+La app corre contra la API del backend SGB
+(`https://tp-ia-utn-bibliotech-back-production.up.railway.app`). El
+interruptor es uno solo, `Entorno.usarBackend`, y vive en el composition
+root: decide qué implementación queda atada a cada contrato de dominio. Ni
+los casos de uso, ni los blocs, ni las pantallas se enteran de cuál está
+montada.
+
+```bash
+flutter run -d chrome                                    # contra el backend
+flutter run -d chrome --dart-define=SGB_USAR_BACKEND=false   # modo local
+```
+
+El modo local sigue existiendo a propósito: sirve para mostrar la app sin
+conexión y es el que usan los tests de reglas de negocio, que describen el
+dominio y no deben depender de la red.
+
+### Qué viene del servidor
+
+| Feature | Rutas |
+|---|---|
+| Sesión | `POST /auth/login`, `GET /auth/me` |
+| Catálogo | `GET/POST/PATCH /catalogo/titulos`, `/titulos/{id}/validar`, `/titulos/{id}/ejemplares`, `/ejemplares`, `/ejemplares/qr/{qr}` |
+| Padrón | `GET/POST/PATCH /lectores` |
+| Préstamos | `GET/POST /prestamos`, `/prestamos/devolucion`, `/prestamos/lector/{id}` |
+| Reservas | `GET/POST/DELETE /reservas`, `/reservas/lector/{id}` |
+| Recomendaciones | `GET /recomendaciones` |
+
+Siguen siendo locales las features que la API no cubre: notificaciones,
+auditoría, configuración de parámetros y registro de aprendizaje.
+
+### Permisos: qué cambia según quién esté logueado
+
+El backend le reserva `/lectores`, `GET /prestamos` y `GET /reservas` al rol
+bibliotecario. Eso no es un detalle de implementación, define qué puede hacer
+cada pantalla, y hubo que respetarlo en tres lugares:
+
+- **Recomendaciones.** El motor local necesita ver toda la circulación para
+  ponderar historial contra popularidad, y un lector no puede leerla. Contra
+  el backend se usa `GET /recomendaciones`, que corre la misma ponderación de
+  la spec §2 —70/30, cold start con 5 préstamos o menos— sobre datos
+  completos. El aviso de cold start se afirma contando el historial propio
+  del lector, que su rol sí puede leer.
+- **Buscar una reserva por id.** Se empieza por las del dueño de la sesión y
+  recién después por el listado global: al revés, cancelar la propia reserva
+  daría 403.
+- **Ciclo de agentes.** Los pasos que escriben —procesar vencimientos y
+  ejecutar decisiones— son del servidor, que corre su propio planificador en
+  un scheduler desde que arranca. La app observa y decide, así que el
+  bibliotecario sigue viendo qué propone el Evaluador sobre datos reales,
+  pero no duplica acciones ya ejecutadas del otro lado.
+
+### Cómo está armado
+
+- `core/api/cliente_api.dart` — el único lugar que arma URLs, adjunta el JWT
+  y traduce el borde técnico a una `Failure`. La tabla de traducción
+  (401/403 → autenticación, 404 → no encontrado, 409 → regla de negocio,
+  422 → validación) está fijada por tests.
+- `core/api/sesion_api.dart` — el JWT y su dueño, persistidos. El cliente le
+  pide el token en cada request, así que un login o un logout se reflejan
+  solos en todos los datasources.
+- `core/api/mapeo_api.dart` — la traducción entre los dos vocabularios, con
+  la pérdida de información de cada conversión documentada.
+- Un datasource y un repositorio API por agregado, implementando los mismos
+  contratos que las versiones locales.
+- `PrestamoRemoto` y `ReservaRemota` — puertos para las operaciones que el
+  backend resuelve en una sola transacción. Prestar, devolver, reservar y
+  cancelar no son "guardar una fila": el servidor verifica cupo, multas y
+  disponibilidad, mueve el estado del ejemplar y calcula el plazo, todo
+  dentro del mismo commit. Los casos de uso delegan en esos puertos cuando
+  están registrados, en vez de repetir del lado de la app reglas que el
+  servidor ya aplica.
+
+### Decisiones sobre datos que la API no da
+
+- **Ejemplares en el listado.** `GET /titulos` informa los conteos pero no
+  lista los ejemplares. El listado guarda esos conteos y deja `ejemplares`
+  vacía; el detalle sí los pide. Rellenar con ejemplares de relleno mostraría
+  etiquetas QR que no resuelven contra el servidor.
+- **Códigos QR.** Los emite el backend y no se pueden derivar del id, así que
+  `Ejemplar.qrAsignado` los conserva tal cual. La regla de continuidad de
+  identidad ante reimpresión (§7) vale igual: el código se conserva, no se
+  recalcula.
+- **Títulos pendientes de validación.** `GET /titulos` sólo devuelve los
+  validados, así que en modo backend la bandeja de pendientes queda vacía.
+- **Multas.** Del lado del backend son registros propios con su motivo y su
+  estado, no un saldo acumulado en el lector: se pagan o condonan de a una.
+
+### Pendiente del lado del backend
+
+`titulo_id` es parte del contrato: está declarado en `PrestamoResponse` y
+aparece en el OpenAPI. Lo que falta es completarlo en dos de las cuatro
+rutas que devuelven préstamos —`GET /prestamos/lector/{id}` y
+`POST /prestamos/devolucion`—, que hoy devuelven el `model_validate` sin
+asignarlo y por eso lo serializan como `null`:
+
+```python
+# circulacion.py, historial_prestamos (~línea 204) y registrar_devolucion (~183)
+r.titulo_id = (await db.get(Ejemplar, p.ejemplar_id)).titulo_id
+```
+
+Es la misma línea que ya tienen `crear_prestamo` y `listar_prestamos`.
+Mientras falte, la sección "Mi actividad" del lector no puede mostrar de qué
+libro es cada préstamo: la app lee el campo siempre que traiga valor, así que
+el día que se complete empieza a funcionar sin tocar el frontend.
 
 ## Estado: la migración funcional está completa
 
@@ -71,11 +180,11 @@ por shell los muestra: ningún bloc necesita un `BuildContext`.
 
 ### Base del proyecto
 - Scaffold con los tres targets: `web`, `android`, `ios`.
-- Tema portado de `css/main.css` (misma paleta, radios y tipografía).
+- Tema portado del prototipo: misma paleta, radios y tipografía.
 - Shell adaptativo: barra inferior en celular, riel lateral en tablet,
   sidebar expandido en escritorio. Un solo árbol de widgets para las tres.
 
-### Dominio y persistencia (portado de `js/db.js`)
+### Dominio y persistencia
 - Entidades inmutables con `Equatable`, sin serialización: el JSON vive en
   los models de `data`, que extienden a la entidad.
 - `KeyValueStore` abstrae el almacenamiento: `SharedPrefsStore` en la app,
@@ -104,7 +213,7 @@ Implementadas de cero durante la migración:
 - **Ponderación de recomendaciones (§2).** 70% historial / 30% popularidad, con
   inversión a 100% popularidad en *cold start*.
 
-### Agentes (portado de `js/agents.js`)
+### Agentes
 - **Analizador:** parser OCR y resolución de fuentes externas.
 - **Evaluador:** decide y devuelve una lista de `Decision` sin tocar el sistema.
   Produce además recomendaciones e indicadores.
@@ -128,8 +237,8 @@ Como el Evaluador es puro, sus tests se escriben armando un
 
 ### Pantallas
 
-**Lector** (`lector.html`) — las siete secciones del prototipo agrupadas en
-cinco destinos, para que la barra inferior siga siendo usable en un celular:
+**Lector** — las siete secciones de la spec agrupadas en cinco destinos, para
+que la barra inferior siga siendo usable en un celular:
 - Catálogo con búsqueda por título, autor, ISBN o género, filtro por género y
   por disponibilidad, y ficha con reserva.
 - Recomendaciones que explican el criterio y avisan del cold start.
@@ -138,7 +247,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
   posición en la cola o el plazo de retiro corriendo.
 - Notificaciones y perfil con límites de la categoría y QR de credencial.
 
-**Bibliotecario** (`bibliotecario.html`) — las siete secciones:
+**Bibliotecario** — las siete secciones:
 - Dashboard con métricas y las decisiones abiertas del Evaluador, con botón
   para que el Planificador ejecute el lote.
 - Alta de libro: se pega el texto reconocido, el Analizador propone la ficha
@@ -150,7 +259,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Lectores con cambio de categoría y registro de pago de multas.
 - Alertas agrupadas por tipo, con el motivo de cada decisión.
 
-**Admin** (`admin.html`) — las seis secciones:
+**Admin** — las seis secciones:
 - Reportes con gráfico de préstamos por mes y rankings.
 - Parámetros: plazos y límites por categoría, retención de reservas, multa
   diaria y ponderación del motor de recomendaciones.
@@ -158,7 +267,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Aprendizaje, sugerencias estratégicas y "acerca de" con la bitácora de la
   sesión y el reinicio de datos.
 
-### Tests — 43, todos en verde
+### Tests — 115, todos en verde
 
 `test/helpers/entorno_de_prueba.dart` levanta el grafo real de la app sobre
 `MemoryStore`, `RelojFijo` y `GeneradorIdSecuencial`. Los tests usan los
@@ -172,6 +281,9 @@ cambia son las tres piezas de infraestructura del borde.
 | `features/auth/sesion_cubit_test.dart` | Login válido, PIN incorrecto, email inexistente, cierre de sesión y validación de campos |
 | `features/reservas/reservas_bloc_test.dart` | Reserva lista vs. en espera, duplicados, cancelación, bloqueo por multa y orden de la cola |
 | `app/arranque_test.dart` | Arranque del composition root, ruteo por rol y tema |
+| `core/api/cliente_api_test.dart` | El borde HTTP: query, JWT y la traducción de cada status a su `Failure` |
+| `features/*/​*_api_datasource_test.dart` | El contrato con la API, con cliente HTTP falso: los cuerpos son los que documenta el OpenAPI, así que un cambio del backend rompe en CI y no en la demo |
+| `features/auth/sesion_repository_api_test.dart` | Login, revalidación del JWT al arrancar, token vencido vs. corte de red |
 
 ### CI/CD
 
@@ -253,7 +365,8 @@ esperar a que el push del tag levante un run nuevo.
 ## Pendiente
 
 1. **Escaneo real de QR con cámara.** Hoy el QR se resuelve por texto, igual
-   que en el prototipo. Haría falta `mobile_scanner` y permisos en Android/iOS.
+   que en el prototipo original. Haría falta `mobile_scanner` y permisos en
+   Android/iOS.
 2. **Enriquecimiento contra Open Library.** `AgenteAnalizador.resolverFuentes`
    ya acepta varias fuentes con su autoridad y resuelve conflictos, pero falta
    el cliente HTTP que consulte la API y arme esos resultados. Hoy la ficha se
@@ -278,7 +391,12 @@ flutter test                 # 39 tests
 flutter analyze
 ```
 
-Usuarios de demostración (precargados en cada tarjeta de rol):
+Contra el backend, las cuentas son las del servidor y el formulario pide
+email y **contraseña**. La pantalla no prellena nada: las credenciales de la
+demo local no existen del otro lado.
+
+En modo local (`--dart-define=SGB_USAR_BACKEND=false`) valen los usuarios de
+demostración, precargados en cada tarjeta de rol:
 
 | Rol | Email | PIN |
 |---|---|---|

@@ -23,6 +23,8 @@ class Libro extends Equatable {
     required this.fechaAlta,
     this.ejemplares = const [],
     this.camposPendientes = const [],
+    this.totalInformado,
+    this.disponiblesInformado,
   });
 
   final String id;
@@ -47,9 +49,23 @@ class Libro extends Equatable {
   /// marcados para carga manual (spec v2 §4.2).
   final List<String> camposPendientes;
 
-  int get totalEjemplares => ejemplares.length;
+  /// Existencias que informa el backend sin listar los ejemplares uno a uno.
+  ///
+  /// `GET /api/v1/catalogo/titulos` devuelve `total_ejemplares` y
+  /// `ejemplares_disponibles`, pero la API no expone ninguna ruta que liste
+  /// los ejemplares de un título. Antes que inventar ejemplares de relleno
+  /// —que mostrarían etiquetas QR que no existen en el servidor— se guarda el
+  /// conteo tal como llegó y [ejemplares] queda vacía: la disponibilidad es
+  /// exacta y no hay ningún dato fabricado.
+  ///
+  /// Con el almacenamiento local ambos quedan en `null` y los conteos vuelven
+  /// a salir de la lista, que ahí sí está completa.
+  final int? totalInformado;
+  final int? disponiblesInformado;
+
+  int get totalEjemplares => totalInformado ?? ejemplares.length;
   int get ejemplaresDisponibles =>
-      ejemplares.where((e) => e.estaDisponible).length;
+      disponiblesInformado ?? ejemplares.where((e) => e.estaDisponible).length;
   bool get hayDisponible => ejemplaresDisponibles > 0;
 
   Ejemplar? get primerEjemplarDisponible {
@@ -97,6 +113,8 @@ class Libro extends Equatable {
     bool? validado,
     List<Ejemplar>? ejemplares,
     List<String>? camposPendientes,
+    int? totalInformado,
+    int? disponiblesInformado,
   }) =>
       Libro(
         id: id,
@@ -113,6 +131,8 @@ class Libro extends Equatable {
         fechaAlta: fechaAlta,
         ejemplares: ejemplares ?? this.ejemplares,
         camposPendientes: camposPendientes ?? this.camposPendientes,
+        totalInformado: totalInformado ?? this.totalInformado,
+        disponiblesInformado: disponiblesInformado ?? this.disponiblesInformado,
       );
 
   /// Devuelve una copia con un ejemplar reemplazado por su versión modificada.
@@ -141,5 +161,7 @@ class Libro extends Equatable {
         fechaAlta,
         ejemplares,
         camposPendientes,
+        totalInformado,
+        disponiblesInformado,
       ];
 }

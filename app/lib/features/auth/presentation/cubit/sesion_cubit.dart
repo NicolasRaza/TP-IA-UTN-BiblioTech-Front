@@ -53,12 +53,12 @@ class SesionCubit extends Cubit<SesionState> {
 
   Future<void> iniciarSesion({
     required String email,
-    required String pin,
+    required String clave,
   }) async {
     emit(state.copyWith(estado: EstadoCarga.cargando, limpiarError: true));
 
     final resultado =
-        await _iniciarSesion(IniciarSesionParams(email: email, pin: pin));
+        await _iniciarSesion(IniciarSesionParams(email: email, clave: clave));
 
     resultado.fold(
       (failure) => emit(SesionState(
