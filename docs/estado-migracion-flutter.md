@@ -109,10 +109,21 @@ cada pantalla, y hubo que respetarlo en tres lugares:
 
 ### Pendiente del lado del backend
 
-`titulo_id` se completa en `POST /prestamos` y en `GET /prestamos`, pero no
-en `GET /prestamos/lector/{id}` ni en la devolución. Mientras falte, la
-sección "Mi actividad" del lector no puede mostrar de qué libro es cada
-préstamo. Se arregla con la misma línea que ya usan las otras dos rutas.
+`titulo_id` es parte del contrato: está declarado en `PrestamoResponse` y
+aparece en el OpenAPI. Lo que falta es completarlo en dos de las cuatro
+rutas que devuelven préstamos —`GET /prestamos/lector/{id}` y
+`POST /prestamos/devolucion`—, que hoy devuelven el `model_validate` sin
+asignarlo y por eso lo serializan como `null`:
+
+```python
+# circulacion.py, historial_prestamos (~línea 204) y registrar_devolucion (~183)
+r.titulo_id = (await db.get(Ejemplar, p.ejemplar_id)).titulo_id
+```
+
+Es la misma línea que ya tienen `crear_prestamo` y `listar_prestamos`.
+Mientras falte, la sección "Mi actividad" del lector no puede mostrar de qué
+libro es cada préstamo: la app lee el campo siempre que traiga valor, así que
+el día que se complete empieza a funcionar sin tocar el frontend.
 
 ## Estado: la migración funcional está completa
 

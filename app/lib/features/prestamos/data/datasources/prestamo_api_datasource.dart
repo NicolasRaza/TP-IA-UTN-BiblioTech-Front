@@ -95,10 +95,15 @@ class PrestamoApiDataSourceHttp implements PrestamoApiDataSource {
 /// - **multaAplicada**: las multas del backend son registros aparte
 ///   (`/api/v1/multas`), no un acumulado dentro del préstamo.
 ///
-/// `titulo_id` sí viaja en `POST /prestamos` y en `GET /prestamos`, pero el
-/// backend todavía no lo completa en `GET /prestamos/lector/{id}` ni en la
-/// devolución. Cuando falta, `libroId` queda vacío antes que apuntar a un
-/// título equivocado.
+/// `titulo_id` es parte del contrato —está en `PrestamoResponse` y aparece en
+/// el OpenAPI—, pero hoy sólo lo completan `POST /prestamos` y
+/// `GET /prestamos`; `GET /prestamos/lector/{id}` y la devolución lo dejan en
+/// `null`, porque devuelven el `model_validate` sin asignarlo.
+///
+/// Por eso el campo se lee siempre que traiga valor y sólo se cae a vacío
+/// cuando llega nulo: apuntar a un título equivocado sería peor que no
+/// apuntar a ninguno. El día que el backend lo complete en las cuatro rutas,
+/// esto empieza a funcionar sin tocar una línea de la app.
 Prestamo prestamoDesdeApi(Map<String, dynamic> json) {
   final inicio = fechaDesdeApi(json['fecha_inicio'], DateTime.now());
   final vencimiento = fechaDesdeApi(json['fecha_devolucion_pactada'], inicio);
