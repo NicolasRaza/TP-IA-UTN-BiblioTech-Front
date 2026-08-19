@@ -46,6 +46,19 @@ class AutenticacionFailure extends Failure {
   const AutenticacionFailure(super.mensaje);
 }
 
+/// La cuenta existe y las credenciales son correctas, pero todavía no la
+/// verificó nadie del personal de la biblioteca.
+///
+/// Es distinta de [AutenticacionFailure] porque no hay nada que corregir: no
+/// se reintenta con otros datos, se espera. La UI la muestra como aviso y no
+/// como error de credenciales.
+class CuentaPendienteFailure extends Failure {
+  const CuentaPendienteFailure(
+      [super.mensaje = 'Tu cuenta todavía no fue verificada por la '
+          'biblioteca. Vas a poder ingresar cuando un bibliotecario '
+          'confirme tus datos.']);
+}
+
 /// No se pudo hablar con el backend: sin conexión, timeout, o una respuesta
 /// que la API no debería haber devuelto.
 class RedFailure extends Failure {

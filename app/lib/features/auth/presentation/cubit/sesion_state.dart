@@ -6,6 +6,7 @@ class SesionState extends Equatable {
     this.estado = EstadoCarga.inicial,
     this.usuario,
     this.mensajeError,
+    this.cuentaPendiente = false,
   });
 
   final EstadoCarga estado;
@@ -14,6 +15,10 @@ class SesionState extends Equatable {
   final Lector? usuario;
 
   final String? mensajeError;
+
+  /// El login falló porque la cuenta existe pero todavía no la verificaron.
+  /// No es un error de credenciales: la pantalla lo muestra como aviso.
+  final bool cuentaPendiente;
 
   bool get haySesion => usuario != null;
 
@@ -24,6 +29,7 @@ class SesionState extends Equatable {
     EstadoCarga? estado,
     Lector? usuario,
     String? mensajeError,
+    bool? cuentaPendiente,
     bool limpiarUsuario = false,
     bool limpiarError = false,
   }) =>
@@ -31,8 +37,10 @@ class SesionState extends Equatable {
         estado: estado ?? this.estado,
         usuario: limpiarUsuario ? null : (usuario ?? this.usuario),
         mensajeError: limpiarError ? null : (mensajeError ?? this.mensajeError),
+        cuentaPendiente:
+            limpiarError ? false : (cuentaPendiente ?? this.cuentaPendiente),
       );
 
   @override
-  List<Object?> get props => [estado, usuario, mensajeError];
+  List<Object?> get props => [estado, usuario, mensajeError, cuentaPendiente];
 }

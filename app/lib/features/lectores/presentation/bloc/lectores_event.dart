@@ -29,6 +29,16 @@ class LectorActualizado extends LectoresEvent {
   List<Object?> get props => [lector];
 }
 
+/// El bibliotecario confirmó el alta de un lector que se autorregistró.
+class LectorVerificado extends LectoresEvent {
+  const LectorVerificado(this.lectorId);
+
+  final String lectorId;
+
+  @override
+  List<Object?> get props => [lectorId];
+}
+
 class CategoriaCambiada extends LectoresEvent {
   const CategoriaCambiada({required this.lectorId, required this.categoria});
 

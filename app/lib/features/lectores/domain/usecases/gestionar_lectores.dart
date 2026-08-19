@@ -170,6 +170,58 @@ class ActualizarLector implements UseCase<Lector, ActualizarLectorParams> {
   }
 }
 
+class VerificarLectorParams extends Equatable {
+  const VerificarLectorParams({required this.lectorId, this.usuarioId});
+
+  final String lectorId;
+  final String? usuarioId;
+
+  @override
+  List<Object?> get props => [lectorId, usuarioId];
+}
+
+/// Confirma el alta de un lector que se registró por su cuenta.
+///
+/// Es el paso que el backend exige antes de dejarlo operar: hasta que su
+/// estado pasa a [EstadoLector.activo], cualquier préstamo o reserva vuelve
+/// con un 403. Verificar es un acto de una persona del personal, no algo que
+/// el sistema pueda deducir, y por eso queda asentado en la auditoría.
+class VerificarLector implements UseCase<Lector, VerificarLectorParams> {
+  const VerificarLector({
+    required LectorRepository lectorRepository,
+    required AuditoriaRepository auditoriaRepository,
+  })  : _lectores = lectorRepository,
+        _auditoria = auditoriaRepository;
+
+  final LectorRepository _lectores;
+  final AuditoriaRepository _auditoria;
+
+  @override
+  Future<Result<Lector>> call(VerificarLectorParams params) async {
+    final buscado = await _lectores.obtenerPorId(params.lectorId);
+    if (buscado case Fallo(:final failure)) return Fallo(failure);
+
+    final lector = buscado.valorONull!;
+    if (!lector.pendienteDeVerificacion) {
+      return Fallo(ReglaDeNegocioFailure(
+        '${lector.nombreCompleto} ya está ${lector.estado.label.toLowerCase()}.',
+      ));
+    }
+
+    final actualizado = await _lectores
+        .actualizar(lector.copyWith(estado: EstadoLector.activo));
+    if (actualizado case Fallo(:final failure)) return Fallo(failure);
+
+    await _auditoria.registrar(
+      tipo: TipoEventoAuditoria.verificacionLector,
+      descripcion: 'Verificación del lector ${lector.nombreCompleto}',
+      usuarioId: params.usuarioId,
+    );
+
+    return actualizado;
+  }
+}
+
 /// Lectores cuya categoría quedó desfasada respecto de su edad.
 ///
 /// Alimenta la decisión `sugerirRevisionCategoria` del Agente Evaluador: el

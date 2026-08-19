@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bibliotech/core/api/cliente_api.dart';
 import 'package:bibliotech/features/lectores/data/datasources/lector_api_datasource.dart';
 import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/lectores/domain/entities/solicitud_de_registro.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -100,6 +101,79 @@ void main() {
 
       expect((jsonDecode(enviado.body) as Map)['categoria'], 'adulto');
     });
+  });
+
+  test('pendiente se distingue de activo y de baja', () async {
+    final esperado = {
+      'pendiente': EstadoLector.pendiente,
+      'activo': EstadoLector.activo,
+      'suspendido': EstadoLector.suspendido,
+      'baja': EstadoLector.baja,
+    };
+
+    for (final entrada in esperado.entries) {
+      final datasource = construir(MockClient(
+        (_) async =>
+            http.Response(jsonEncode(lectorJson(estado: entrada.key)), 200),
+      ));
+      expect((await datasource.obtener('3')).valorONull!.estado, entrada.value,
+          reason: entrada.key);
+    }
+  });
+
+  test('la edición manda el estado tal cual, no un booleano', () async {
+    late http.Request enviado;
+    final datasource = construir(MockClient((peticion) async {
+      enviado = peticion;
+      return http.Response(jsonEncode(lectorJson()), 200);
+    }));
+
+    await datasource.actualizar(Lector(
+      id: '3',
+      nombre: 'Laura',
+      apellido: 'Gómez',
+      email: 'laura@demo.com',
+      categoria: CategoriaLector.adulto,
+      fechaAlta: DateTime(2026, 1, 10),
+      estado: EstadoLector.suspendido,
+    ));
+
+    expect((jsonDecode(enviado.body) as Map)['estado'], 'suspendido');
+  });
+
+  test('el autorregistro manda todo lo que declara la persona', () async {
+    late http.Request enviado;
+    final datasource = construir(MockClient((peticion) async {
+      enviado = peticion;
+      return http.Response(jsonEncode(lectorJson(estado: 'pendiente')), 201);
+    }));
+
+    final registrado = await datasource.registrar(SolicitudDeRegistro(
+      nombre: 'Nadia',
+      apellido: 'Ferreyra',
+      documento: '44111222',
+      email: 'nadia@demo.com',
+      fechaNacimiento: DateTime(2012, 3, 9),
+      telefono: '11-5555-0000',
+      domicilio: 'Mitre 440',
+      categoria: CategoriaLector.menor,
+      tutorNombre: 'Marta Ferreyra',
+      tutorTelefono: '11-4444-1111',
+      consentimientoDatos: true,
+    ));
+
+    final cuerpo = jsonDecode(enviado.body) as Map<String, Object?>;
+    expect(enviado.method, 'POST');
+    expect(enviado.url.path, '/api/v1/lectores/');
+    expect(cuerpo['documento'], '44111222');
+    expect(cuerpo['fecha_nacimiento'], '2012-03-09');
+    expect(cuerpo['domicilio'], 'Mitre 440');
+    expect(cuerpo['categoria'], 'infantil');
+    expect(cuerpo['tutor_nombre'], 'Marta Ferreyra');
+    expect(cuerpo['tutor_telefono'], '11-4444-1111');
+    expect(cuerpo['consentimiento_datos'], isTrue);
+    // Lo que vuelve del backend es un lector que todavía no opera.
+    expect(registrado.valorONull!.estado, EstadoLector.pendiente);
   });
 
   test('suspendido y baja dejan al lector sin operar', () async {

@@ -3,12 +3,18 @@ import 'package:get_it/get_it.dart';
 import '../../features/administracion/data/datasources/administracion_local_datasource.dart';
 import '../../features/administracion/data/repositories/auditoria_repository_impl.dart';
 import '../../features/administracion/data/repositories/configuracion_repository_impl.dart';
+import '../../features/administracion/data/datasources/usuario_interno_api_datasource.dart';
 import '../../features/administracion/data/repositories/mantenimiento_repository_impl.dart';
+import '../../features/administracion/data/repositories/usuario_interno_repository_api.dart';
+import '../../features/administracion/data/repositories/usuario_interno_repository_local.dart';
 import '../../features/administracion/domain/repositories/auditoria_repository.dart';
 import '../../features/administracion/domain/repositories/configuracion_repository.dart';
 import '../../features/administracion/domain/repositories/mantenimiento_repository.dart';
+import '../../features/administracion/domain/repositories/usuario_interno_repository.dart';
 import '../../features/administracion/domain/usecases/gestionar_configuracion.dart';
+import '../../features/administracion/domain/usecases/gestionar_usuarios_internos.dart';
 import '../../features/administracion/presentation/cubit/administracion_cubit.dart';
+import '../../features/administracion/presentation/cubit/usuarios_internos_cubit.dart';
 import '../../features/agentes/data/datasources/aprendizaje_local_datasource.dart';
 import '../../features/agentes/data/repositories/aprendizaje_repository_impl.dart';
 import '../../features/agentes/data/repositories/recomendacion_remota_api.dart';
@@ -29,6 +35,7 @@ import '../../features/auth/data/repositories/sesion_repository_api.dart';
 import '../../features/auth/data/repositories/sesion_repository_impl.dart';
 import '../../features/auth/domain/repositories/sesion_repository.dart';
 import '../../features/auth/domain/usecases/gestionar_sesion.dart';
+import '../../features/auth/presentation/cubit/registro_cubit.dart';
 import '../../features/auth/presentation/cubit/sesion_cubit.dart';
 import '../../features/catalogo/data/datasources/catalogo_api_datasource.dart';
 import '../../features/catalogo/data/datasources/catalogo_local_datasource.dart';
@@ -49,6 +56,7 @@ import '../../features/lectores/data/datasources/lector_local_datasource.dart';
 import '../../features/lectores/data/repositories/lector_repository_api.dart';
 import '../../features/lectores/data/repositories/lector_repository_impl.dart';
 import '../../features/lectores/domain/repositories/lector_repository.dart';
+import '../../features/lectores/domain/usecases/autorregistro.dart';
 import '../../features/lectores/domain/usecases/cambiar_categoria.dart';
 import '../../features/lectores/domain/usecases/gestionar_lectores.dart';
 import '../../features/lectores/presentation/bloc/lectores_bloc.dart';
@@ -174,6 +182,8 @@ void _registrarDataSources(bool usarBackend) {
 
   sl.registerLazySingleton<CatalogoApiDataSource>(
       () => CatalogoApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<UsuarioInternoApiDataSource>(
+      () => UsuarioInternoApiDataSourceHttp(sl()));
   sl.registerLazySingleton<LectorApiDataSource>(
       () => LectorApiDataSourceHttp(sl()));
   sl.registerLazySingleton<PrestamoApiDataSource>(
@@ -222,6 +232,7 @@ void _registrarRepositorios(bool usarBackend) {
     sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryImpl(
           localDataSource: sl(),
           generadorId: sl(),
+          reloj: sl(),
         ));
 
     sl.registerLazySingleton<PrestamoRepository>(() => PrestamoRepositoryImpl(
@@ -234,6 +245,15 @@ void _registrarRepositorios(bool usarBackend) {
           generadorId: sl(),
         ));
   }
+
+  // Las cuentas del personal: contra el backend son su propia tabla; sin él,
+  // el personal vive en el padrón local distinguido por rol.
+  sl.registerLazySingleton<UsuarioInternoRepository>(() => usarBackend
+      ? UsuarioInternoRepositoryApi(sl())
+      : UsuarioInternoRepositorioLocal(
+          lectorRepository: sl(),
+          reloj: sl(),
+        ));
 
   sl.registerLazySingleton<NotificacionRepository>(
       () => NotificacionRepositoryImpl(
@@ -351,6 +371,15 @@ void _registrarCasosDeUso(bool usarBackend) {
         lectorRepository: sl(),
         auditoriaRepository: sl(),
       ));
+  sl.registerLazySingleton(() => VerificarLector(
+        lectorRepository: sl(),
+        auditoriaRepository: sl(),
+      ));
+  sl.registerLazySingleton(() => RegistrarseComoLector(
+        lectorRepository: sl(),
+        auditoriaRepository: sl(),
+        reloj: sl(),
+      ));
   sl.registerLazySingleton(() => CambiarCategoria(
         lectorRepository: sl(),
         auditoriaRepository: sl(),
@@ -429,6 +458,15 @@ void _registrarCasosDeUso(bool usarBackend) {
         auditoriaRepository: sl(),
       ));
   sl.registerLazySingleton(() => ObtenerAuditoria(sl()));
+  sl.registerLazySingleton(() => ObtenerUsuariosInternos(sl()));
+  sl.registerLazySingleton(() => RegistrarUsuarioInterno(
+        usuarioRepository: sl(),
+        auditoriaRepository: sl(),
+      ));
+  sl.registerLazySingleton(() => CambiarEstadoUsuarioInterno(
+        usuarioRepository: sl(),
+        auditoriaRepository: sl(),
+      ));
   sl.registerLazySingleton(() => ReiniciarDatos(sl()));
   sl.registerLazySingleton(() => InicializarDatos(sl()));
 
@@ -490,6 +528,8 @@ void _registrarPresentacion() {
         inicializarDatos: sl(),
       ));
 
+  sl.registerFactory(() => RegistroCubit(registrarse: sl()));
+
   // Quién opera, para la traza de auditoría. Se pasa como función y no como
   // dependencia directa del SesionCubit: así los blocs de cada feature no
   // quedan atados al feature de autenticación.
@@ -528,6 +568,7 @@ void _registrarPresentacion() {
         obtenerLectores: sl(),
         registrarLector: sl(),
         actualizarLector: sl(),
+        verificarLector: sl(),
         cambiarCategoria: sl(),
         obtenerDesactualizados: sl(),
         buscarPorQr: sl(),
@@ -569,6 +610,13 @@ void _registrarPresentacion() {
         obtenerReporteAprendizaje: sl(),
         obtenerEstadisticas: sl(),
         obtenerUsuarios: sl(),
+        usuarioActualId: usuarioActualId,
+      ));
+
+  sl.registerFactory(() => UsuariosInternosCubit(
+        obtenerUsuarios: sl(),
+        registrarUsuario: sl(),
+        cambiarEstado: sl(),
         usuarioActualId: usuarioActualId,
       ));
 
