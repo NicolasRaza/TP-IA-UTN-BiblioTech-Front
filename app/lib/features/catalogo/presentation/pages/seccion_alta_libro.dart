@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
@@ -19,7 +20,10 @@ class SeccionAltaLibro extends StatefulWidget {
 }
 
 class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
-  final _textoOcr = TextEditingController();
+  PlatformFile? _fotoTapa;
+  PlatformFile? _fotoContratapa;
+  PlatformFile? _fotoFicha;
+  
   final _controles = <String, TextEditingController>{};
 
   /// Sólo queda como estado local lo que es propio del formulario: el texto
@@ -28,14 +32,24 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
 
   @override
   void dispose() {
-    _textoOcr.dispose();
     for (final c in _controles.values) {
       c.dispose();
     }
     super.dispose();
   }
 
-  void _analizar() => context.read<AltaLibroCubit>().analizar(_textoOcr.text);
+  void _analizar() {
+    if (_fotoTapa == null || _fotoContratapa == null || _fotoFicha == null) return;
+    
+    context.read<AltaLibroCubit>().analizar(
+      fotoTapa: _fotoTapa!.bytes!,
+      fotoContratapa: _fotoContratapa!.bytes!,
+      fotoFicha: _fotoFicha!.bytes!,
+      extensionTapa: _fotoTapa!.extension,
+      extensionContratapa: _fotoContratapa!.extension,
+      extensionFicha: _fotoFicha!.extension,
+    );
+  }
 
   /// Vuelca los valores sugeridos en los campos editables del formulario.
   void _volcarEnFormulario(FichaSugerida ficha) {
@@ -48,7 +62,9 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
   void _limpiar() {
     context.read<AltaLibroCubit>().limpiar();
     setState(() {
-      _textoOcr.clear();
+      _fotoTapa = null;
+      _fotoContratapa = null;
+      _fotoFicha = null;
       for (final c in _controles.values) {
         c.clear();
       }
@@ -87,7 +103,9 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
   /// reinició solo después de guardar.
   void _limpiarCampos() {
     setState(() {
-      _textoOcr.clear();
+      _fotoTapa = null;
+      _fotoContratapa = null;
+      _fotoFicha = null;
       for (final c in _controles.values) {
         c.clear();
       }
@@ -120,37 +138,41 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Pegá el texto reconocido de la tapa, contratapa y página con la '
-                  'ficha técnica. En esta versión el OCR se simula con el texto que '
-                  'ingreses.',
+                  'Subí las fotos de la tapa, contratapa y la página con la '
+                  'ficha técnica del ejemplar para extraer los datos automáticamente.',
                   style: TextStyle(
                       color: Paleta.textMuted, fontSize: 12.5, height: 1.45),
                 ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _textoOcr,
-                  maxLines: 7,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'El nombre de la rosa\nUmberto Eco\nEditorial Lumen\nISBN 978-84-08-00626-8\n1980\n560 páginas',
-                  ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(child: _SelectorDeFoto(
+                      titulo: 'Tapa', 
+                      archivo: _fotoTapa, 
+                      alSeleccionar: (f) => setState(() => _fotoTapa = f),
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: _SelectorDeFoto(
+                      titulo: 'Contratapa', 
+                      archivo: _fotoContratapa, 
+                      alSeleccionar: (f) => setState(() => _fotoContratapa = f),
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: _SelectorDeFoto(
+                      titulo: 'Ficha Técnica / ISBN', 
+                      archivo: _fotoFicha, 
+                      alSeleccionar: (f) => setState(() => _fotoFicha = f),
+                    )),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     FilledButton.icon(
-                      onPressed:
-                          _textoOcr.text.trim().isEmpty ? null : _analizar,
+                      onPressed: (_fotoTapa != null && _fotoContratapa != null && _fotoFicha != null) 
+                          ? _analizar : null,
                       icon: const Icon(Icons.auto_fix_high, size: 18),
                       label: const Text('Analizar'),
-                    ),
-                    const SizedBox(width: 10),
-                    OutlinedButton(
-                      onPressed: () {
-                        _textoOcr.text = _ejemploOcr;
-                        _analizar();
-                      },
-                      child: const Text('Usar ejemplo'),
                     ),
                     const Spacer(),
                     if (ficha != null)
@@ -261,14 +283,6 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
     'isbn': 'ISBN',
     'paginas': 'Páginas',
   };
-
-  static const _ejemploOcr = '''
-El nombre de la rosa
-Umberto Eco
-Editorial Lumen
-ISBN 978-84-08-00626-8
-1980
-560 páginas''';
 }
 
 /// Aviso con el estado general de la revisión.
@@ -393,6 +407,76 @@ class _CampoFicha extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _SelectorDeFoto extends StatelessWidget {
+  const _SelectorDeFoto({
+    required this.titulo,
+    required this.archivo,
+    required this.alSeleccionar,
+  });
+
+  final String titulo;
+  final PlatformFile? archivo;
+  final ValueChanged<PlatformFile?> alSeleccionar;
+
+  Future<void> _elegirArchivo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result != null && result.files.isNotEmpty) {
+      alSeleccionar(result.files.first);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _elegirArchivo,
+      borderRadius: BorderRadius.circular(Radios.base),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: archivo != null ? Paleta.primary : Paleta.border,
+            width: archivo != null ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(Radios.base),
+          color: archivo != null ? Paleta.primary.withOpacity(0.05) : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              archivo != null ? Icons.image : Icons.add_photo_alternate_outlined,
+              size: 28,
+              color: archivo != null ? Paleta.primary : Paleta.textMuted,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              titulo,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: archivo != null ? Paleta.primary : Paleta.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (archivo != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                archivo!.name,
+                style: const TextStyle(fontSize: 11, color: Paleta.textMuted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ]
+          ],
+        ),
       ),
     );
   }

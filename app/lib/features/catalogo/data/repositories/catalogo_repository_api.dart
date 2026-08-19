@@ -1,5 +1,6 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../agentes/domain/entities/ficha_sugerida.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
 import '../../domain/repositories/catalogo_repository.dart';
@@ -111,6 +112,25 @@ class CatalogoRepositoryApi implements CatalogoRepository {
       if (validado.failureONull is! ReglaDeNegocioFailure) return validado;
     }
     return _api.editarTitulo(libro);
+  }
+
+  @override
+  Future<Result<FichaSugerida>> capturarOcr({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  }) {
+    return _api.capturarOcr(
+      fotoTapa: fotoTapa,
+      fotoContratapa: fotoContratapa,
+      fotoFicha: fotoFicha,
+      extensionTapa: extensionTapa,
+      extensionContratapa: extensionContratapa,
+      extensionFicha: extensionFicha,
+    );
   }
 
   @override
