@@ -26,7 +26,7 @@ dependencies:
   qr_flutter: ^4.1.0
   # Consulta a Open Library para enriquecimiento de fichas
   http: ^1.2.2
-  http_parser: ^4.1.2
+  http_parser: ^4.0.2
   file_picker: ^8.1.2
   # Gráficos del dashboard e informes
   fl_chart: ^0.69.0
