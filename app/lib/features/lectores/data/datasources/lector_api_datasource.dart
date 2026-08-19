@@ -3,12 +3,14 @@ import '../../../../core/api/mapeo_api.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../domain/entities/lector.dart';
+import '../../domain/entities/solicitud_de_registro.dart';
 
 /// Acceso al padrón del backend SGB (`/api/v1/lectores`).
 ///
-/// Todas las rutas de este grupo exigen rol bibliotecario o administrador: un
-/// lector autenticado recibe 403, que el [ClienteApi] traduce a
-/// [AutenticacionFailure]. Es el propio backend el que define ese límite.
+/// Salvo el alta, todas las rutas de este grupo exigen rol bibliotecario o
+/// administrador: un lector autenticado recibe 403, que el [ClienteApi]
+/// traduce a [AutenticacionFailure]. Es el propio backend el que define ese
+/// límite.
 abstract interface class LectorApiDataSource {
   Future<Result<List<Lector>>> listar({String nombre, String documento});
 
@@ -17,7 +19,14 @@ abstract interface class LectorApiDataSource {
 
   /// `POST /lectores/` — el backend crea también el usuario de la app y le
   /// asigna el documento como contraseña inicial.
+  ///
+  /// El alta nace siempre en `pendiente`, la cree quien la cree.
   Future<Result<Lector>> crear(Lector lector);
+
+  /// `POST /lectores/` sin sesión: el autorregistro desde la pantalla de
+  /// acceso. Misma ruta que [crear] —el endpoint es público—, pero con todos
+  /// los campos que la persona declara de sí misma.
+  Future<Result<Lector>> registrar(SolicitudDeRegistro solicitud);
 
   Future<Result<Lector>> actualizar(Lector lector);
 }
@@ -74,6 +83,28 @@ class LectorApiDataSourceHttp implements LectorApiDataSource {
       );
 
   @override
+  Future<Result<Lector>> registrar(SolicitudDeRegistro solicitud) =>
+      _api.post<Lector>(
+        '/api/v1/lectores/',
+        cuerpo: {
+          'nombre': solicitud.nombre,
+          'apellido': solicitud.apellido,
+          'documento': solicitud.documento,
+          'fecha_nacimiento': fechaHaciaApi(solicitud.fechaNacimiento),
+          'email': solicitud.email,
+          if (solicitud.telefono.isNotEmpty) 'telefono': solicitud.telefono,
+          if (solicitud.domicilio.isNotEmpty) 'domicilio': solicitud.domicilio,
+          'categoria': categoriaHaciaApi(solicitud.categoria),
+          if (solicitud.tutorNombre.isNotEmpty)
+            'tutor_nombre': solicitud.tutorNombre,
+          if (solicitud.tutorTelefono.isNotEmpty)
+            'tutor_telefono': solicitud.tutorTelefono,
+          'consentimiento_datos': solicitud.consentimientoDatos,
+        },
+        leer: _leerLector,
+      );
+
+  @override
   Future<Result<Lector>> actualizar(Lector lector) {
     final id = idHaciaApi(lector.id);
     if (id == null) return _sinIdRemoto();
@@ -84,7 +115,7 @@ class LectorApiDataSourceHttp implements LectorApiDataSource {
         'apellido': lector.apellido,
         if (lector.telefono.isNotEmpty) 'telefono': lector.telefono,
         'categoria': categoriaHaciaApi(lector.categoria),
-        'estado': lector.activo ? 'activo' : 'baja',
+        'estado': estadoLectorHaciaApi(lector.estado),
         if (lector.tutor != null && lector.tutor!.isNotEmpty)
           'tutor_nombre': lector.tutor,
       },
@@ -121,7 +152,7 @@ Lector lectorDesdeApi(Map<String, dynamic> json, {String email = ''}) {
     categoria: categoriaDesdeApi(json['categoria'] as String?),
     tutor: json['tutor_nombre'] as String?,
     fechaAlta: fechaAlta,
-    activo: lectorActivoDesdeApi(json['estado'] as String?),
+    estado: estadoLectorDesdeApi(json['estado'] as String?),
     // `multas_pendientes` es un conteo, no un importe: sólo viene en la ficha
     // (`GET /lectores/{id}`) y en el listado llega en cero.
     multasPendientes: (json['multas_pendientes'] as num?)?.toInt() ?? 0,

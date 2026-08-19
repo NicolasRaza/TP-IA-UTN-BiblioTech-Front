@@ -5,8 +5,10 @@ import '../core/di/inyeccion.dart';
 import '../core/presentation/widgets/avisos_de_bloc.dart';
 import '../core/theme/tema.dart';
 import '../features/administracion/presentation/cubit/administracion_cubit.dart';
+import '../features/administracion/presentation/cubit/usuarios_internos_cubit.dart';
 import '../features/administracion/presentation/pages/seccion_parametros.dart';
 import '../features/administracion/presentation/pages/seccion_reportes.dart';
+import '../features/administracion/presentation/pages/seccion_usuarios.dart';
 import '../features/administracion/presentation/pages/secciones_varias.dart';
 import '../features/agentes/presentation/bloc/agentes_bloc.dart';
 import 'shell_adaptativo.dart';
@@ -24,16 +26,31 @@ class PanelAdmin extends StatelessWidget {
           create: (_) =>
               sl<AgentesBloc>()..add(const DecisionesPendientesSolicitadas()),
         ),
+        BlocProvider(create: (_) => sl<UsuariosInternosCubit>()..cargar()),
       ],
-      child: BlocListener<AdministracionCubit, AdministracionState>(
-        listenWhen: (a, b) =>
-            a.mensajeExito != b.mensajeExito ||
-            a.mensajeError != b.mensajeError,
-        listener: (context, state) => mostrarAvisoDeBloc(
-          context,
-          mensajeExito: state.mensajeExito,
-          mensajeError: state.mensajeError,
-        ),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<AdministracionCubit, AdministracionState>(
+            listenWhen: (a, b) =>
+                a.mensajeExito != b.mensajeExito ||
+                a.mensajeError != b.mensajeError,
+            listener: (context, state) => mostrarAvisoDeBloc(
+              context,
+              mensajeExito: state.mensajeExito,
+              mensajeError: state.mensajeError,
+            ),
+          ),
+          BlocListener<UsuariosInternosCubit, UsuariosInternosState>(
+            listenWhen: (a, b) =>
+                a.mensajeExito != b.mensajeExito ||
+                a.mensajeError != b.mensajeError,
+            listener: (context, state) => mostrarAvisoDeBloc(
+              context,
+              mensajeExito: state.mensajeExito,
+              mensajeError: state.mensajeError,
+            ),
+          ),
+        ],
         child: const _ShellDelAdmin(),
       ),
     );
@@ -60,6 +77,12 @@ class _ShellDelAdmin extends StatelessWidget {
           icono: Icons.tune_outlined,
           iconoActivo: Icons.tune,
           constructor: (_) => const SeccionParametros(),
+        ),
+        Destino(
+          etiqueta: 'Usuarios',
+          icono: Icons.manage_accounts_outlined,
+          iconoActivo: Icons.manage_accounts,
+          constructor: (_) => const SeccionUsuarios(),
         ),
         Destino(
           etiqueta: 'Auditoría',

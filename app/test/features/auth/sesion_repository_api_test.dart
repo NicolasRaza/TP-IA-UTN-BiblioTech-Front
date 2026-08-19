@@ -117,6 +117,74 @@ void main() {
     expect(usuario.email, 'bibliotecario@demo.com');
   });
 
+  group('cuenta pendiente de verificación', () {
+    Map<String, Object?> perfilPendiente() => {
+          'id': 9,
+          'email': 'nuevo@demo.com',
+          'rol': 'lector',
+          'lector_id': 12,
+          'estado': 'pendiente',
+        };
+
+    test('el backend deja entrar, pero la app no abre la sesión', () async {
+      final repo = construir(autenticacion(perfil: perfilPendiente()));
+
+      final resultado =
+          await repo.iniciarSesion(email: 'nuevo@demo.com', clave: 'x');
+
+      expect(resultado.failureONull, isA<CuentaPendienteFailure>());
+      expect(sesion.hayToken, isFalse);
+    });
+
+    test('una sesión guardada que quedó pendiente se descarta', () async {
+      // Se abre con la cuenta ya verificada y, al arrancar de nuevo, el
+      // servidor la reporta pendiente.
+      await construir(autenticacion()).iniciarSesion(
+        email: 'laura@demo.com',
+        clave: 'x',
+      );
+
+      final sesionGuardada = SesionApi(store);
+      final recuperada = await SesionRepositoryApi(
+        api: autenticacion(perfil: perfilPendiente()),
+        sesion: sesionGuardada,
+        lectores: _PadronVacio(),
+      ).obtenerSesionActiva();
+
+      expect(recuperada.esExito, isTrue);
+      expect(recuperada.valorONull, isNull);
+      expect(sesionGuardada.hayToken, isFalse);
+    });
+
+    test('sin el campo estado la cuenta se toma como verificada', () async {
+      // Contra una versión del backend que todavía no lo expone: el bloqueo
+      // queda del lado del servidor y el login sigue funcionando.
+      final repo = construir(autenticacion());
+
+      final resultado =
+          await repo.iniciarSesion(email: 'laura@demo.com', clave: 'x');
+
+      expect(resultado.esExito, isTrue);
+    });
+
+    test('el personal nunca queda pendiente', () async {
+      final repo = construir(autenticacion(perfil: {
+        'id': 1,
+        'email': 'bibliotecario@demo.com',
+        'rol': 'bibliotecario',
+        'lector_id': null,
+        'estado': null,
+      }));
+
+      final resultado = await repo.iniciarSesion(
+        email: 'bibliotecario@demo.com',
+        clave: 'x',
+      );
+
+      expect(resultado.esExito, isTrue);
+    });
+  });
+
   test('credenciales rechazadas no dejan sesión abierta', () async {
     final repo = construir(autenticacion(statusLogin: 401));
 

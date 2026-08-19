@@ -7,6 +7,7 @@ import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../lectores/domain/entities/lector.dart';
 import '../cubit/sesion_cubit.dart';
+import 'pantalla_registro.dart';
 
 /// Pantalla de acceso: elección de rol y login.
 class PantallaLogin extends StatelessWidget {
@@ -65,6 +66,8 @@ class PantallaLogin extends StatelessWidget {
                           ],
                         ),
                       ),
+                    const SizedBox(height: 26),
+                    const _InvitacionARegistrarse(),
                     const SizedBox(height: 34),
                     const _NotaDemo(),
                   ],
@@ -226,6 +229,42 @@ class _TarjetaRol extends StatelessWidget {
   }
 }
 
+/// Puerta de entrada al autorregistro. Va debajo de los tres roles porque no
+/// es una cuarta forma de entrar: es lo que hace quien todavía no tiene cuenta.
+class _InvitacionARegistrarse extends StatelessWidget {
+  const _InvitacionARegistrarse();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Paleta.bgCard.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(Radios.base),
+        border: Border.all(color: Paleta.border),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 14,
+        runSpacing: 10,
+        children: [
+          const Text(
+            '¿Todavía no sos socio de la biblioteca?',
+            style: TextStyle(color: Paleta.textSecondary, fontSize: 13.5),
+          ),
+          FilledButton.icon(
+            onPressed: () =>
+                Navigator.of(context).push(PantallaRegistro.ruta()),
+            icon: const Icon(Icons.person_add_alt, size: 18),
+            label: const Text('Registrarme como lector'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DialogoLogin extends StatefulWidget {
   const _DialogoLogin({required this.rol});
 
@@ -243,6 +282,7 @@ class _DialogoLoginState extends State<_DialogoLogin> {
   late final _clave = TextEditingController(text: widget.rol.claveInicial);
   final _form = GlobalKey<FormState>();
   String? _error;
+  bool _pendiente = false;
 
   @override
   void dispose() {
@@ -267,8 +307,10 @@ class _DialogoLoginState extends State<_DialogoLogin> {
     if (estado.haySesion) {
       Navigator.of(context).pop();
     } else {
-      setState(() => _error =
-          estado.mensajeError ?? 'Email o $_etiquetaClave incorrectos');
+      setState(() {
+        _pendiente = estado.cuentaPendiente;
+        _error = estado.mensajeError ?? 'Email o $_etiquetaClave incorrectos';
+      });
     }
   }
 
@@ -324,13 +366,24 @@ class _DialogoLoginState extends State<_DialogoLogin> {
               if (_error != null) ...[
                 const SizedBox(height: 14),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Paleta.danger, size: 17),
+                    Icon(
+                      _pendiente ? Icons.hourglass_empty : Icons.error_outline,
+                      color: _pendiente ? Paleta.warning : Paleta.danger,
+                      size: 17,
+                    ),
                     const SizedBox(width: 8),
-                    Text(_error!,
-                        style: const TextStyle(
-                            color: Paleta.danger, fontSize: 13)),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: _pendiente ? Paleta.warning : Paleta.danger,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],

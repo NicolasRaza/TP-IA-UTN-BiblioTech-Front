@@ -40,6 +40,7 @@ class _SeccionLectoresState extends State<SeccionLectores> {
       ..sort((a, b) => a.apellido.compareTo(b.apellido));
 
     final desactualizados = estado.categoriasDesactualizadas;
+    final pendientes = estado.pendientesDeVerificacion;
 
     return Seccion(
       children: [
@@ -47,6 +48,49 @@ class _SeccionLectoresState extends State<SeccionLectores> {
           'Lectores',
           subtitulo: '${estado.lectores.length} socios registrados',
         ),
+        if (pendientes.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Paleta.warning.withOpacity(0.09),
+              borderRadius: BorderRadius.circular(Radios.base),
+              border: Border.all(color: Paleta.warning.withOpacity(0.28)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.how_to_reg_outlined,
+                        size: 17, color: Paleta.warning),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Text(
+                        '${pendientes.length} '
+                        '${pendientes.length == 1 ? 'persona se registró' : 'personas se registraron'} '
+                        'y ${pendientes.length == 1 ? 'espera' : 'esperan'} '
+                        'verificación. Hasta confirmarlas no pueden entrar a '
+                        'la app ni pedir préstamos.',
+                        style: const TextStyle(
+                            color: Paleta.textSecondary,
+                            fontSize: 12.5,
+                            height: 1.45),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                for (final l in pendientes)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _FilaPendiente(lector: l),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
         if (desactualizados.isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.all(15),
@@ -95,6 +139,69 @@ class _SeccionLectoresState extends State<SeccionLectores> {
   }
 }
 
+/// Autorregistro esperando confirmación: los datos declarados y el botón que
+/// lo habilita. Verificar es lo único que se puede hacer sobre un pendiente,
+/// así que la fila no abre ficha ni ofrece nada más.
+class _FilaPendiente extends StatelessWidget {
+  const _FilaPendiente({required this.lector});
+
+  final Lector lector;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Paleta.bgCard,
+        borderRadius: BorderRadius.circular(Radios.base),
+        border: Border.all(color: Paleta.border),
+      ),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 10,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AvatarLector(lector, radio: 17),
+              const SizedBox(width: 11),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(lector.nombreCompleto,
+                      style: const TextStyle(
+                          fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      if (lector.dni.isNotEmpty) 'DNI ${lector.dni}',
+                      if (lector.email.isNotEmpty) lector.email,
+                      lector.categoria.label,
+                      if (lector.tutor != null && lector.tutor!.isNotEmpty)
+                        'Tutor: ${lector.tutor}',
+                    ].join(' · '),
+                    style: const TextStyle(
+                        fontSize: 11.5, color: Paleta.textMuted),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          FilledButton.icon(
+            onPressed: () =>
+                context.read<LectoresBloc>().add(LectorVerificado(lector.id)),
+            icon: const Icon(Icons.verified_outlined, size: 17),
+            label: const Text('Verificar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FilaLector extends StatelessWidget {
   const _FilaLector({required this.lector});
 
@@ -120,10 +227,12 @@ class _FilaLector extends StatelessWidget {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         subtitle: Text('DNI ${lector.dni} · $activos préstamos abiertos',
             style: const TextStyle(fontSize: 12)),
-        trailing: lector.multasPendientes > 0
-            ? Insignia(Formato.pesos(lector.multasPendientes),
-                color: Paleta.danger)
-            : Insignia.categoria(lector.categoria),
+        trailing: switch (lector) {
+          final l when !l.activo => Insignia.estadoLector(l.estado),
+          final l when l.multasPendientes > 0 =>
+            Insignia(Formato.pesos(l.multasPendientes), color: Paleta.danger),
+          final l => Insignia.categoria(l.categoria),
+        },
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -134,6 +243,7 @@ class _FilaLector extends StatelessWidget {
                 _dato('Teléfono', lector.telefono),
                 if (lector.tutor != null) _dato('Tutor', lector.tutor!),
                 _dato('Socio desde', Formato.fecha(lector.fechaAlta)),
+                _dato('Estado', lector.estado.label),
                 _dato('Categoría vigente', lector.categoria.label),
                 _dato(
                     'Límites',
@@ -145,6 +255,14 @@ class _FilaLector extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
+                    if (lector.pendienteDeVerificacion)
+                      FilledButton.icon(
+                        onPressed: () => context
+                            .read<LectoresBloc>()
+                            .add(LectorVerificado(lector.id)),
+                        icon: const Icon(Icons.verified_outlined, size: 17),
+                        label: const Text('Verificar alta'),
+                      ),
                     OutlinedButton.icon(
                       onPressed: () => _cambiarCategoria(context, lector),
                       icon: const Icon(Icons.swap_horiz, size: 17),

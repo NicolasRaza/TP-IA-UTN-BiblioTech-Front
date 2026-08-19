@@ -44,13 +44,36 @@ dominio y no deben depender de la red.
 |---|---|
 | Sesión | `POST /auth/login`, `GET /auth/me` |
 | Catálogo | `GET/POST/PATCH /catalogo/titulos`, `/titulos/{id}/validar`, `/titulos/{id}/ejemplares`, `/ejemplares`, `/ejemplares/qr/{qr}` |
-| Padrón | `GET/POST/PATCH /lectores` |
+| Padrón | `GET/POST/PATCH /lectores` (el `POST` es público: es el autorregistro) |
+| Personal | `GET/POST /usuarios`, `DELETE /usuarios/{id}`, `/usuarios/{id}/reactivar` |
 | Préstamos | `GET/POST /prestamos`, `/prestamos/devolucion`, `/prestamos/lector/{id}` |
 | Reservas | `GET/POST/DELETE /reservas`, `/reservas/lector/{id}` |
 | Recomendaciones | `GET /recomendaciones` |
 
 Siguen siendo locales las features que la API no cubre: notificaciones,
 auditoría, configuración de parámetros y registro de aprendizaje.
+
+### Alta de usuarios: quién da de alta a quién
+
+El padrón tiene dos puertas de entrada, y ninguna de las dos habilita nada por
+sí sola:
+
+- **Lectores.** Se registran ellos mismos desde la pantalla de acceso
+  (`PantallaRegistro`, `POST /lectores` sin token). El alta nace en estado
+  `pendiente`: la persona existe, pero no puede entrar. Un bibliotecario la ve
+  en la sección Lectores, la verifica (`PATCH /lectores/{id}` con
+  `{"estado": "activo"}`) y recién ahí la cuenta sirve. Mientras siga
+  pendiente, el login se rechaza con `CuentaPendienteFailure` y la pantalla lo
+  explica en lugar de mostrar "credenciales incorrectas".
+- **Bibliotecarios y administradores.** Los da de alta un administrador desde
+  la sección Usuarios de su panel (`POST /usuarios`). No hay autorregistro de
+  personal, y el backend rechaza esas rutas con cualquier otro rol.
+
+El estado del lector logueado llega por `GET /auth/me`: es la única vía, porque
+`/lectores/{id}` exige rol bibliotecario y un lector no puede leerse a sí
+mismo. Si el backend no devuelve ese campo, la app lo toma como verificado y el
+bloqueo queda del lado del servidor, que responde 403 al primer préstamo o
+reserva.
 
 ### Permisos: qué cambia según quién esté logueado
 
@@ -371,10 +394,7 @@ esperar a que el push del tag levante un run nuevo.
    ya acepta varias fuentes con su autoridad y resuelve conflictos, pero falta
    el cliente HTTP que consulte la API y arme esos resultados. Hoy la ficha se
    arma solo con el texto del OCR. `http` ya está en `pubspec.yaml`.
-3. **Alta de lectores desde la UI.** El caso de uso `RegistrarLector` y el
-   `LectoresBloc` ya la soportan; falta el formulario en la sección de
-   lectores.
-4. **Publicación.** El TP pide la app publicada con links en vivo.
+3. **Publicación.** El TP pide la app publicada con links en vivo.
    `flutter build web` genera `app/build/web` y el CI ya lo sube como
    artefacto; falta decidir dónde alojarlo (GitHub Pages es lo más directo).
 5. **Captura de fotos.** La spec v2 §3 habla de tres fotos por libro. La UI
@@ -387,7 +407,7 @@ cd app
 flutter pub get
 flutter run -d chrome        # web
 flutter run                  # mobile con dispositivo conectado
-flutter test                 # 39 tests
+flutter test                 # 135 tests
 flutter analyze
 ```
 
