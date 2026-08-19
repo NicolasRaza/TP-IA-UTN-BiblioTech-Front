@@ -17,7 +17,7 @@ import '../../../lectores/presentation/bloc/lectores_bloc.dart';
 import '../../domain/services/politica_de_prestamo.dart';
 import '../bloc/prestamos_bloc.dart';
 
-/// Registrar préstamo, portado de `bibliotecario.html #s-prestamo`.
+/// Registrar préstamo (spec v2 §9).
 ///
 /// El lector se identifica por su QR o por búsqueda, y el ejemplar por el QR
 /// de su etiqueta. El repositorio valida límites, multas y vencidos.
@@ -254,7 +254,7 @@ class _SeccionPrestamoState extends State<SeccionPrestamo> {
   }
 }
 
-/// Registrar devolución, portado de `bibliotecario.html #s-devolucion`.
+/// Registrar devolución (spec v2 §9).
 class SeccionDevolucion extends StatefulWidget {
   const SeccionDevolucion({super.key});
 

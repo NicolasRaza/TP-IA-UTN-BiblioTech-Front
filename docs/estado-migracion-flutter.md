@@ -1,10 +1,16 @@
 # Estado de la migración a Flutter
 
-Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile).
-Rama de trabajo: `claude/flutter-architecture-structure-2grzfz`.
+Seguimiento de la migración del prototipo HTML/JS a Flutter (web + mobile) y
+de la conexión con el backend SGB.
 
-**Última actualización:** sesión del 15/08/2026 — refactor a Clean
-Architecture + BLoC.
+El prototipo original (`index.html`, `lector.html`, `bibliotecario.html`,
+`admin.html`, `js/`, `css/`) se eliminó del repositorio una vez que la app
+Flutter quedó conectada al backend: dejarlo habría sido mantener dos
+implementaciones de la misma spec, una de ellas sin uso y sin backend. Sigue
+en el historial de git para quien quiera compararlas.
+
+**Última actualización:** sesión del 19/08/2026 — conexión con el backend SGB
+y baja del prototipo.
 
 ## Dónde está cada cosa
 
@@ -12,11 +18,7 @@ Architecture + BLoC.
 |---|---|
 | `app/` | Proyecto Flutter (web, android, ios) |
 | `.github/workflows/ci.yml` | CI: formato, análisis, tests y builds |
-| `index.html`, `lector.html`, `bibliotecario.html`, `admin.html`, `js/`, `css/` | Prototipo original, se conserva como referencia |
 | `docs/tp1-sistema-gestion-bibliotecas-v2.md` | Especificación funcional canónica |
-
-El prototipo no se tocó: la app Flutter vive en `app/` y se puede comparar
-pantalla por pantalla contra el HTML.
 
 ## Conexión con el backend
 
@@ -178,11 +180,11 @@ por shell los muestra: ningún bloc necesita un `BuildContext`.
 
 ### Base del proyecto
 - Scaffold con los tres targets: `web`, `android`, `ios`.
-- Tema portado de `css/main.css` (misma paleta, radios y tipografía).
+- Tema portado del prototipo: misma paleta, radios y tipografía.
 - Shell adaptativo: barra inferior en celular, riel lateral en tablet,
   sidebar expandido en escritorio. Un solo árbol de widgets para las tres.
 
-### Dominio y persistencia (portado de `js/db.js`)
+### Dominio y persistencia
 - Entidades inmutables con `Equatable`, sin serialización: el JSON vive en
   los models de `data`, que extienden a la entidad.
 - `KeyValueStore` abstrae el almacenamiento: `SharedPrefsStore` en la app,
@@ -211,7 +213,7 @@ Implementadas de cero durante la migración:
 - **Ponderación de recomendaciones (§2).** 70% historial / 30% popularidad, con
   inversión a 100% popularidad en *cold start*.
 
-### Agentes (portado de `js/agents.js`)
+### Agentes
 - **Analizador:** parser OCR y resolución de fuentes externas.
 - **Evaluador:** decide y devuelve una lista de `Decision` sin tocar el sistema.
   Produce además recomendaciones e indicadores.
@@ -235,8 +237,8 @@ Como el Evaluador es puro, sus tests se escriben armando un
 
 ### Pantallas
 
-**Lector** (`lector.html`) — las siete secciones del prototipo agrupadas en
-cinco destinos, para que la barra inferior siga siendo usable en un celular:
+**Lector** — las siete secciones de la spec agrupadas en cinco destinos, para
+que la barra inferior siga siendo usable en un celular:
 - Catálogo con búsqueda por título, autor, ISBN o género, filtro por género y
   por disponibilidad, y ficha con reserva.
 - Recomendaciones que explican el criterio y avisan del cold start.
@@ -245,7 +247,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
   posición en la cola o el plazo de retiro corriendo.
 - Notificaciones y perfil con límites de la categoría y QR de credencial.
 
-**Bibliotecario** (`bibliotecario.html`) — las siete secciones:
+**Bibliotecario** — las siete secciones:
 - Dashboard con métricas y las decisiones abiertas del Evaluador, con botón
   para que el Planificador ejecute el lote.
 - Alta de libro: se pega el texto reconocido, el Analizador propone la ficha
@@ -257,7 +259,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Lectores con cambio de categoría y registro de pago de multas.
 - Alertas agrupadas por tipo, con el motivo de cada decisión.
 
-**Admin** (`admin.html`) — las seis secciones:
+**Admin** — las seis secciones:
 - Reportes con gráfico de préstamos por mes y rankings.
 - Parámetros: plazos y límites por categoría, retención de reservas, multa
   diaria y ponderación del motor de recomendaciones.
@@ -363,7 +365,8 @@ esperar a que el push del tag levante un run nuevo.
 ## Pendiente
 
 1. **Escaneo real de QR con cámara.** Hoy el QR se resuelve por texto, igual
-   que en el prototipo. Haría falta `mobile_scanner` y permisos en Android/iOS.
+   que en el prototipo original. Haría falta `mobile_scanner` y permisos en
+   Android/iOS.
 2. **Enriquecimiento contra Open Library.** `AgenteAnalizador.resolverFuentes`
    ya acepta varias fuentes con su autoridad y resuelve conflictos, pero falta
    el cliente HTTP que consulte la API y arme esos resultados. Hoy la ficha se

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Paleta de BiblioTech, portada de las variables CSS del prototipo
-/// (`css/main.css`) para que la app Flutter se vea igual que la web original.
+/// Paleta de BiblioTech.
 class Paleta {
   static const bgBase = Color(0xFF080B14);
   static const bgSurface = Color(0xFF0E1220);

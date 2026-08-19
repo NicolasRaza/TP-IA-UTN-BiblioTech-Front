@@ -9,7 +9,7 @@ import '../../../agentes/presentation/bloc/agentes_bloc.dart';
 import '../cubit/administracion_cubit.dart';
 import '../../../agentes/domain/services/agente_evaluador.dart';
 
-/// Registro de auditoría, portado de `admin.html #s-auditoria`.
+/// Registro de auditoría (spec v2 §6).
 class SeccionAuditoria extends StatefulWidget {
   const SeccionAuditoria({super.key});
 
@@ -127,7 +127,7 @@ class _SeccionAuditoriaState extends State<SeccionAuditoria> {
       };
 }
 
-/// Aprendizaje del sistema, portado de `admin.html #s-aprendizaje`.
+/// Aprendizaje del sistema (spec v2 §5).
 class SeccionAprendizaje extends StatelessWidget {
   const SeccionAprendizaje({super.key});
 
@@ -248,7 +248,7 @@ class SeccionAprendizaje extends StatelessWidget {
   }
 }
 
-/// Sugerencias estratégicas, portadas de `admin.html #s-sugerencias`.
+/// Sugerencias estratégicas (spec v2 §5).
 class SeccionSugerencias extends StatelessWidget {
   const SeccionSugerencias({super.key});
 
@@ -337,7 +337,7 @@ class SeccionSugerencias extends StatelessWidget {
       };
 }
 
-/// Acerca del sistema, portado de `admin.html #s-acerca`.
+/// Acerca del sistema: bitácora de la sesión y reinicio de datos.
 class SeccionAcerca extends StatelessWidget {
   const SeccionAcerca({super.key});
 

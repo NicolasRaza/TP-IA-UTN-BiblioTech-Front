@@ -10,8 +10,8 @@ import '../models/aprendizaje_models.dart';
 ///
 /// Correcciones e interacciones comparten una única clave (`bt_aprendizaje`)
 /// con la forma `{correcciones: [...], clics: [...]}`, heredada del prototipo
-/// HTML. El datasource preserva ese formato para no invalidar datos ya
-/// guardados, y expone las dos colecciones por separado.
+/// HTML/JS original. El datasource preserva ese formato para no invalidar
+/// datos ya guardados, y expone las dos colecciones por separado.
 abstract interface class AprendizajeLocalDataSource {
   Result<List<CorreccionModel>> leerCorrecciones();
   Result<void> guardarCorrecciones(List<Correccion> correcciones);
@@ -27,7 +27,7 @@ class AprendizajeLocalDataSourceImpl implements AprendizajeLocalDataSource {
 
   static const _claveCorrecciones = 'correcciones';
 
-  /// Se llamaba 'clics' en el prototipo; se conserva el nombre en disco.
+  /// Se llamaba 'clics' en el prototipo original; se conserva en disco.
   static const _claveInteracciones = 'clics';
 
   @override

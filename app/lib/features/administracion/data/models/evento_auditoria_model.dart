@@ -32,8 +32,8 @@ class EventoAuditoriaModel extends EventoAuditoria {
         'id': id,
         'tipo': tipo.code,
         'descripcion': descripcion,
-        // La clave se llama 'usuario' desde el prototipo HTML; se conserva
-        // para no invalidar los datos ya guardados.
+        // La clave se llama 'usuario' desde el prototipo HTML/JS original;
+        // se conserva para no invalidar los datos ya guardados.
         'usuario': usuarioId,
         'fecha': fecha.toIso8601String(),
       };

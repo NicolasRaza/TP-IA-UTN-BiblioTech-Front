@@ -9,7 +9,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../agentes/domain/services/agente_evaluador.dart';
 import '../cubit/administracion_cubit.dart';
 
-/// Reportes e indicadores, portados de `admin.html #s-reportes`.
+/// Reportes e indicadores (spec v2 §6).
 class SeccionReportes extends StatelessWidget {
   const SeccionReportes({super.key});
 

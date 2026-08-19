@@ -1,3 +1,9 @@
+> **Nota.** Las entradas de este registro se escribieron sobre el prototipo
+> HTML/JS original (`lector.html`, `bibliotecario.html`, `admin.html`,
+> `js/db.js`), que ya no está en el repositorio: la app se reescribió en
+> Flutter y vive en `app/`. Se conservan como registro de lo aprendido, y
+> siguen consultables en el historial de git.
+
 ## 2026-08-16 - Unsanitized User Input in UI Rendering (XSS)
 **Vulnerability:** Several innerHTML assignments in UI rendering logic (`bibliotecario.html` and `admin.html`) were not properly escaping user-provided fields (like `nombre`, `apellido`, `dni`, `email`), creating a Cross-Site Scripting (XSS) vulnerability.
 **Learning:** Even internal-facing panels and lists can be vulnerable if user-controlled fields aren't escaped before DOM insertion. The codebase relies heavily on template literals and `innerHTML` for dynamic UI updates, making it easy to overlook variable escaping.

@@ -33,7 +33,8 @@ class ServicioPushWeb implements ServicioPush {
   @override
   bool get soportado => _shim?.soportado() ?? false;
 
-  /// El shim se carga desde `index.html`, así que no hay nada que inicializar.
+  /// El shim se carga desde `web/index.html`, así que no hay nada que
+  /// inicializar.
   @override
   Future<void> inicializar() async {}
 
