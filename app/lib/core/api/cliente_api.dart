@@ -29,6 +29,9 @@ class ClienteApi {
 
   /// De dónde sale el `Authorization: Bearer`. Es una función y no un String
   /// porque el token cambia con cada login y el cliente vive todo el proceso.
+  ///
+  /// Cada método acepta además un `token` explícito que la pisa, para las
+  /// rutas que se llaman antes de que exista una sesión.
   final TokenDeSesion _token;
 
   /// Railway duerme las instancias inactivas: el primer request de la demo
@@ -38,46 +41,54 @@ class ClienteApi {
   Future<Result<T>> get<T>(
     String ruta, {
     Map<String, String> query = const {},
+    String? token,
     required T Function(Object? json) leer,
   }) =>
       _pedir(
         metodo: _Metodo.get,
         ruta: ruta,
         query: query,
+        token: token,
         leer: leer,
       );
 
   Future<Result<T>> post<T>(
     String ruta, {
     Object? cuerpo,
+    String? token,
     required T Function(Object? json) leer,
   }) =>
       _pedir(
         metodo: _Metodo.post,
         ruta: ruta,
         cuerpo: cuerpo,
+        token: token,
         leer: leer,
       );
 
   Future<Result<T>> patch<T>(
     String ruta, {
     Object? cuerpo,
+    String? token,
     required T Function(Object? json) leer,
   }) =>
       _pedir(
         metodo: _Metodo.patch,
         ruta: ruta,
         cuerpo: cuerpo,
+        token: token,
         leer: leer,
       );
 
   Future<Result<T>> delete<T>(
     String ruta, {
+    String? token,
     required T Function(Object? json) leer,
   }) =>
       _pedir(
         metodo: _Metodo.delete,
         ruta: ruta,
+        token: token,
         leer: leer,
       );
 
@@ -86,13 +97,17 @@ class ClienteApi {
     required String ruta,
     Map<String, String> query = const {},
     Object? cuerpo,
+    String? token,
     required T Function(Object? json) leer,
   }) async {
     final uri = Uri.parse('$_baseUrl$ruta').replace(
       queryParameters: query.isEmpty ? null : query,
     );
 
-    final jwt = _token();
+    // El token explícito gana sobre el de la sesión: lo usa el login, que
+    // todavía no abrió ninguna, y el registro del token de Firebase, que llega
+    // con el JWT recién emitido en la mano.
+    final jwt = token ?? _token();
     final headers = {
       'Accept': 'application/json',
       if (cuerpo != null) 'Content-Type': 'application/json',
@@ -128,6 +143,9 @@ class ClienteApi {
         final codigo => Fallo(RedFailure('El servidor respondió $codigo')),
       };
     } on FormatException {
+      // Cubre dos casos que para el usuario son el mismo: el cuerpo no era
+      // JSON, o `leer` encontró un JSON válido al que le faltaba lo que el
+      // contrato promete.
       return const Fallo(
           RedFailure('El servidor devolvió una respuesta ilegible'));
     } catch (_) {

@@ -8,11 +8,16 @@ abstract interface class SesionRepository {
 
   /// Valida las credenciales y persiste la sesión.
   ///
-  /// Falla con [AutenticacionFailure] si el email no existe, el PIN no
-  /// coincide, o la cuenta de un lector está dada de baja.
+  /// [clave] es el secreto que escribió la persona: el PIN del padrón cuando
+  /// la app corre sobre su almacenamiento local, y la contraseña de la cuenta
+  /// cuando corre contra el backend. El contrato no distingue cuál de los dos
+  /// es; eso lo sabe la implementación que esté montada.
+  ///
+  /// Falla con [AutenticacionFailure] si las credenciales no coinciden o la
+  /// cuenta está dada de baja.
   Future<Result<Lector>> iniciarSesion({
     required String email,
-    required String pin,
+    required String clave,
   });
 
   Future<Result<void>> cerrarSesion();

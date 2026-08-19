@@ -31,6 +31,11 @@ class EntornoDePrueba {
       store: MemoryStore(),
       reloj: reloj,
       generadorId: GeneradorIdSecuencial(),
+      // Los tests describen las reglas de dominio de la app, no el contrato
+      // con el backend: corren sobre el almacenamiento local para no depender
+      // de la red. El contrato con la API lo cubren los tests de datasource,
+      // con un cliente HTTP falso.
+      usarBackend: false,
     );
 
     await sl<InicializarDatos>()(const SinParametros());

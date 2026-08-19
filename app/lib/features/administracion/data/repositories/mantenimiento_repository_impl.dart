@@ -28,7 +28,9 @@ class MantenimientoRepositoryImpl implements MantenimientoRepository {
     required AdministracionLocalDataSource administracionDataSource,
     required AprendizajeLocalDataSource aprendizajeDataSource,
     required Reloj reloj,
-  })  : _store = store,
+    bool sembrarDemo = true,
+  })  : _sembrarDemo = sembrarDemo,
+        _store = store,
         _catalogo = catalogoDataSource,
         _lectores = lectorDataSource,
         _prestamos = prestamoDataSource,
@@ -47,6 +49,16 @@ class MantenimientoRepositoryImpl implements MantenimientoRepository {
   final AdministracionLocalDataSource _administracion;
   final AprendizajeLocalDataSource _aprendizaje;
   final Reloj _reloj;
+
+  /// Si hay que sembrar el catálogo, el padrón y la circulación de ejemplo.
+  ///
+  /// Con la app corriendo contra el backend esos cuatro agregados son del
+  /// servidor: sembrarlos igual dejaría un juego de datos paralelo que la app
+  /// no lee y, peor, notificaciones y auditoría apuntando a lectores que del
+  /// otro lado no existen. En ese modo sólo se siembra lo que sigue siendo
+  /// local: la configuración —que el panel de administración edita y las
+  /// políticas de dominio leen— y el registro de aprendizaje, ambos vacíos.
+  final bool _sembrarDemo;
 
   @override
   Future<Result<void>> inicializarSiHaceFalta() async {
@@ -68,12 +80,14 @@ class MantenimientoRepositoryImpl implements MantenimientoRepository {
     final seed = SeedData(_reloj.ahora);
 
     final pasos = <Result<void>>[
-      _catalogo.guardar(seed.libros()),
-      _lectores.guardar(seed.lectores()),
-      _prestamos.guardar(seed.prestamos()),
-      _reservas.guardar(seed.reservas()),
-      _notificaciones.guardar(seed.notificaciones()),
-      _administracion.guardarAuditoria(seed.auditoria()),
+      if (_sembrarDemo) ...[
+        _catalogo.guardar(seed.libros()),
+        _lectores.guardar(seed.lectores()),
+        _prestamos.guardar(seed.prestamos()),
+        _reservas.guardar(seed.reservas()),
+        _notificaciones.guardar(seed.notificaciones()),
+        _administracion.guardarAuditoria(seed.auditoria()),
+      ],
       _administracion.guardarConfiguracion(const ConfiguracionBiblioteca()),
       _aprendizaje.guardarCorrecciones(const []),
       _aprendizaje.guardarInteracciones(const []),

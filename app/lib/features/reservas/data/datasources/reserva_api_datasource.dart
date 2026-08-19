@@ -18,6 +18,9 @@ abstract interface class ReservaApiDataSource {
 
   /// `GET /reservas/lector/{id}` — sólo las activas: en cola o retenidas.
   Future<Result<List<Reserva>>> deLector(String lectorId);
+
+  /// `GET /reservas` — todas, en cualquier estado. Pide rol bibliotecario.
+  Future<Result<List<Reserva>>> todas();
 }
 
 class ReservaApiDataSourceHttp implements ReservaApiDataSource {
@@ -57,11 +60,18 @@ class ReservaApiDataSourceHttp implements ReservaApiDataSource {
     if (id == null) return Future.value(const Exito([]));
     return _api.get<List<Reserva>>(
       '/api/v1/reservas/lector/$id',
-      leer: (json) => (json as List<Object?>? ?? const [])
-          .map((e) => reservaDesdeApi(e as Map<String, dynamic>))
-          .toList(),
+      leer: _leerLista,
     );
   }
+
+  @override
+  Future<Result<List<Reserva>>> todas() =>
+      _api.get<List<Reserva>>('/api/v1/reservas', leer: _leerLista);
+
+  static List<Reserva> _leerLista(Object? json) =>
+      (json as List<Object?>? ?? const [])
+          .map((e) => reservaDesdeApi(e as Map<String, dynamic>))
+          .toList();
 }
 
 /// Traduce un `ReservaResponse` del backend.

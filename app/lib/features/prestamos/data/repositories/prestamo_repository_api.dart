@@ -1,6 +1,5 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../../../lectores/domain/repositories/lector_repository.dart';
 import '../../domain/entities/prestamo.dart';
 import '../../domain/repositories/prestamo_repository.dart';
 import '../datasources/prestamo_api_datasource.dart';
@@ -12,39 +11,19 @@ import '../datasources/prestamo_api_datasource.dart';
 /// este contrato. Los métodos de escritura del contrato local —`crear`,
 /// `actualizar`— fallan explícitamente en vez de simular que guardaron algo.
 class PrestamoRepositoryApi implements PrestamoRepository {
-  const PrestamoRepositoryApi({
-    required PrestamoApiDataSource api,
-    required LectorRepository lectores,
-  })  : _api = api,
-        _lectores = lectores;
+  const PrestamoRepositoryApi(this._api);
 
   final PrestamoApiDataSource _api;
-  final LectorRepository _lectores;
 
   @override
   Future<Result<List<Prestamo>>> obtenerDeLector(String lectorId) =>
       _api.deLector(lectorId);
 
-  /// La API v1 sólo expone los préstamos de un lector puntual: no hay una ruta
-  /// que devuelva la circulación completa. Se arma recorriendo el padrón, que
-  /// es la única fuente real disponible.
-  ///
-  /// Son N+1 requests, aceptable para el tamaño de una biblioteca de la demo y
-  /// preferible a mostrar datos inventados. Un `GET /prestamos` en el backend
-  /// lo reemplazaría por una sola llamada.
+  /// `GET /prestamos`, que además completa el título de cada préstamo. Sólo
+  /// responde a bibliotecarios y administradores, que son los únicos que ven
+  /// la circulación completa.
   @override
-  Future<Result<List<Prestamo>>> obtenerTodos() async {
-    final padron = await _lectores.obtenerLectores();
-    if (padron case Fallo(:final failure)) return Fallo(failure);
-
-    final todos = <Prestamo>[];
-    for (final lector in padron.valorONull!) {
-      final suyos = await _api.deLector(lector.id);
-      if (suyos case Fallo(:final failure)) return Fallo(failure);
-      todos.addAll(suyos.valorONull!);
-    }
-    return Exito(todos);
-  }
+  Future<Result<List<Prestamo>>> obtenerTodos() => _api.todos();
 
   @override
   Future<Result<Prestamo>> obtenerPorId(String prestamoId) async {

@@ -23,11 +23,14 @@ import '../../features/agentes/domain/usecases/procesar_vencimientos.dart';
 import '../../features/agentes/presentation/bloc/agentes_bloc.dart';
 import '../../features/agentes/presentation/cubit/recomendaciones_cubit.dart';
 import '../../features/auth/data/datasources/auth_api_datasource.dart';
+import '../../features/auth/data/repositories/sesion_repository_api.dart';
 import '../../features/auth/data/repositories/sesion_repository_impl.dart';
 import '../../features/auth/domain/repositories/sesion_repository.dart';
 import '../../features/auth/domain/usecases/gestionar_sesion.dart';
 import '../../features/auth/presentation/cubit/sesion_cubit.dart';
+import '../../features/catalogo/data/datasources/catalogo_api_datasource.dart';
 import '../../features/catalogo/data/datasources/catalogo_local_datasource.dart';
+import '../../features/catalogo/data/repositories/catalogo_repository_api.dart';
 import '../../features/catalogo/data/repositories/catalogo_repository_impl.dart';
 import '../../features/catalogo/domain/repositories/catalogo_repository.dart';
 import '../../features/catalogo/domain/usecases/agregar_ejemplar.dart';
@@ -39,7 +42,9 @@ import '../../features/catalogo/domain/usecases/reimprimir_etiqueta.dart';
 import '../../features/catalogo/domain/usecases/validar_libro.dart';
 import '../../features/catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../../features/catalogo/presentation/cubit/alta_libro_cubit.dart';
+import '../../features/lectores/data/datasources/lector_api_datasource.dart';
 import '../../features/lectores/data/datasources/lector_local_datasource.dart';
+import '../../features/lectores/data/repositories/lector_repository_api.dart';
 import '../../features/lectores/data/repositories/lector_repository_impl.dart';
 import '../../features/lectores/domain/repositories/lector_repository.dart';
 import '../../features/lectores/domain/usecases/cambiar_categoria.dart';
@@ -54,21 +59,32 @@ import '../../features/notificaciones/domain/usecases/activar_notificaciones_pus
 import '../../features/notificaciones/domain/usecases/gestionar_notificaciones.dart';
 import '../../features/notificaciones/presentation/cubit/notificaciones_cubit.dart';
 import '../../features/notificaciones/presentation/cubit/push_cubit.dart';
+import '../../features/prestamos/data/datasources/prestamo_api_datasource.dart';
 import '../../features/prestamos/data/datasources/prestamo_local_datasource.dart';
+import '../../features/prestamos/data/repositories/prestamo_remoto_api.dart';
+import '../../features/prestamos/data/repositories/prestamo_repository_api.dart';
 import '../../features/prestamos/data/repositories/prestamo_repository_impl.dart';
+import '../../features/prestamos/domain/repositories/prestamo_remoto.dart';
 import '../../features/prestamos/domain/repositories/prestamo_repository.dart';
 import '../../features/prestamos/domain/usecases/consultas_prestamos.dart';
 import '../../features/prestamos/domain/usecases/registrar_devolucion.dart';
 import '../../features/prestamos/domain/usecases/registrar_prestamo.dart';
 import '../../features/prestamos/presentation/bloc/prestamos_bloc.dart';
+import '../../features/reservas/data/datasources/reserva_api_datasource.dart';
 import '../../features/reservas/data/datasources/reserva_local_datasource.dart';
+import '../../features/reservas/data/repositories/reserva_remota_api.dart';
+import '../../features/reservas/data/repositories/reserva_repository_api.dart';
 import '../../features/reservas/data/repositories/reserva_repository_impl.dart';
+import '../../features/reservas/domain/repositories/reserva_remota.dart';
 import '../../features/reservas/domain/repositories/reserva_repository.dart';
 import '../../features/reservas/domain/services/asignador_de_cola.dart';
 import '../../features/reservas/domain/usecases/cancelar_reserva.dart';
 import '../../features/reservas/domain/usecases/consultas_reservas.dart';
 import '../../features/reservas/domain/usecases/crear_reserva.dart';
 import '../../features/reservas/presentation/bloc/reservas_bloc.dart';
+import '../api/cliente_api.dart';
+import '../api/sesion_api.dart';
+import '../config/entorno.dart';
 import '../push/fabrica_push.dart';
 import '../push/servicio_push.dart';
 import '../services/reloj.dart';
@@ -88,14 +104,20 @@ final sl = GetIt.instance;
 /// El registro va de adentro hacia afuera: infraestructura → datasources →
 /// repositorios → servicios de dominio → casos de uso → presentación.
 ///
-/// Los tres parámetros existen para los tests: pasando un [MemoryStore], un
-/// [RelojFijo] y un [GeneradorIdSecuencial] se obtiene el grafo real de la
-/// app —los mismos casos de uso y repositorios que corren en producción— pero
-/// determinista y sin plugins de Flutter.
+/// Los tres primeros parámetros existen para los tests: pasando un
+/// [MemoryStore], un [RelojFijo] y un [GeneradorIdSecuencial] se obtiene el
+/// grafo real de la app —los mismos casos de uso y repositorios que corren en
+/// producción— pero determinista y sin plugins de Flutter.
+///
+/// [usarBackend] elige contra qué corre la app. Es el único interruptor de
+/// todo el proyecto: cambia qué implementación queda atada a cada contrato de
+/// dominio, y ni los casos de uso ni los blocs ni las pantallas se enteran.
+/// Los tests lo dejan en `false` para no depender de la red.
 Future<void> configurarInyeccion({
   KeyValueStore? store,
   Reloj? reloj,
   GeneradorId? generadorId,
+  bool usarBackend = Entorno.usarBackend,
 }) async {
   // ─────────────────────────── Infraestructura ───────────────────────────
 
@@ -104,14 +126,18 @@ Future<void> configurarInyeccion({
   sl.registerLazySingleton<GeneradorId>(
       () => generadorId ?? GeneradorIdPorTiempo(sl()));
 
-  _registrarDataSources();
-  _registrarRepositorios();
+  _registrarDataSources(usarBackend);
+  _registrarRepositorios(usarBackend);
   _registrarServiciosDeDominio();
-  _registrarCasosDeUso();
+  _registrarCasosDeUso(usarBackend);
   _registrarPresentacion();
 }
 
-void _registrarDataSources() {
+void _registrarDataSources(bool usarBackend) {
+  // Los datasources locales se registran siempre: aunque la app corra contra
+  // el backend, el mantenimiento (reinicio de datos) y las features que la API
+  // no cubre —notificaciones, auditoría, configuración, aprendizaje— siguen
+  // trabajando sobre el almacenamiento del dispositivo.
   sl.registerLazySingleton<CatalogoLocalDataSource>(
       () => CatalogoLocalDataSourceImpl(sl()));
   sl.registerLazySingleton<LectorLocalDataSource>(
@@ -132,28 +158,71 @@ void _registrarDataSources() {
   // ni toca plugins mientras no los pida.
   sl.registerLazySingleton<AuthApiDataSource>(() => AuthApiDataSourceHttp());
   sl.registerLazySingleton<ServicioPush>(crearServicioPush);
+
+  if (!usarBackend) return;
+
+  // La sesión de la API y el cliente HTTP que la usa. El cliente le pide el
+  // token en cada request, así que un login o un logout se reflejan solos en
+  // todos los datasources remotos sin tener que reconstruir ninguno.
+  sl.registerLazySingleton(() => SesionApi(sl()));
+  sl.registerLazySingleton(() => ClienteApi(
+        baseUrl: Entorno.apiBaseUrl,
+        token: () => sl<SesionApi>().token,
+      ));
+
+  sl.registerLazySingleton<CatalogoApiDataSource>(
+      () => CatalogoApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<LectorApiDataSource>(
+      () => LectorApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<PrestamoApiDataSource>(
+      () => PrestamoApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<ReservaApiDataSource>(
+      () => ReservaApiDataSourceHttp(sl()));
 }
 
-void _registrarRepositorios() {
-  sl.registerLazySingleton<CatalogoRepository>(() => CatalogoRepositoryImpl(
-        localDataSource: sl(),
-        generadorId: sl(),
-      ));
+void _registrarRepositorios(bool usarBackend) {
+  // Los cuatro agregados que el backend administra. Es el único punto donde se
+  // decide de dónde salen: de acá para arriba, casos de uso y blocs ven
+  // siempre el mismo contrato.
+  if (usarBackend) {
+    sl.registerLazySingleton<CatalogoRepository>(
+        () => CatalogoRepositoryApi(sl()));
 
-  sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryImpl(
-        localDataSource: sl(),
-        generadorId: sl(),
-      ));
+    sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryApi(
+          api: sl(),
+          sesion: sl(),
+        ));
 
-  sl.registerLazySingleton<PrestamoRepository>(() => PrestamoRepositoryImpl(
-        localDataSource: sl(),
-        generadorId: sl(),
-      ));
+    sl.registerLazySingleton<PrestamoRepository>(
+        () => PrestamoRepositoryApi(sl()));
 
-  sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryImpl(
-        localDataSource: sl(),
-        generadorId: sl(),
-      ));
+    sl.registerLazySingleton<ReservaRepository>(
+        () => ReservaRepositoryApi(sl()));
+
+    // Puertos para las transacciones que resuelve el servidor de una sola vez.
+    sl.registerLazySingleton<PrestamoRemoto>(() => PrestamoRemotoApi(sl()));
+    sl.registerLazySingleton<ReservaRemota>(() => ReservaRemotaApi(sl()));
+  } else {
+    sl.registerLazySingleton<CatalogoRepository>(() => CatalogoRepositoryImpl(
+          localDataSource: sl(),
+          generadorId: sl(),
+        ));
+
+    sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryImpl(
+          localDataSource: sl(),
+          generadorId: sl(),
+        ));
+
+    sl.registerLazySingleton<PrestamoRepository>(() => PrestamoRepositoryImpl(
+          localDataSource: sl(),
+          generadorId: sl(),
+        ));
+
+    sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryImpl(
+          localDataSource: sl(),
+          generadorId: sl(),
+        ));
+  }
 
   sl.registerLazySingleton<NotificacionRepository>(
       () => NotificacionRepositoryImpl(
@@ -173,10 +242,16 @@ void _registrarRepositorios() {
   sl.registerLazySingleton<AprendizajeRepository>(
       () => AprendizajeRepositoryImpl(sl()));
 
-  sl.registerLazySingleton<SesionRepository>(() => SesionRepositoryImpl(
-        store: sl(),
-        lectorRepository: sl(),
-      ));
+  sl.registerLazySingleton<SesionRepository>(() => usarBackend
+      ? SesionRepositoryApi(
+          api: sl(),
+          sesion: sl(),
+          lectores: sl(),
+        )
+      : SesionRepositoryImpl(
+          store: sl(),
+          lectorRepository: sl(),
+        ));
 
   sl.registerLazySingleton<PushRepository>(() => PushRepositoryImpl(
         servicio: sl(),
@@ -194,6 +269,7 @@ void _registrarRepositorios() {
             administracionDataSource: sl(),
             aprendizajeDataSource: sl(),
             reloj: sl(),
+            sembrarDemo: !usarBackend,
           ));
 }
 
@@ -226,7 +302,7 @@ void _registrarServiciosDeDominio() {
       ));
 }
 
-void _registrarCasosDeUso() {
+void _registrarCasosDeUso(bool usarBackend) {
   // ── Catálogo ──
   sl.registerLazySingleton(() => ObtenerCatalogo(sl()));
   sl.registerLazySingleton(() => BuscarLibros(sl()));
@@ -288,6 +364,7 @@ void _registrarCasosDeUso() {
         configuracionRepository: sl(),
         auditoriaRepository: sl(),
         reloj: sl(),
+        remoto: usarBackend ? sl<PrestamoRemoto>() : null,
       ));
   sl.registerLazySingleton(() => RegistrarDevolucion(
         prestamoRepository: sl(),
@@ -297,6 +374,7 @@ void _registrarCasosDeUso() {
         auditoriaRepository: sl(),
         asignadorDeCola: sl(),
         reloj: sl(),
+        remoto: usarBackend ? sl<PrestamoRemoto>() : null,
       ));
 
   // ── Reservas ──
@@ -312,11 +390,13 @@ void _registrarCasosDeUso() {
         aprendizajeRepository: sl(),
         asignadorDeCola: sl(),
         reloj: sl(),
+        remota: usarBackend ? sl<ReservaRemota>() : null,
       ));
   sl.registerLazySingleton(() => CancelarReserva(
         reservaRepository: sl(),
         catalogoRepository: sl(),
         asignadorDeCola: sl(),
+        remota: usarBackend ? sl<ReservaRemota>() : null,
       ));
 
   // ── Notificaciones ──

@@ -12,15 +12,20 @@ import '../datasources/catalogo_api_datasource.dart';
 /// dos está montada. Lo que cambia es dónde vive la verdad —acá, en el
 /// servidor— y qué operaciones existen.
 ///
-/// **Dos huecos de la API v1**, resueltos sin inventar datos:
+/// El listado y el detalle traen distinto nivel de detalle, a propósito:
 ///
-/// - `GET /titulos` devuelve únicamente títulos validados, así que el backend
-///   no tiene forma de listar los pendientes de revisión. `obtenerTodos` y
-///   `obtenerPendientesValidacion` devuelven, respectivamente, el catálogo
-///   público y una lista vacía, en lugar de simular una bandeja de entrada.
-/// - No hay ruta que liste los ejemplares de un título; sólo el conteo y la
-///   búsqueda por QR. Los `Libro` que salen de acá traen los totales
-///   informados por el servidor y `ejemplares` vacía.
+/// - `GET /titulos` informa `total_ejemplares` y `ejemplares_disponibles`,
+///   que es todo lo que necesita una grilla de catálogo. Los `Libro` del
+///   listado llegan con esos conteos y `ejemplares` vacía: pedir la lista de
+///   cada título sería un request por fila para un dato que la grilla no usa.
+/// - `obtenerPorId` sí completa los ejemplares con
+///   `GET /titulos/{id}/ejemplares`, que es de donde salen los códigos QR
+///   reales para la ficha y el inventario.
+///
+/// Queda un hueco de la API: `GET /titulos` devuelve únicamente títulos
+/// validados, así que el backend no expone los pendientes de revisión.
+/// `obtenerPendientesValidacion` devuelve vacío en vez de simular una bandeja
+/// de entrada.
 class CatalogoRepositoryApi implements CatalogoRepository {
   const CatalogoRepositoryApi(this._api);
 
@@ -37,8 +42,19 @@ class CatalogoRepositoryApi implements CatalogoRepository {
       const Exito([]);
 
   @override
-  Future<Result<Libro>> obtenerPorId(String libroId) =>
-      _api.obtenerTitulo(libroId);
+  Future<Result<Libro>> obtenerPorId(String libroId) async {
+    final tituloResult = await _api.obtenerTitulo(libroId);
+    if (tituloResult case Fallo(:final failure)) return Fallo(failure);
+
+    final ejemplaresResult = await _api.listarEjemplares(libroId);
+    if (ejemplaresResult case Fallo(:final failure)) return Fallo(failure);
+
+    return Exito(
+      tituloResult.valorONull!.copyWith(
+        ejemplares: ejemplaresResult.valorONull!,
+      ),
+    );
+  }
 
   @override
   Future<Result<List<Libro>>> buscar({
@@ -74,7 +90,7 @@ class CatalogoRepositoryApi implements CatalogoRepository {
 
     // El ejemplar sólo trae el id de su título; el mostrador necesita también
     // la ficha para poder mostrar de qué libro se trata.
-    final libroResult = await _api.obtenerTitulo(ejemplar.libroId);
+    final libroResult = await obtenerPorId(ejemplar.libroId);
     if (libroResult case Fallo(:final failure)) return Fallo(failure);
 
     return Exito((libro: libroResult.valorONull!, ejemplar: ejemplar));

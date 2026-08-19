@@ -18,6 +18,10 @@ abstract interface class CatalogoApiDataSource {
 
   Future<Result<Libro>> obtenerTitulo(String libroId);
 
+  /// `GET /titulos/{id}/ejemplares` — los ejemplares activos del título, con
+  /// su código QR, su estado y su condición física.
+  Future<Result<List<Ejemplar>>> listarEjemplares(String libroId);
+
   Future<Result<Libro>> crearTitulo(Libro libro);
 
   Future<Result<Libro>> editarTitulo(Libro libro);
@@ -65,6 +69,17 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
             '/api/v1/catalogo/titulos/$id',
             leer: _leerLibro,
           ));
+
+  @override
+  Future<Result<List<Ejemplar>>> listarEjemplares(String libroId) =>
+      _conIdRemoto(
+          libroId,
+          (id) => _api.get<List<Ejemplar>>(
+                '/api/v1/catalogo/titulos/$id/ejemplares',
+                leer: (json) => (json as List<Object?>? ?? const [])
+                    .map((e) => _ejemplarDesdeApi(e as Map<String, dynamic>))
+                    .toList(),
+              ));
 
   @override
   Future<Result<Libro>> crearTitulo(Libro libro) => _api.post<Libro>(
