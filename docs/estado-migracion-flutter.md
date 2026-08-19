@@ -18,6 +18,82 @@ Architecture + BLoC.
 El prototipo no se tocó: la app Flutter vive en `app/` y se puede comparar
 pantalla por pantalla contra el HTML.
 
+## Conexión con el backend
+
+La app corre contra la API del backend SGB
+(`https://tp-ia-utn-bibliotech-back-production.up.railway.app`). El
+interruptor es uno solo, `Entorno.usarBackend`, y vive en el composition
+root: decide qué implementación queda atada a cada contrato de dominio. Ni
+los casos de uso, ni los blocs, ni las pantallas se enteran de cuál está
+montada.
+
+```bash
+flutter run -d chrome                                    # contra el backend
+flutter run -d chrome --dart-define=SGB_USAR_BACKEND=false   # modo local
+```
+
+El modo local sigue existiendo a propósito: sirve para mostrar la app sin
+conexión y es el que usan los tests de reglas de negocio, que describen el
+dominio y no deben depender de la red.
+
+### Qué viene del servidor
+
+| Feature | Rutas |
+|---|---|
+| Sesión | `POST /auth/login`, `GET /auth/me` |
+| Catálogo | `GET/POST/PATCH /catalogo/titulos`, `/titulos/{id}/validar`, `/titulos/{id}/ejemplares`, `/ejemplares`, `/ejemplares/qr/{qr}` |
+| Padrón | `GET/POST/PATCH /lectores` |
+| Préstamos | `GET/POST /prestamos`, `/prestamos/devolucion`, `/prestamos/lector/{id}` |
+| Reservas | `GET/POST/DELETE /reservas`, `/reservas/lector/{id}` |
+
+Siguen siendo locales las features que la API no cubre: notificaciones,
+auditoría, configuración de parámetros y registro de aprendizaje. Los
+agentes trabajan sobre lo que devuelven los repositorios, así que en modo
+backend evalúan datos reales.
+
+### Cómo está armado
+
+- `core/api/cliente_api.dart` — el único lugar que arma URLs, adjunta el JWT
+  y traduce el borde técnico a una `Failure`. La tabla de traducción
+  (401/403 → autenticación, 404 → no encontrado, 409 → regla de negocio,
+  422 → validación) está fijada por tests.
+- `core/api/sesion_api.dart` — el JWT y su dueño, persistidos. El cliente le
+  pide el token en cada request, así que un login o un logout se reflejan
+  solos en todos los datasources.
+- `core/api/mapeo_api.dart` — la traducción entre los dos vocabularios, con
+  la pérdida de información de cada conversión documentada.
+- Un datasource y un repositorio API por agregado, implementando los mismos
+  contratos que las versiones locales.
+- `PrestamoRemoto` y `ReservaRemota` — puertos para las operaciones que el
+  backend resuelve en una sola transacción. Prestar, devolver, reservar y
+  cancelar no son "guardar una fila": el servidor verifica cupo, multas y
+  disponibilidad, mueve el estado del ejemplar y calcula el plazo, todo
+  dentro del mismo commit. Los casos de uso delegan en esos puertos cuando
+  están registrados, en vez de repetir del lado de la app reglas que el
+  servidor ya aplica.
+
+### Decisiones sobre datos que la API no da
+
+- **Ejemplares en el listado.** `GET /titulos` informa los conteos pero no
+  lista los ejemplares. El listado guarda esos conteos y deja `ejemplares`
+  vacía; el detalle sí los pide. Rellenar con ejemplares de relleno mostraría
+  etiquetas QR que no resuelven contra el servidor.
+- **Códigos QR.** Los emite el backend y no se pueden derivar del id, así que
+  `Ejemplar.qrAsignado` los conserva tal cual. La regla de continuidad de
+  identidad ante reimpresión (§7) vale igual: el código se conserva, no se
+  recalcula.
+- **Títulos pendientes de validación.** `GET /titulos` sólo devuelve los
+  validados, así que en modo backend la bandeja de pendientes queda vacía.
+- **Multas.** Del lado del backend son registros propios con su motivo y su
+  estado, no un saldo acumulado en el lector: se pagan o condonan de a una.
+
+### Pendiente del lado del backend
+
+`titulo_id` se completa en `POST /prestamos` y en `GET /prestamos`, pero no
+en `GET /prestamos/lector/{id}` ni en la devolución. Mientras falte, la
+sección "Mi actividad" del lector no puede mostrar de qué libro es cada
+préstamo. Se arregla con la misma línea que ya usan las otras dos rutas.
+
 ## Estado: la migración funcional está completa
 
 Las tres interfaces de la spec v2 §9 están portadas y operativas. Verificado
@@ -158,7 +234,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Aprendizaje, sugerencias estratégicas y "acerca de" con la bitácora de la
   sesión y el reinicio de datos.
 
-### Tests — 43, todos en verde
+### Tests — 108, todos en verde
 
 `test/helpers/entorno_de_prueba.dart` levanta el grafo real de la app sobre
 `MemoryStore`, `RelojFijo` y `GeneradorIdSecuencial`. Los tests usan los
@@ -172,6 +248,9 @@ cambia son las tres piezas de infraestructura del borde.
 | `features/auth/sesion_cubit_test.dart` | Login válido, PIN incorrecto, email inexistente, cierre de sesión y validación de campos |
 | `features/reservas/reservas_bloc_test.dart` | Reserva lista vs. en espera, duplicados, cancelación, bloqueo por multa y orden de la cola |
 | `app/arranque_test.dart` | Arranque del composition root, ruteo por rol y tema |
+| `core/api/cliente_api_test.dart` | El borde HTTP: query, JWT y la traducción de cada status a su `Failure` |
+| `features/*/​*_api_datasource_test.dart` | El contrato con la API, con cliente HTTP falso: los cuerpos son los que documenta el OpenAPI, así que un cambio del backend rompe en CI y no en la demo |
+| `features/auth/sesion_repository_api_test.dart` | Login, revalidación del JWT al arrancar, token vencido vs. corte de red |
 
 ### CI/CD
 
@@ -278,7 +357,12 @@ flutter test                 # 39 tests
 flutter analyze
 ```
 
-Usuarios de demostración (precargados en cada tarjeta de rol):
+Contra el backend, las cuentas son las del servidor y el formulario pide
+email y **contraseña**. La pantalla no prellena nada: las credenciales de la
+demo local no existen del otro lado.
+
+En modo local (`--dart-define=SGB_USAR_BACKEND=false`) valen los usuarios de
+demostración, precargados en cada tarjeta de rol:
 
 | Rol | Email | PIN |
 |---|---|---|
