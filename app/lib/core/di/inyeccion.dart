@@ -537,8 +537,8 @@ void _registrarPresentacion() {
         validarLibro: sl(),
         agregarEjemplar: sl(),
         registrarCorreccion: sl(),
+        catalogoRepository: sl(),
         reloj: sl(),
         usuarioActualId: usuarioActualId,
-        analizador: sl(),
       ));
 }

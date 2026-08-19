@@ -66,6 +66,35 @@ class ClienteApi {
         leer: leer,
       );
 
+  Future<Result<T>> postMultipart<T>(
+    String ruta, {
+    required List<http.MultipartFile> archivos,
+    String? token,
+    required T Function(Object? json) leer,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$ruta');
+    final jwt = token ?? _token();
+
+    final request = http.MultipartRequest('POST', uri);
+    if (jwt != null && jwt.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $jwt';
+    }
+
+    request.files.addAll(archivos);
+
+    try {
+      final streamedResponse = await _cliente.send(request).timeout(espera);
+      final respuesta = await http.Response.fromStream(streamedResponse);
+
+      return _procesarRespuesta(respuesta, leer);
+    } on FormatException {
+      return const Fallo(
+          RedFailure('El servidor devolvió una respuesta ilegible'));
+    } catch (_) {
+      return const Fallo(RedFailure());
+    }
+  }
+
   Future<Result<T>> patch<T>(
     String ruta, {
     Object? cuerpo,
@@ -139,24 +168,7 @@ class ClienteApi {
       }
           .timeout(espera);
 
-      return switch (respuesta.statusCode) {
-        >= 200 && < 300 => Exito(leer(_decodificar(respuesta.body))),
-        401 => Fallo(AutenticacionFailure(
-            _detalle(respuesta.body, 'La sesión del backend expiró'))),
-        403 => Fallo(AutenticacionFailure(
-            _detalle(respuesta.body, 'La cuenta no tiene permiso para esto'))),
-        404 => Fallo(NoEncontradoFailure(
-            _detalle(respuesta.body, 'El servidor no encontró ese registro'))),
-        // El backend usa 409 para los choques con una regla de negocio
-        // —cupo lleno, reserva duplicada, ejemplar prestado— y 422 para los
-        // datos mal formados. Distinguirlos importa: el primero se le explica
-        // al usuario, el segundo es un formulario a corregir.
-        409 => Fallo(ReglaDeNegocioFailure(
-            _detalle(respuesta.body, 'La operación no está permitida'))),
-        422 => Fallo(ValidacionFailure(
-            _detalle(respuesta.body, 'El servidor rechazó los datos'))),
-        final codigo => Fallo(RedFailure('El servidor respondió $codigo')),
-      };
+      return _procesarRespuesta(respuesta, leer);
     } on FormatException {
       // Cubre dos casos que para el usuario son el mismo: el cuerpo no era
       // JSON, o `leer` encontró un JSON válido al que le faltaba lo que el
@@ -167,6 +179,26 @@ class ClienteApi {
       // Timeout, DNS, CORS, TLS: para el usuario final son todos lo mismo.
       return const Fallo(RedFailure());
     }
+  }
+
+  Result<T> _procesarRespuesta<T>(
+    http.Response respuesta,
+    T Function(Object? json) leer,
+  ) {
+    return switch (respuesta.statusCode) {
+      >= 200 && < 300 => Exito(leer(_decodificar(respuesta.body))),
+      401 => Fallo(AutenticacionFailure(
+          _detalle(respuesta.body, 'La sesión del backend expiró'))),
+      403 => Fallo(AutenticacionFailure(
+          _detalle(respuesta.body, 'La cuenta no tiene permiso para esto'))),
+      404 => Fallo(NoEncontradoFailure(
+          _detalle(respuesta.body, 'El servidor no encontró ese registro'))),
+      409 => Fallo(ReglaDeNegocioFailure(
+          _detalle(respuesta.body, 'La operación no está permitida'))),
+      422 => Fallo(ValidacionFailure(
+          _detalle(respuesta.body, 'El servidor rechazó los datos'))),
+      final codigo => Fallo(RedFailure('El servidor respondió $codigo')),
+    };
   }
 
   static Object? _decodificar(String cuerpo) =>

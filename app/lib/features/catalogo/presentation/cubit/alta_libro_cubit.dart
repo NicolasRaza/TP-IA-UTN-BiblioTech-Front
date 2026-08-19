@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/repositories/catalogo_repository.dart';
 
 import '../../../../core/error/result.dart';
 import '../../../../core/presentation/estado_carga.dart';
 import '../../../../core/services/reloj.dart';
 import '../../../agentes/domain/entities/ficha_sugerida.dart';
-import '../../../agentes/domain/services/agente_analizador.dart';
 import '../../../agentes/domain/usecases/consultas_agentes.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
@@ -26,36 +26,57 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
     required ValidarLibro validarLibro,
     required AgregarEjemplar agregarEjemplar,
     required RegistrarCorreccion registrarCorreccion,
+    required CatalogoRepository catalogoRepository,
     required Reloj reloj,
     required String? Function() usuarioActualId,
-    AgenteAnalizador analizador = const AgenteAnalizador(),
   })  : _registrarLibro = registrarLibro,
         _validarLibro = validarLibro,
         _agregarEjemplar = agregarEjemplar,
         _registrarCorreccion = registrarCorreccion,
+        _catalogoRepository = catalogoRepository,
         _reloj = reloj,
         _usuarioActualId = usuarioActualId,
-        _analizador = analizador,
         super(const AltaLibroState());
 
   final RegistrarLibro _registrarLibro;
   final ValidarLibro _validarLibro;
   final AgregarEjemplar _agregarEjemplar;
   final RegistrarCorreccion _registrarCorreccion;
+  final CatalogoRepository _catalogoRepository;
   final Reloj _reloj;
   final String? Function() _usuarioActualId;
-  final AgenteAnalizador _analizador;
 
   /// Estructura el texto crudo del OCR en campos editoriales.
-  void analizar(String textoOcr) {
-    if (textoOcr.trim().isEmpty) {
+  /// Envía las fotos al backend para estructurar la ficha del OCR.
+  Future<void> analizar({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  }) async {
+    emit(state.copyWith(estado: EstadoCarga.cargando, limpiarMensajes: true));
+
+    final resultado = await _catalogoRepository.capturarOcr(
+      fotoTapa: fotoTapa,
+      fotoContratapa: fotoContratapa,
+      fotoFicha: fotoFicha,
+      extensionTapa: extensionTapa,
+      extensionContratapa: extensionContratapa,
+      extensionFicha: extensionFicha,
+    );
+
+    if (resultado case Fallo(:final failure)) {
       emit(state.copyWith(
-        mensajeError: 'Pegá el texto del OCR para poder analizarlo',
+        estado: EstadoCarga.inicial,
+        mensajeError: failure.mensaje,
       ));
       return;
     }
 
-    final ficha = _analizador.procesarTextoOcr(textoOcr);
+    final ficha = resultado.valorONull!;
+
     emit(state.copyWith(
       estado: EstadoCarga.exito,
       ficha: ficha,

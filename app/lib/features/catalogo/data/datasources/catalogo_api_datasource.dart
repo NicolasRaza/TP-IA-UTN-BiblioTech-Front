@@ -1,9 +1,13 @@
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 import '../../../../core/api/cliente_api.dart';
 import '../../../../core/api/mapeo_api.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
+import '../../../agentes/domain/entities/ficha_sugerida.dart';
 
 /// Acceso al catálogo del backend SGB (`/api/v1/catalogo`).
 ///
@@ -25,6 +29,16 @@ abstract interface class CatalogoApiDataSource {
   Future<Result<Libro>> crearTitulo(Libro libro);
 
   Future<Result<Libro>> editarTitulo(Libro libro);
+
+  /// `POST /titulos/captura-ocr` — envía las 3 fotos para extraer la ficha por OCR.
+  Future<Result<FichaSugerida>> capturarOcr({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  });
 
   /// `POST /titulos/{id}/validar` — publica el título con la ficha corregida.
   Future<Result<Libro>> validarTitulo(Libro libro);
@@ -96,6 +110,60 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
             cuerpo: _cuerpoTitulo(libro, conIsbn: false),
             leer: _leerLibro,
           ));
+
+  @override
+  Future<Result<FichaSugerida>> capturarOcr({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  }) {
+    final mimeTapa = _determinarMime(extensionTapa);
+    final mimeContratapa = _determinarMime(extensionContratapa);
+    final mimeFicha = _determinarMime(extensionFicha);
+
+    return _api.postMultipart<FichaSugerida>(
+      '/api/v1/catalogo/titulos/captura-ocr',
+      archivos: [
+        http.MultipartFile.fromBytes(
+          'foto_tapa',
+          fotoTapa,
+          filename: 'tapa.${extensionTapa ?? "jpg"}',
+          contentType:
+              MediaType(mimeTapa.split('/')[0], mimeTapa.split('/')[1]),
+        ),
+        http.MultipartFile.fromBytes(
+          'foto_contratapa',
+          fotoContratapa,
+          filename: 'contratapa.${extensionContratapa ?? "jpg"}',
+          contentType: MediaType(
+              mimeContratapa.split('/')[0], mimeContratapa.split('/')[1]),
+        ),
+        http.MultipartFile.fromBytes(
+          'foto_ficha',
+          fotoFicha,
+          filename: 'ficha.${extensionFicha ?? "jpg"}',
+          contentType:
+              MediaType(mimeFicha.split('/')[0], mimeFicha.split('/')[1]),
+        ),
+      ],
+      leer: _leerFichaOcr,
+    );
+  }
+
+  String _determinarMime(String? ext) {
+    if (ext == null) return 'image/jpeg';
+    switch (ext.toLowerCase()) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
+    }
+  }
 
   @override
   Future<Result<Libro>> validarTitulo(Libro libro) =>
@@ -174,10 +242,49 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
         libroId: idDesdeApi(json['titulo_id']),
         condicion: condicionDesdeApi(json['condicion'] as String?),
         estado: estadoEjemplarDesdeApi(json['estado'] as String?),
+        ubicacion: json['ubicacion_fisica'] as String? ?? 'Sin asignar',
         // El código lo emite el servidor: se conserva tal cual, porque es lo
         // único que resuelve contra `GET /ejemplares/qr/{codigo}`.
         qrAsignado: json['codigo_qr'] as String?,
       );
+
+  static FichaSugerida _leerFichaOcr(Object? json) {
+    final data = json as Map<String, dynamic>;
+
+    // Mapeo del JSON OCRResultado a FichaSugerida
+    final campos = <String, CampoSugerido>{};
+
+    void agregarCampo(String clave, String? valor, num? confianza) {
+      if (valor == null || valor.isEmpty) {
+        campos[clave] = const CampoSugerido.pendiente();
+      } else {
+        campos[clave] = CampoSugerido(
+          valor: valor,
+          confianza: (confianza ?? 0) >= 0.8
+              ? NivelConfianza.alta
+              : ((confianza ?? 0) >= 0.5
+                  ? NivelConfianza.media
+                  : NivelConfianza.baja),
+          porcentaje: ((confianza ?? 0) * 100).round(),
+          fuente: 'OCR',
+        );
+      }
+    }
+
+    agregarCampo(
+        'isbn', data['isbn'] as String?, data['confianza_isbn'] as num?);
+    agregarCampo(
+        'titulo', data['titulo'] as String?, data['confianza_titulo'] as num?);
+    agregarCampo(
+        'autor', data['autores'] as String?, data['confianza_autores'] as num?);
+
+    // Estos campos no tienen nivel de confianza específico en el backend, se consideran de enriquecimiento o alta
+    agregarCampo('editorial', data['editorial'] as String?, 0.9);
+    agregarCampo('anio', data['anio_edicion'] as String?, 0.9);
+    agregarCampo('paginas', data['paginas']?.toString(), 0.9);
+
+    return FichaSugerida(campos: campos);
+  }
 
   /// Los campos que aceptan `TituloCreate`, `TituloUpdate` y `TituloValidar`.
   /// El ISBN sólo viaja en el alta: el backend no lo deja cambiar después.

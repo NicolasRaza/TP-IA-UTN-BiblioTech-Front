@@ -44,6 +44,7 @@ class Ejemplar extends Equatable {
     required this.libroId,
     required this.condicion,
     required this.estado,
+    this.ubicacion = 'Sin asignar',
     this.reimpresionesQr = 0,
     this.qrAsignado,
   });
@@ -52,6 +53,7 @@ class Ejemplar extends Equatable {
   final String libroId;
   final CondicionEjemplar condicion;
   final EstadoEjemplar estado;
+  final String ubicacion;
 
   /// Cuántas veces se reimprimió la etiqueta. El QR en sí nunca cambia.
   final int reimpresionesQr;
@@ -76,6 +78,7 @@ class Ejemplar extends Equatable {
   Ejemplar copyWith({
     CondicionEjemplar? condicion,
     EstadoEjemplar? estado,
+    String? ubicacion,
     int? reimpresionesQr,
   }) =>
       Ejemplar(
@@ -83,11 +86,12 @@ class Ejemplar extends Equatable {
         libroId: libroId,
         condicion: condicion ?? this.condicion,
         estado: estado ?? this.estado,
+        ubicacion: ubicacion ?? this.ubicacion,
         reimpresionesQr: reimpresionesQr ?? this.reimpresionesQr,
         qrAsignado: qrAsignado,
       );
 
   @override
   List<Object?> get props =>
-      [id, libroId, condicion, estado, reimpresionesQr, qrAsignado];
+      [id, libroId, condicion, estado, ubicacion, reimpresionesQr, qrAsignado];
 }

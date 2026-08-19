@@ -1,4 +1,5 @@
 import '../../../../core/error/result.dart';
+import '../../../agentes/domain/entities/ficha_sugerida.dart';
 import '../entities/ejemplar.dart';
 import '../entities/libro.dart';
 
@@ -40,6 +41,16 @@ abstract interface class CatalogoRepository {
 
   /// Reemplaza un libro existente por completo, ejemplares incluidos.
   Future<Result<Libro>> actualizar(Libro libro);
+
+  /// Envía fotos al OCR del backend y obtiene la ficha sugerida.
+  Future<Result<FichaSugerida>> capturarOcr({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  });
 
   Future<Result<void>> eliminar(String libroId);
 
