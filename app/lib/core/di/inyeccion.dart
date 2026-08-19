@@ -293,7 +293,6 @@ void _registrarCasosDeUso() {
       ));
   sl.registerLazySingleton(() => RegistrarseComoLector(
         lectorRepository: sl(),
-        auditoriaRepository: sl(),
         reloj: sl(),
       ));
   sl.registerLazySingleton(() => CambiarCategoria(
