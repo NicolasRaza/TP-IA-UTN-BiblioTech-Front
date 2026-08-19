@@ -6,7 +6,6 @@ import '../../../../core/error/result.dart';
 import '../../../../core/presentation/estado_carga.dart';
 import '../../../../core/services/reloj.dart';
 import '../../../agentes/domain/entities/ficha_sugerida.dart';
-import '../../../agentes/domain/services/agente_analizador.dart';
 import '../../../agentes/domain/usecases/consultas_agentes.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
@@ -30,7 +29,6 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
     required CatalogoRepository catalogoRepository,
     required Reloj reloj,
     required String? Function() usuarioActualId,
-    AgenteAnalizador analizador = const AgenteAnalizador(),
   })  : _registrarLibro = registrarLibro,
         _validarLibro = validarLibro,
         _agregarEjemplar = agregarEjemplar,
@@ -38,7 +36,6 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
         _catalogoRepository = catalogoRepository,
         _reloj = reloj,
         _usuarioActualId = usuarioActualId,
-        _analizador = analizador,
         super(const AltaLibroState());
 
   final RegistrarLibro _registrarLibro;
@@ -48,7 +45,6 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
   final CatalogoRepository _catalogoRepository;
   final Reloj _reloj;
   final String? Function() _usuarioActualId;
-  final AgenteAnalizador _analizador;
 
   /// Estructura el texto crudo del OCR en campos editoriales.
   /// Envía las fotos al backend para estructurar la ficha del OCR.

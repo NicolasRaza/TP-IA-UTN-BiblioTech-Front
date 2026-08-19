@@ -79,16 +79,17 @@ class ClienteApi {
     if (jwt != null && jwt.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $jwt';
     }
-    
+
     request.files.addAll(archivos);
 
     try {
       final streamedResponse = await _cliente.send(request).timeout(espera);
       final respuesta = await http.Response.fromStream(streamedResponse);
-      
+
       return _procesarRespuesta(respuesta, leer);
     } on FormatException {
-      return const Fallo(RedFailure('El servidor devolvió una respuesta ilegible'));
+      return const Fallo(
+          RedFailure('El servidor devolvió una respuesta ilegible'));
     } catch (_) {
       return const Fallo(RedFailure());
     }

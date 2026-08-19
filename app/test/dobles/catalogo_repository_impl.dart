@@ -1,6 +1,7 @@
 import 'package:bibliotech/core/error/failures.dart';
 import 'package:bibliotech/core/error/result.dart';
 import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/agentes/domain/entities/ficha_sugerida.dart';
 import 'package:bibliotech/features/catalogo/domain/entities/ejemplar.dart';
 import 'package:bibliotech/features/catalogo/domain/entities/libro.dart';
 import 'package:bibliotech/features/catalogo/domain/repositories/catalogo_repository.dart';
@@ -133,6 +134,20 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
     if (guardado case Fallo(:final failure)) return Fallo(failure);
 
     return Exito(libro);
+  }
+
+  @override
+  Future<Result<FichaSugerida>> capturarOcr({
+    required List<int> fotoTapa,
+    required List<int> fotoContratapa,
+    required List<int> fotoFicha,
+    String? extensionTapa,
+    String? extensionContratapa,
+    String? extensionFicha,
+  }) async {
+    throw UnimplementedError(
+      'El doble local no soporta OCR: es una capacidad exclusiva del backend',
+    );
   }
 
   @override

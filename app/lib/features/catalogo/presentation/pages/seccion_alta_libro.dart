@@ -23,7 +23,7 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
   PlatformFile? _fotoTapa;
   PlatformFile? _fotoContratapa;
   PlatformFile? _fotoFicha;
-  
+
   final _controles = <String, TextEditingController>{};
 
   /// Sólo queda como estado local lo que es propio del formulario: el texto
@@ -39,16 +39,18 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
   }
 
   void _analizar() {
-    if (_fotoTapa == null || _fotoContratapa == null || _fotoFicha == null) return;
-    
+    if (_fotoTapa == null || _fotoContratapa == null || _fotoFicha == null) {
+      return;
+    }
+
     context.read<AltaLibroCubit>().analizar(
-      fotoTapa: _fotoTapa!.bytes!,
-      fotoContratapa: _fotoContratapa!.bytes!,
-      fotoFicha: _fotoFicha!.bytes!,
-      extensionTapa: _fotoTapa!.extension,
-      extensionContratapa: _fotoContratapa!.extension,
-      extensionFicha: _fotoFicha!.extension,
-    );
+          fotoTapa: _fotoTapa!.bytes!,
+          fotoContratapa: _fotoContratapa!.bytes!,
+          fotoFicha: _fotoFicha!.bytes!,
+          extensionTapa: _fotoTapa!.extension,
+          extensionContratapa: _fotoContratapa!.extension,
+          extensionFicha: _fotoFicha!.extension,
+        );
   }
 
   /// Vuelca los valores sugeridos en los campos editables del formulario.
@@ -146,21 +148,24 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    Expanded(child: _SelectorDeFoto(
-                      titulo: 'Tapa', 
-                      archivo: _fotoTapa, 
+                    Expanded(
+                        child: _SelectorDeFoto(
+                      titulo: 'Tapa',
+                      archivo: _fotoTapa,
                       alSeleccionar: (f) => setState(() => _fotoTapa = f),
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _SelectorDeFoto(
-                      titulo: 'Contratapa', 
-                      archivo: _fotoContratapa, 
+                    Expanded(
+                        child: _SelectorDeFoto(
+                      titulo: 'Contratapa',
+                      archivo: _fotoContratapa,
                       alSeleccionar: (f) => setState(() => _fotoContratapa = f),
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _SelectorDeFoto(
-                      titulo: 'Ficha Técnica / ISBN', 
-                      archivo: _fotoFicha, 
+                    Expanded(
+                        child: _SelectorDeFoto(
+                      titulo: 'Ficha Técnica / ISBN',
+                      archivo: _fotoFicha,
                       alSeleccionar: (f) => setState(() => _fotoFicha = f),
                     )),
                   ],
@@ -169,8 +174,11 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
                 Row(
                   children: [
                     FilledButton.icon(
-                      onPressed: (_fotoTapa != null && _fotoContratapa != null && _fotoFicha != null) 
-                          ? _analizar : null,
+                      onPressed: (_fotoTapa != null &&
+                              _fotoContratapa != null &&
+                              _fotoFicha != null)
+                          ? _analizar
+                          : null,
                       icon: const Icon(Icons.auto_fix_high, size: 18),
                       label: const Text('Analizar'),
                     ),
@@ -451,7 +459,9 @@ class _SelectorDeFoto extends StatelessWidget {
         child: Column(
           children: [
             Icon(
-              archivo != null ? Icons.image : Icons.add_photo_alternate_outlined,
+              archivo != null
+                  ? Icons.image
+                  : Icons.add_photo_alternate_outlined,
               size: 28,
               color: archivo != null ? Paleta.primary : Paleta.textMuted,
             ),
