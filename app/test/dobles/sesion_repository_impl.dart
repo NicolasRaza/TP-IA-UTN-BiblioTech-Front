@@ -1,9 +1,10 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../../lectores/domain/entities/lector.dart';
-import '../../../lectores/domain/repositories/lector_repository.dart';
-import '../../domain/repositories/sesion_repository.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/lectores/domain/repositories/lector_repository.dart';
+import 'package:bibliotech/features/auth/domain/repositories/sesion_repository.dart';
+import 'coleccion_json.dart';
 
 /// Implementación del [SesionRepository].
 ///

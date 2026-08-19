@@ -10,8 +10,8 @@ typedef EjemplarLocalizado = ({Libro libro, Ejemplar ejemplar});
 ///
 /// Lo define el dominio y lo implementa `data`: esa es la inversión de
 /// dependencias que sostiene toda la arquitectura. Los casos de uso dependen
-/// de esta interfaz y no saben si detrás hay SharedPreferences, una base
-/// local o una API remota.
+/// de esta interfaz y no saben qué hay detrás —hoy la API del backend, en los
+/// tests un doble en memoria—.
 abstract interface class CatalogoRepository {
   /// Todos los libros, validados o no. Es la vista del bibliotecario.
   Future<Result<List<Libro>>> obtenerTodos();

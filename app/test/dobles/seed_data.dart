@@ -1,10 +1,10 @@
-import '../../../catalogo/domain/entities/ejemplar.dart';
-import '../../../catalogo/domain/entities/libro.dart';
-import '../../../lectores/domain/entities/lector.dart';
-import '../../../notificaciones/domain/entities/notificacion.dart';
-import '../../../prestamos/domain/entities/prestamo.dart';
-import '../../../reservas/domain/entities/reserva.dart';
-import '../../domain/entities/evento_auditoria.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/ejemplar.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/libro.dart';
+import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/notificaciones/domain/entities/notificacion.dart';
+import 'package:bibliotech/features/prestamos/domain/entities/prestamo.dart';
+import 'package:bibliotech/features/reservas/domain/entities/reserva.dart';
+import 'package:bibliotech/features/administracion/domain/entities/evento_auditoria.dart';
 
 /// Datos de demostración del modo local.
 ///

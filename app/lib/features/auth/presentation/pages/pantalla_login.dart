@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/config/entorno.dart';
 import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/responsive.dart';
@@ -118,22 +117,14 @@ class _Marca extends StatelessWidget {
 }
 
 class _DatosRol {
-  const _DatosRol(this.rol, this.nombre, this.descripcion, this.icono,
-      this.color, this.emailDemo, this.pinDemo);
+  const _DatosRol(
+      this.rol, this.nombre, this.descripcion, this.icono, this.color);
 
   final RolUsuario rol;
   final String nombre;
   final String descripcion;
   final IconData icono;
   final Color color;
-  final String emailDemo;
-  final String pinDemo;
-
-  /// Con el backend montado, las credenciales de la demo local no existen: las
-  /// cuentas viven en el servidor. Se deja el formulario vacío en vez de
-  /// prellenarlo con un usuario que no va a entrar.
-  String get emailInicial => Entorno.usarBackend ? '' : emailDemo;
-  String get claveInicial => Entorno.usarBackend ? '' : pinDemo;
 }
 
 class _TarjetaRol extends StatelessWidget {
@@ -148,8 +139,6 @@ class _TarjetaRol extends StatelessWidget {
       'Buscá libros, reservá y seguí tus préstamos',
       Icons.person_outline,
       Paleta.teal,
-      'laura@demo.com',
-      '1234',
     ),
     _DatosRol(
       RolUsuario.bibliotecario,
@@ -157,8 +146,6 @@ class _TarjetaRol extends StatelessWidget {
       'Cargá libros, prestá y gestioná el inventario',
       Icons.local_library_outlined,
       Paleta.primary,
-      'bibliotecario@demo.com',
-      '0000',
     ),
     _DatosRol(
       RolUsuario.administrador,
@@ -166,8 +153,6 @@ class _TarjetaRol extends StatelessWidget {
       'Indicadores, parámetros y auditoría',
       Icons.insights_outlined,
       Paleta.pink,
-      'admin@demo.com',
-      '9999',
     ),
   ];
 
@@ -274,12 +259,12 @@ class _DialogoLogin extends StatefulWidget {
   State<_DialogoLogin> createState() => _DialogoLoginState();
 }
 
-/// "Contraseña" contra el backend, "PIN" contra el padrón local.
-const _etiquetaClave = Entorno.usarBackend ? 'Contraseña' : 'PIN';
+/// Las cuentas viven en el servidor: la credencial es una contraseña.
+const _etiquetaClave = 'Contraseña';
 
 class _DialogoLoginState extends State<_DialogoLogin> {
-  late final _email = TextEditingController(text: widget.rol.emailInicial);
-  late final _clave = TextEditingController(text: widget.rol.claveInicial);
+  final _email = TextEditingController();
+  final _clave = TextEditingController();
   final _form = GlobalKey<FormState>();
   String? _error;
   bool _pendiente = false;
@@ -352,11 +337,7 @@ class _DialogoLoginState extends State<_DialogoLogin> {
                 controller: _clave,
                 decoration: const InputDecoration(labelText: _etiquetaClave),
                 obscureText: true,
-                // Contra el backend la credencial es una contraseña y puede
-                // tener cualquier carácter; el PIN local es sólo numérico.
-                keyboardType: Entorno.usarBackend
-                    ? TextInputType.text
-                    : TextInputType.number,
+                keyboardType: TextInputType.text,
                 autofillHints: const [AutofillHints.password],
                 onFieldSubmitted: (_) => _entrar(),
                 validator: (v) => (v == null || v.trim().isEmpty)

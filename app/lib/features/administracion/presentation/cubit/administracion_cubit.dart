@@ -22,7 +22,6 @@ class AdministracionCubit extends Cubit<AdministracionState> {
     required ObtenerConfiguracion obtenerConfiguracion,
     required GuardarConfiguracion guardarConfiguracion,
     required ObtenerAuditoria obtenerAuditoria,
-    required ReiniciarDatos reiniciarDatos,
     required ObtenerIndicadores obtenerIndicadores,
     required ObtenerSugerencias obtenerSugerencias,
     required ObtenerReporteAprendizaje obtenerReporteAprendizaje,
@@ -32,7 +31,6 @@ class AdministracionCubit extends Cubit<AdministracionState> {
   })  : _obtenerConfiguracion = obtenerConfiguracion,
         _guardarConfiguracion = guardarConfiguracion,
         _obtenerAuditoria = obtenerAuditoria,
-        _reiniciarDatos = reiniciarDatos,
         _obtenerIndicadores = obtenerIndicadores,
         _obtenerSugerencias = obtenerSugerencias,
         _obtenerReporte = obtenerReporteAprendizaje,
@@ -44,7 +42,6 @@ class AdministracionCubit extends Cubit<AdministracionState> {
   final ObtenerConfiguracion _obtenerConfiguracion;
   final GuardarConfiguracion _guardarConfiguracion;
   final ObtenerAuditoria _obtenerAuditoria;
-  final ReiniciarDatos _reiniciarDatos;
   final ObtenerIndicadores _obtenerIndicadores;
   final ObtenerSugerencias _obtenerSugerencias;
   final ObtenerReporteAprendizaje _obtenerReporte;
@@ -69,21 +66,6 @@ class AdministracionCubit extends Cubit<AdministracionState> {
       (cfg) async {
         await _recargar();
         emit(state.copyWith(mensajeExito: 'Parámetros guardados'));
-      },
-    );
-  }
-
-  /// Vuelve todo al estado de demostración original.
-  Future<void> reiniciarDatos() async {
-    final resultado = await _reiniciarDatos(const SinParametros());
-
-    await resultado.fold(
-      (failure) async => emit(state.copyWith(mensajeError: failure.mensaje)),
-      (_) async {
-        await _recargar();
-        emit(state.copyWith(
-          mensajeExito: 'Los datos volvieron al estado de demostración',
-        ));
       },
     );
   }

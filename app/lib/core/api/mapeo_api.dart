@@ -35,6 +35,48 @@ String categoriaHaciaApi(CategoriaLector categoria) => switch (categoria) {
       CategoriaLector.adulto || CategoriaLector.senior => 'adulto',
     };
 
+/// Los mapas `categoría -> número` de la configuración, en el vocabulario del
+/// backend.
+///
+/// Arrastran la misma pérdida que [categoriaHaciaApi] y por el mismo motivo:
+/// `menor` se abre en las dos categorías que el backend distingue y `senior`
+/// viaja como `adulto`, que es la categoría con la que el servidor le
+/// calcularía el plazo de todos modos. Ida y vuelta no devuelve el mismo mapa;
+/// devuelve el mismo significado.
+Map<String, int> mapaPorCategoriaHaciaApi(Map<CategoriaLector, int> mapa) {
+  int valor(CategoriaLector c) => mapa[c] ?? mapa[CategoriaLector.adulto] ?? 0;
+  return {
+    'infantil': valor(CategoriaLector.menor),
+    'adolescente': valor(CategoriaLector.menor),
+    'adulto': valor(CategoriaLector.adulto),
+    'docente': valor(CategoriaLector.docente),
+    'institucional': valor(CategoriaLector.personal),
+  };
+}
+
+Map<CategoriaLector, int> mapaPorCategoriaDesdeApi(
+  Object? json,
+  Map<CategoriaLector, int> porDefecto,
+) {
+  if (json is! Map) return porDefecto;
+
+  int? leer(String clave) => (json[clave] as num?)?.toInt();
+  final adulto = leer('adulto') ?? porDefecto[CategoriaLector.adulto]!;
+
+  return {
+    CategoriaLector.menor: leer('infantil') ??
+        leer('adolescente') ??
+        porDefecto[CategoriaLector.menor]!,
+    CategoriaLector.adulto: adulto,
+    CategoriaLector.docente:
+        leer('docente') ?? porDefecto[CategoriaLector.docente]!,
+    // El backend no tiene `senior`: se le aplica lo mismo que a un adulto.
+    CategoriaLector.senior: adulto,
+    CategoriaLector.personal:
+        leer('institucional') ?? porDefecto[CategoriaLector.personal]!,
+  };
+}
+
 // ── Estado del lector ────────────────────────────────────────────────────────
 //
 // Las dos escalas coinciden código a código —`pendiente`, `activo`,

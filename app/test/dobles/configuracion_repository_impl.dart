@@ -1,7 +1,7 @@
-import '../../../../core/error/result.dart';
-import '../../domain/entities/configuracion_biblioteca.dart';
-import '../../domain/repositories/configuracion_repository.dart';
-import '../datasources/administracion_local_datasource.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/features/administracion/domain/entities/configuracion_biblioteca.dart';
+import 'package:bibliotech/features/administracion/domain/repositories/configuracion_repository.dart';
+import 'administracion_local_datasource.dart';
 
 /// Implementación del [ConfiguracionRepository] sobre el almacenamiento local.
 class ConfiguracionRepositoryImpl implements ConfiguracionRepository {

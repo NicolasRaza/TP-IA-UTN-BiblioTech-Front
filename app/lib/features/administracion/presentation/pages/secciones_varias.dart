@@ -473,11 +473,6 @@ class SeccionAcerca extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-        OutlinedButton.icon(
-          onPressed: () => _confirmarReinicio(context),
-          icon: const Icon(Icons.restart_alt, size: 18),
-          label: const Text('Reiniciar datos de demostración'),
-        ),
       ],
     );
   }
@@ -509,26 +504,4 @@ class SeccionAcerca extends StatelessWidget {
       'Analiza las correcciones humanas para afinar el criterio del próximo ciclo.'
     ),
   ];
-
-  static Future<void> _confirmarReinicio(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reiniciar datos'),
-        content: const Text(
-            'Se borran los libros, lectores, préstamos y reservas cargados, y se '
-            'vuelve a los datos de demostración. La sesión se cierra.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancelar')),
-          FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Reiniciar')),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    context.read<AdministracionCubit>().reiniciarDatos();
-  }
 }

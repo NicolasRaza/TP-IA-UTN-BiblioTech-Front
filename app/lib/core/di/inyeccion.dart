@@ -1,22 +1,20 @@
 import 'package:get_it/get_it.dart';
 
-import '../../features/administracion/data/datasources/administracion_local_datasource.dart';
-import '../../features/administracion/data/repositories/auditoria_repository_impl.dart';
-import '../../features/administracion/data/repositories/configuracion_repository_impl.dart';
+import '../../features/administracion/data/datasources/auditoria_api_datasource.dart';
+import '../../features/administracion/data/datasources/configuracion_api_datasource.dart';
+import '../../features/administracion/data/repositories/auditoria_repository_api.dart';
+import '../../features/administracion/data/repositories/configuracion_repository_api.dart';
 import '../../features/administracion/data/datasources/usuario_interno_api_datasource.dart';
-import '../../features/administracion/data/repositories/mantenimiento_repository_impl.dart';
 import '../../features/administracion/data/repositories/usuario_interno_repository_api.dart';
-import '../../features/administracion/data/repositories/usuario_interno_repository_local.dart';
 import '../../features/administracion/domain/repositories/auditoria_repository.dart';
 import '../../features/administracion/domain/repositories/configuracion_repository.dart';
-import '../../features/administracion/domain/repositories/mantenimiento_repository.dart';
 import '../../features/administracion/domain/repositories/usuario_interno_repository.dart';
 import '../../features/administracion/domain/usecases/gestionar_configuracion.dart';
 import '../../features/administracion/domain/usecases/gestionar_usuarios_internos.dart';
 import '../../features/administracion/presentation/cubit/administracion_cubit.dart';
 import '../../features/administracion/presentation/cubit/usuarios_internos_cubit.dart';
-import '../../features/agentes/data/datasources/aprendizaje_local_datasource.dart';
-import '../../features/agentes/data/repositories/aprendizaje_repository_impl.dart';
+import '../../features/agentes/data/datasources/aprendizaje_api_datasource.dart';
+import '../../features/agentes/data/repositories/aprendizaje_repository_api.dart';
 import '../../features/agentes/data/repositories/recomendacion_remota_api.dart';
 import '../../features/agentes/domain/repositories/aprendizaje_repository.dart';
 import '../../features/agentes/domain/repositories/recomendacion_remota.dart';
@@ -32,15 +30,12 @@ import '../../features/agentes/presentation/bloc/agentes_bloc.dart';
 import '../../features/agentes/presentation/cubit/recomendaciones_cubit.dart';
 import '../../features/auth/data/datasources/auth_api_datasource.dart';
 import '../../features/auth/data/repositories/sesion_repository_api.dart';
-import '../../features/auth/data/repositories/sesion_repository_impl.dart';
 import '../../features/auth/domain/repositories/sesion_repository.dart';
 import '../../features/auth/domain/usecases/gestionar_sesion.dart';
 import '../../features/auth/presentation/cubit/registro_cubit.dart';
 import '../../features/auth/presentation/cubit/sesion_cubit.dart';
 import '../../features/catalogo/data/datasources/catalogo_api_datasource.dart';
-import '../../features/catalogo/data/datasources/catalogo_local_datasource.dart';
 import '../../features/catalogo/data/repositories/catalogo_repository_api.dart';
-import '../../features/catalogo/data/repositories/catalogo_repository_impl.dart';
 import '../../features/catalogo/domain/repositories/catalogo_repository.dart';
 import '../../features/catalogo/domain/usecases/agregar_ejemplar.dart';
 import '../../features/catalogo/domain/usecases/buscar_libros.dart';
@@ -52,16 +47,14 @@ import '../../features/catalogo/domain/usecases/validar_libro.dart';
 import '../../features/catalogo/presentation/bloc/catalogo_bloc.dart';
 import '../../features/catalogo/presentation/cubit/alta_libro_cubit.dart';
 import '../../features/lectores/data/datasources/lector_api_datasource.dart';
-import '../../features/lectores/data/datasources/lector_local_datasource.dart';
 import '../../features/lectores/data/repositories/lector_repository_api.dart';
-import '../../features/lectores/data/repositories/lector_repository_impl.dart';
 import '../../features/lectores/domain/repositories/lector_repository.dart';
 import '../../features/lectores/domain/usecases/autorregistro.dart';
 import '../../features/lectores/domain/usecases/cambiar_categoria.dart';
 import '../../features/lectores/domain/usecases/gestionar_lectores.dart';
 import '../../features/lectores/presentation/bloc/lectores_bloc.dart';
-import '../../features/notificaciones/data/datasources/notificacion_local_datasource.dart';
-import '../../features/notificaciones/data/repositories/notificacion_repository_impl.dart';
+import '../../features/notificaciones/data/datasources/notificacion_api_datasource.dart';
+import '../../features/notificaciones/data/repositories/notificacion_repository_api.dart';
 import '../../features/notificaciones/data/repositories/push_repository_impl.dart';
 import '../../features/notificaciones/domain/repositories/notificacion_repository.dart';
 import '../../features/notificaciones/domain/repositories/push_repository.dart';
@@ -70,10 +63,8 @@ import '../../features/notificaciones/domain/usecases/gestionar_notificaciones.d
 import '../../features/notificaciones/presentation/cubit/notificaciones_cubit.dart';
 import '../../features/notificaciones/presentation/cubit/push_cubit.dart';
 import '../../features/prestamos/data/datasources/prestamo_api_datasource.dart';
-import '../../features/prestamos/data/datasources/prestamo_local_datasource.dart';
 import '../../features/prestamos/data/repositories/prestamo_remoto_api.dart';
 import '../../features/prestamos/data/repositories/prestamo_repository_api.dart';
-import '../../features/prestamos/data/repositories/prestamo_repository_impl.dart';
 import '../../features/prestamos/domain/repositories/prestamo_remoto.dart';
 import '../../features/prestamos/domain/repositories/prestamo_repository.dart';
 import '../../features/prestamos/domain/usecases/consultas_prestamos.dart';
@@ -81,10 +72,8 @@ import '../../features/prestamos/domain/usecases/registrar_devolucion.dart';
 import '../../features/prestamos/domain/usecases/registrar_prestamo.dart';
 import '../../features/prestamos/presentation/bloc/prestamos_bloc.dart';
 import '../../features/reservas/data/datasources/reserva_api_datasource.dart';
-import '../../features/reservas/data/datasources/reserva_local_datasource.dart';
 import '../../features/reservas/data/repositories/reserva_remota_api.dart';
 import '../../features/reservas/data/repositories/reserva_repository_api.dart';
-import '../../features/reservas/data/repositories/reserva_repository_impl.dart';
 import '../../features/reservas/domain/repositories/reserva_remota.dart';
 import '../../features/reservas/domain/repositories/reserva_repository.dart';
 import '../../features/reservas/domain/services/asignador_de_cola.dart';
@@ -119,15 +108,13 @@ final sl = GetIt.instance;
 /// grafo real de la app —los mismos casos de uso y repositorios que corren en
 /// producción— pero determinista y sin plugins de Flutter.
 ///
-/// [usarBackend] elige contra qué corre la app. Es el único interruptor de
-/// todo el proyecto: cambia qué implementación queda atada a cada contrato de
-/// dominio, y ni los casos de uso ni los blocs ni las pantallas se enteran.
-/// Los tests lo dejan en `false` para no depender de la red.
+/// Toda la verdad del negocio vive en el backend: acá no hay una segunda
+/// implementación local a la que caer. Lo único que queda en el dispositivo es
+/// el token de la sesión, que [SesionApi] guarda con claves propias.
 Future<void> configurarInyeccion({
   KeyValueStore? store,
   Reloj? reloj,
   GeneradorId? generadorId,
-  bool usarBackend = Entorno.usarBackend,
 }) async {
   // ─────────────────────────── Infraestructura ───────────────────────────
 
@@ -136,40 +123,18 @@ Future<void> configurarInyeccion({
   sl.registerLazySingleton<GeneradorId>(
       () => generadorId ?? GeneradorIdPorTiempo(sl()));
 
-  _registrarDataSources(usarBackend);
-  _registrarRepositorios(usarBackend);
+  _registrarDataSources();
+  _registrarRepositorios();
   _registrarServiciosDeDominio();
-  _registrarCasosDeUso(usarBackend);
+  _registrarCasosDeUso();
   _registrarPresentacion();
 }
 
-void _registrarDataSources(bool usarBackend) {
-  // Los datasources locales se registran siempre: aunque la app corra contra
-  // el backend, el mantenimiento (reinicio de datos) y las features que la API
-  // no cubre —notificaciones, auditoría, configuración, aprendizaje— siguen
-  // trabajando sobre el almacenamiento del dispositivo.
-  sl.registerLazySingleton<CatalogoLocalDataSource>(
-      () => CatalogoLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<LectorLocalDataSource>(
-      () => LectorLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<PrestamoLocalDataSource>(
-      () => PrestamoLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<ReservaLocalDataSource>(
-      () => ReservaLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<NotificacionLocalDataSource>(
-      () => NotificacionLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<AdministracionLocalDataSource>(
-      () => AdministracionLocalDataSourceImpl(sl()));
-  sl.registerLazySingleton<AprendizajeLocalDataSource>(
-      () => AprendizajeLocalDataSourceImpl(sl()));
-
-  // Los dos bordes remotos: la API del backend y el SDK de Firebase del
-  // dispositivo. Son lazy, así que un test que arma el grafo no abre sockets
-  // ni toca plugins mientras no los pida.
+void _registrarDataSources() {
+  // El SDK de Firebase del dispositivo, para las notificaciones push. Es lazy,
+  // así que un test que arma el grafo no toca plugins mientras no lo pida.
   sl.registerLazySingleton<AuthApiDataSource>(() => AuthApiDataSourceHttp());
   sl.registerLazySingleton<ServicioPush>(crearServicioPush);
-
-  if (!usarBackend) return;
 
   // La sesión de la API y el cliente HTTP que la usa. El cliente le pide el
   // token en cada request, así que un login o un logout se reflejan solos en
@@ -190,118 +155,72 @@ void _registrarDataSources(bool usarBackend) {
       () => PrestamoApiDataSourceHttp(sl()));
   sl.registerLazySingleton<ReservaApiDataSource>(
       () => ReservaApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<NotificacionApiDataSource>(
+      () => NotificacionApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<AuditoriaApiDataSource>(
+      () => AuditoriaApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<ConfiguracionApiDataSource>(
+      () => ConfiguracionApiDataSourceHttp(sl()));
+  sl.registerLazySingleton<AprendizajeApiDataSource>(
+      () => AprendizajeApiDataSourceHttp(sl()));
 }
 
-void _registrarRepositorios(bool usarBackend) {
-  // Los cuatro agregados que el backend administra. Es el único punto donde se
-  // decide de dónde salen: de acá para arriba, casos de uso y blocs ven
-  // siempre el mismo contrato.
-  if (usarBackend) {
-    sl.registerLazySingleton<CatalogoRepository>(
-        () => CatalogoRepositoryApi(sl()));
+void _registrarRepositorios() {
+  // Un solo lugar donde cada contrato de dominio se ata a su implementación, y
+  // todas son del backend: no hay una segunda verdad viviendo en el
+  // dispositivo con la que ésta pueda desincronizarse.
+  sl.registerLazySingleton<CatalogoRepository>(
+      () => CatalogoRepositoryApi(sl()));
 
-    sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryApi(
-          api: sl(),
-          sesion: sl(),
-        ));
-
-    sl.registerLazySingleton<PrestamoRepository>(
-        () => PrestamoRepositoryApi(sl()));
-
-    sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryApi(
-          api: sl(),
-          sesion: sl(),
-        ));
-
-    // Puertos para las transacciones que resuelve el servidor de una sola vez.
-    sl.registerLazySingleton<PrestamoRemoto>(() => PrestamoRemotoApi(sl()));
-    sl.registerLazySingleton<ReservaRemota>(() => ReservaRemotaApi(sl()));
-
-    // Las recomendaciones también son del servidor: el motor local necesita
-    // ver toda la circulación y un lector no tiene permiso para leerla.
-    sl.registerLazySingleton<RecomendacionRemota>(() => RecomendacionRemotaApi(
-          api: sl(),
-          prestamos: sl(),
-        ));
-  } else {
-    sl.registerLazySingleton<CatalogoRepository>(() => CatalogoRepositoryImpl(
-          localDataSource: sl(),
-          generadorId: sl(),
-        ));
-
-    sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryImpl(
-          localDataSource: sl(),
-          generadorId: sl(),
-          reloj: sl(),
-        ));
-
-    sl.registerLazySingleton<PrestamoRepository>(() => PrestamoRepositoryImpl(
-          localDataSource: sl(),
-          generadorId: sl(),
-        ));
-
-    sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryImpl(
-          localDataSource: sl(),
-          generadorId: sl(),
-        ));
-  }
-
-  // Las cuentas del personal: contra el backend son su propia tabla; sin él,
-  // el personal vive en el padrón local distinguido por rol.
-  sl.registerLazySingleton<UsuarioInternoRepository>(() => usarBackend
-      ? UsuarioInternoRepositoryApi(sl())
-      : UsuarioInternoRepositorioLocal(
-          lectorRepository: sl(),
-          reloj: sl(),
-        ));
-
-  sl.registerLazySingleton<NotificacionRepository>(
-      () => NotificacionRepositoryImpl(
-            localDataSource: sl(),
-            generadorId: sl(),
-          ));
-
-  sl.registerLazySingleton<ConfiguracionRepository>(
-      () => ConfiguracionRepositoryImpl(sl()));
-
-  sl.registerLazySingleton<AuditoriaRepository>(() => AuditoriaRepositoryImpl(
-        localDataSource: sl(),
-        generadorId: sl(),
-        reloj: sl(),
+  sl.registerLazySingleton<LectorRepository>(() => LectorRepositoryApi(
+        api: sl(),
+        sesion: sl(),
       ));
 
-  sl.registerLazySingleton<AprendizajeRepository>(
-      () => AprendizajeRepositoryImpl(sl()));
+  sl.registerLazySingleton<PrestamoRepository>(
+      () => PrestamoRepositoryApi(sl()));
 
-  sl.registerLazySingleton<SesionRepository>(() => usarBackend
-      ? SesionRepositoryApi(
-          api: sl(),
-          sesion: sl(),
-          lectores: sl(),
-        )
-      : SesionRepositoryImpl(
-          store: sl(),
-          lectorRepository: sl(),
-        ));
+  sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryApi(
+        api: sl(),
+        sesion: sl(),
+      ));
+
+  sl.registerLazySingleton<UsuarioInternoRepository>(
+      () => UsuarioInternoRepositoryApi(sl()));
+
+  sl.registerLazySingleton<NotificacionRepository>(
+      () => NotificacionRepositoryApi(sl()));
+
+  sl.registerLazySingleton<ConfiguracionRepository>(
+      () => ConfiguracionRepositoryApi(sl()));
+
+  sl.registerLazySingleton<AuditoriaRepository>(
+      () => AuditoriaRepositoryApi(sl()));
+
+  sl.registerLazySingleton<AprendizajeRepository>(
+      () => AprendizajeRepositoryApi(sl()));
+
+  sl.registerLazySingleton<SesionRepository>(() => SesionRepositoryApi(
+        api: sl(),
+        sesion: sl(),
+        lectores: sl(),
+      ));
+
+  // Puertos para las transacciones que resuelve el servidor de una sola vez.
+  sl.registerLazySingleton<PrestamoRemoto>(() => PrestamoRemotoApi(sl()));
+  sl.registerLazySingleton<ReservaRemota>(() => ReservaRemotaApi(sl()));
+
+  // Las recomendaciones también son del servidor: el motor local necesita ver
+  // toda la circulación y un lector no tiene permiso para leerla.
+  sl.registerLazySingleton<RecomendacionRemota>(() => RecomendacionRemotaApi(
+        api: sl(),
+        prestamos: sl(),
+      ));
 
   sl.registerLazySingleton<PushRepository>(() => PushRepositoryImpl(
         servicio: sl(),
         api: sl(),
       ));
-
-  sl.registerLazySingleton<MantenimientoRepository>(
-      () => MantenimientoRepositoryImpl(
-            store: sl(),
-            catalogoDataSource: sl(),
-            lectorDataSource: sl(),
-            prestamoDataSource: sl(),
-            reservaDataSource: sl(),
-            notificacionDataSource: sl(),
-            administracionDataSource: sl(),
-            aprendizajeDataSource: sl(),
-            reloj: sl(),
-            sembrarDemo: !usarBackend,
-          ));
 }
 
 void _registrarServiciosDeDominio() {
@@ -333,7 +252,7 @@ void _registrarServiciosDeDominio() {
       ));
 }
 
-void _registrarCasosDeUso(bool usarBackend) {
+void _registrarCasosDeUso() {
   // ── Catálogo ──
   sl.registerLazySingleton(() => ObtenerCatalogo(sl()));
   sl.registerLazySingleton(() => BuscarLibros(sl()));
@@ -401,7 +320,7 @@ void _registrarCasosDeUso(bool usarBackend) {
         configuracionRepository: sl(),
         auditoriaRepository: sl(),
         reloj: sl(),
-        remoto: usarBackend ? sl<PrestamoRemoto>() : null,
+        remoto: sl<PrestamoRemoto>(),
       ));
   sl.registerLazySingleton(() => RegistrarDevolucion(
         prestamoRepository: sl(),
@@ -411,7 +330,7 @@ void _registrarCasosDeUso(bool usarBackend) {
         auditoriaRepository: sl(),
         asignadorDeCola: sl(),
         reloj: sl(),
-        remoto: usarBackend ? sl<PrestamoRemoto>() : null,
+        remoto: sl<PrestamoRemoto>(),
       ));
 
   // ── Reservas ──
@@ -427,13 +346,13 @@ void _registrarCasosDeUso(bool usarBackend) {
         aprendizajeRepository: sl(),
         asignadorDeCola: sl(),
         reloj: sl(),
-        remota: usarBackend ? sl<ReservaRemota>() : null,
+        remota: sl<ReservaRemota>(),
       ));
   sl.registerLazySingleton(() => CancelarReserva(
         reservaRepository: sl(),
         catalogoRepository: sl(),
         asignadorDeCola: sl(),
-        remota: usarBackend ? sl<ReservaRemota>() : null,
+        remota: sl<ReservaRemota>(),
       ));
 
   // ── Notificaciones ──
@@ -464,8 +383,6 @@ void _registrarCasosDeUso(bool usarBackend) {
         usuarioRepository: sl(),
         auditoriaRepository: sl(),
       ));
-  sl.registerLazySingleton(() => ReiniciarDatos(sl()));
-  sl.registerLazySingleton(() => InicializarDatos(sl()));
 
   // ── Agentes ──
   sl.registerLazySingleton(() => ProcesarVencimientos(
@@ -483,14 +400,15 @@ void _registrarCasosDeUso(bool usarBackend) {
         observador: sl(),
         evaluador: sl(),
         planificador: sl(),
-        // Contra el backend, vencimientos y acciones los corre el scheduler
-        // del servidor: la app observa y decide, pero no ejecuta.
-        ejecutarAcciones: !usarBackend,
+        // Vencimientos y acciones los corre el scheduler del servidor desde
+        // que arranca: la app observa y decide, pero no ejecuta, para no
+        // duplicar lo que del otro lado ya pasó.
+        ejecutarAcciones: false,
       ));
   sl.registerLazySingleton(() => ObtenerRecomendaciones(
         observador: sl(),
         evaluador: sl(),
-        remota: usarBackend ? sl<RecomendacionRemota>() : null,
+        remota: sl<RecomendacionRemota>(),
       ));
   sl.registerLazySingleton(() => ObtenerIndicadores(
         observador: sl(),
@@ -522,7 +440,6 @@ void _registrarPresentacion() {
         iniciarSesion: sl(),
         cerrarSesion: sl(),
         obtenerSesionActiva: sl(),
-        inicializarDatos: sl(),
       ));
 
   sl.registerFactory(() => RegistroCubit(registrarse: sl()));
@@ -601,7 +518,6 @@ void _registrarPresentacion() {
         obtenerConfiguracion: sl(),
         guardarConfiguracion: sl(),
         obtenerAuditoria: sl(),
-        reiniciarDatos: sl(),
         obtenerIndicadores: sl(),
         obtenerSugerencias: sl(),
         obtenerReporteAprendizaje: sl(),

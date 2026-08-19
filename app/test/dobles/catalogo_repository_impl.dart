@@ -1,10 +1,10 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/ejemplar.dart';
-import '../../domain/entities/libro.dart';
-import '../../domain/repositories/catalogo_repository.dart';
-import '../datasources/catalogo_local_datasource.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/ejemplar.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/libro.dart';
+import 'package:bibliotech/features/catalogo/domain/repositories/catalogo_repository.dart';
+import 'catalogo_local_datasource.dart';
 
 /// Implementación del [CatalogoRepository] sobre el almacenamiento local.
 ///

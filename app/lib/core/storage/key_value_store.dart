@@ -71,32 +71,3 @@ class SharedPrefsStore implements KeyValueStore {
   @override
   Iterable<String> get keys => _cache.keys;
 }
-
-/// Claves de persistencia. Los nombres (`bt_*`) vienen del prototipo
-/// HTML/JS original y se conservan para que los datos ya guardados en un
-/// navegador sigan siendo legibles.
-abstract final class ClavesAlmacenamiento {
-  static const libros = 'bt_libros';
-  static const lectores = 'bt_lectores';
-  static const prestamos = 'bt_prestamos';
-  static const reservas = 'bt_reservas';
-  static const notificaciones = 'bt_notificaciones';
-  static const config = 'bt_config';
-  static const auditoria = 'bt_auditoria';
-  static const aprendizaje = 'bt_aprendizaje';
-  static const sesion = 'bt_sesion';
-  static const inicializado = 'bt_initialized';
-
-  static const todas = [
-    libros,
-    lectores,
-    prestamos,
-    reservas,
-    notificaciones,
-    config,
-    auditoria,
-    aprendizaje,
-    sesion,
-    inicializado,
-  ];
-}

@@ -18,7 +18,8 @@ import 'package:http/testing.dart';
 void main() {
   const baseUrl = 'https://backend.test';
 
-  test('el alta de un ejemplar va por POST /ejemplares con el título y la '
+  test(
+      'el alta de un ejemplar va por POST /ejemplares con el título y la '
       'condición', () async {
     final peticiones = <http.Request>[];
     final cliente = MockClient((peticion) async {
@@ -61,8 +62,7 @@ void main() {
     expect(jsonDecode(enviado.body), {'titulo_id': 7, 'condicion': 'regular'});
 
     final ejemplar = resultado.valorONull!;
-    expect(ejemplar.id, '12',
-        reason: 'el id lo asigna el backend, no la app');
+    expect(ejemplar.id, '12', reason: 'el id lo asigna el backend, no la app');
     expect(ejemplar.qr, 'SGB-000012',
         reason: 'la etiqueta que se imprime es la que devolvió el backend');
     expect(ejemplar.condicion, CondicionEjemplar.regular);

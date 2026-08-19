@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/coleccion_json.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/lector.dart';
-import '../models/lector_model.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'coleccion_json.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/lectores/data/models/lector_model.dart';
 
 /// Acceso al almacenamiento local del padrón de personas.
 abstract interface class LectorLocalDataSource {
