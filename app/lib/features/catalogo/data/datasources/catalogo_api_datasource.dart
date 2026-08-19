@@ -8,7 +8,6 @@ import '../../../../core/error/result.dart';
 import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
 import '../../../agentes/domain/entities/ficha_sugerida.dart';
-import '../../../agentes/domain/services/agente_analizador.dart';
 
 /// Acceso al catálogo del backend SGB (`/api/v1/catalogo`).
 ///
@@ -132,19 +131,22 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
           'foto_tapa',
           fotoTapa,
           filename: 'tapa.${extensionTapa ?? "jpg"}',
-          contentType: MediaType(mimeTapa.split('/')[0], mimeTapa.split('/')[1]),
+          contentType:
+              MediaType(mimeTapa.split('/')[0], mimeTapa.split('/')[1]),
         ),
         http.MultipartFile.fromBytes(
           'foto_contratapa',
           fotoContratapa,
           filename: 'contratapa.${extensionContratapa ?? "jpg"}',
-          contentType: MediaType(mimeContratapa.split('/')[0], mimeContratapa.split('/')[1]),
+          contentType: MediaType(
+              mimeContratapa.split('/')[0], mimeContratapa.split('/')[1]),
         ),
         http.MultipartFile.fromBytes(
           'foto_ficha',
           fotoFicha,
           filename: 'ficha.${extensionFicha ?? "jpg"}',
-          contentType: MediaType(mimeFicha.split('/')[0], mimeFicha.split('/')[1]),
+          contentType:
+              MediaType(mimeFicha.split('/')[0], mimeFicha.split('/')[1]),
         ),
       ],
       leer: _leerFichaOcr,
@@ -248,7 +250,7 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
 
   static FichaSugerida _leerFichaOcr(Object? json) {
     final data = json as Map<String, dynamic>;
-    
+
     // Mapeo del JSON OCRResultado a FichaSugerida
     final campos = <String, CampoSugerido>{};
 
@@ -258,24 +260,29 @@ class CatalogoApiDataSourceHttp implements CatalogoApiDataSource {
       } else {
         campos[clave] = CampoSugerido(
           valor: valor,
-          confianza: (confianza ?? 0) >= 0.8 
-              ? NivelConfianza.alta 
-              : ((confianza ?? 0) >= 0.5 ? NivelConfianza.media : NivelConfianza.baja),
+          confianza: (confianza ?? 0) >= 0.8
+              ? NivelConfianza.alta
+              : ((confianza ?? 0) >= 0.5
+                  ? NivelConfianza.media
+                  : NivelConfianza.baja),
           porcentaje: ((confianza ?? 0) * 100).round(),
           fuente: 'OCR',
         );
       }
     }
 
-    agregarCampo('isbn', data['isbn'] as String?, data['confianza_isbn'] as num?);
-    agregarCampo('titulo', data['titulo'] as String?, data['confianza_titulo'] as num?);
-    agregarCampo('autor', data['autores'] as String?, data['confianza_autores'] as num?);
-    
+    agregarCampo(
+        'isbn', data['isbn'] as String?, data['confianza_isbn'] as num?);
+    agregarCampo(
+        'titulo', data['titulo'] as String?, data['confianza_titulo'] as num?);
+    agregarCampo(
+        'autor', data['autores'] as String?, data['confianza_autores'] as num?);
+
     // Estos campos no tienen nivel de confianza específico en el backend, se consideran de enriquecimiento o alta
     agregarCampo('editorial', data['editorial'] as String?, 0.9);
     agregarCampo('anio', data['anio_edicion'] as String?, 0.9);
     agregarCampo('paginas', data['paginas']?.toString(), 0.9);
-    
+
     return FichaSugerida(campos: campos);
   }
 

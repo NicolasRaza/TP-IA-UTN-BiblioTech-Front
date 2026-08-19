@@ -285,15 +285,19 @@ class _FichaLibro extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            for (var i = 0; i < libro.ejemplares.length; i++) ...[
-                              if (i > 0) const Divider(height: 1, color: Paleta.border),
+                            for (var i = 0;
+                                i < libro.ejemplares.length;
+                                i++) ...[
+                              if (i > 0)
+                                const Divider(height: 1, color: Paleta.border),
                               Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             libro.ejemplares[i].qr,
@@ -306,7 +310,10 @@ class _FichaLibro extends StatelessWidget {
                                           const SizedBox(height: 3),
                                           Row(
                                             children: [
-                                              const Icon(Icons.location_on_outlined, size: 14, color: Paleta.textSecondary),
+                                              const Icon(
+                                                  Icons.location_on_outlined,
+                                                  size: 14,
+                                                  color: Paleta.textSecondary),
                                               const SizedBox(width: 4),
                                               Text(
                                                 libro.ejemplares[i].ubicacion,
@@ -319,7 +326,8 @@ class _FichaLibro extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                    Insignia.estadoEjemplar(libro.ejemplares[i].estado),
+                                    Insignia.estadoEjemplar(
+                                        libro.ejemplares[i].estado),
                                   ],
                                 ),
                               ),

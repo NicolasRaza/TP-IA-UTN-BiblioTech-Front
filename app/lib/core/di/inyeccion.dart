@@ -540,6 +540,5 @@ void _registrarPresentacion() {
         catalogoRepository: sl(),
         reloj: sl(),
         usuarioActualId: usuarioActualId,
-        analizador: sl(),
       ));
 }
