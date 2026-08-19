@@ -10,8 +10,8 @@ typedef EjemplarLocalizado = ({Libro libro, Ejemplar ejemplar});
 ///
 /// Lo define el dominio y lo implementa `data`: esa es la inversión de
 /// dependencias que sostiene toda la arquitectura. Los casos de uso dependen
-/// de esta interfaz y no saben si detrás hay SharedPreferences, una base
-/// local o una API remota.
+/// de esta interfaz y no saben qué hay detrás —hoy la API del backend, en los
+/// tests un doble en memoria—.
 abstract interface class CatalogoRepository {
   /// Todos los libros, validados o no. Es la vista del bibliotecario.
   Future<Result<List<Libro>>> obtenerTodos();
@@ -42,6 +42,18 @@ abstract interface class CatalogoRepository {
   Future<Result<Libro>> actualizar(Libro libro);
 
   Future<Result<void>> eliminar(String libroId);
+
+  /// Suma una copia física a un título ya existente y la devuelve ya
+  /// identificada.
+  ///
+  /// Es una operación propia y no un `actualizar` con la lista de ejemplares
+  /// ampliada porque el alta de un ejemplar no es una edición del título: el
+  /// backend la expone como su propia ruta (`POST /catalogo/ejemplares`) y es
+  /// él quien asigna el id y el código QR de la etiqueta.
+  Future<Result<Ejemplar>> agregarEjemplar(
+    String libroId,
+    CondicionEjemplar condicion,
+  );
 
   /// Cambia el estado de un ejemplar puntual.
   ///

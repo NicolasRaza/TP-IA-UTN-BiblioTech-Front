@@ -1,10 +1,10 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/ejemplar.dart';
-import '../../domain/entities/libro.dart';
-import '../../domain/repositories/catalogo_repository.dart';
-import '../datasources/catalogo_local_datasource.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/ejemplar.dart';
+import 'package:bibliotech/features/catalogo/domain/entities/libro.dart';
+import 'package:bibliotech/features/catalogo/domain/repositories/catalogo_repository.dart';
+import 'catalogo_local_datasource.dart';
 
 /// Implementación del [CatalogoRepository] sobre el almacenamiento local.
 ///
@@ -144,6 +144,30 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
       ..removeWhere((l) => l.id == libroId);
 
     return _local.guardar(lista);
+  }
+
+  @override
+  Future<Result<Ejemplar>> agregarEjemplar(
+    String libroId,
+    CondicionEjemplar condicion,
+  ) async {
+    final libroResult = await obtenerPorId(libroId);
+    if (libroResult case Fallo(:final failure)) return Fallo(failure);
+    final libro = libroResult.valorONull!;
+
+    final nuevo = Ejemplar(
+      id: 'ej-${_generadorId.generar()}',
+      libroId: libroId,
+      condicion: condicion,
+      estado: EstadoEjemplar.disponible,
+    );
+
+    final guardado = await actualizar(
+      libro.copyWith(ejemplares: [...libro.ejemplares, nuevo]),
+    );
+    if (guardado case Fallo(:final failure)) return Fallo(failure);
+
+    return Exito(nuevo);
   }
 
   @override

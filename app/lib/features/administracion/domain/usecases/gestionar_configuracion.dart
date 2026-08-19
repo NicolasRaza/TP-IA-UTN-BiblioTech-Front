@@ -11,7 +11,6 @@ import '../entities/configuracion_biblioteca.dart';
 import '../entities/evento_auditoria.dart';
 import '../repositories/auditoria_repository.dart';
 import '../repositories/configuracion_repository.dart';
-import '../repositories/mantenimiento_repository.dart';
 
 class ObtenerConfiguracion
     implements UseCase<ConfiguracionBiblioteca, SinParametros> {
@@ -102,25 +101,4 @@ class ObtenerAuditoria
   @override
   Future<Result<List<EventoAuditoria>>> call(SinParametros params) =>
       _repository.obtenerTodos();
-}
-
-/// Vuelve todo al estado de demostración original.
-class ReiniciarDatos implements UseCase<void, SinParametros> {
-  const ReiniciarDatos(this._repository);
-
-  final MantenimientoRepository _repository;
-
-  @override
-  Future<Result<void>> call(SinParametros params) => _repository.reiniciar();
-}
-
-/// Siembra los datos de ejemplo la primera vez que se abre la app.
-class InicializarDatos implements UseCase<void, SinParametros> {
-  const InicializarDatos(this._repository);
-
-  final MantenimientoRepository _repository;
-
-  @override
-  Future<Result<void>> call(SinParametros params) =>
-      _repository.inicializarSiHaceFalta();
 }

@@ -80,6 +80,20 @@ class ClienteApi {
         leer: leer,
       );
 
+  Future<Result<T>> put<T>(
+    String ruta, {
+    Object? cuerpo,
+    String? token,
+    required T Function(Object? json) leer,
+  }) =>
+      _pedir(
+        metodo: _Metodo.put,
+        ruta: ruta,
+        cuerpo: cuerpo,
+        token: token,
+        leer: leer,
+      );
+
   Future<Result<T>> delete<T>(
     String ruta, {
     String? token,
@@ -120,6 +134,7 @@ class ClienteApi {
         _Metodo.get => _cliente.get(uri, headers: headers),
         _Metodo.post => _cliente.post(uri, headers: headers, body: body),
         _Metodo.patch => _cliente.patch(uri, headers: headers, body: body),
+        _Metodo.put => _cliente.put(uri, headers: headers, body: body),
         _Metodo.delete => _cliente.delete(uri, headers: headers, body: body),
       }
           .timeout(espera);
@@ -179,4 +194,4 @@ class ClienteApi {
 /// Devuelve el JWT vigente, o `null` si todavía no hay sesión abierta.
 typedef TokenDeSesion = String? Function();
 
-enum _Metodo { get, post, patch, delete }
+enum _Metodo { get, post, put, patch, delete }

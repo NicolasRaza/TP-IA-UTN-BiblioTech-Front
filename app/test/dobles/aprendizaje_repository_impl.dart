@@ -1,7 +1,7 @@
-import '../../../../core/error/result.dart';
-import '../../domain/entities/recomendacion.dart';
-import '../../domain/repositories/aprendizaje_repository.dart';
-import '../datasources/aprendizaje_local_datasource.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/features/agentes/domain/entities/recomendacion.dart';
+import 'package:bibliotech/features/agentes/domain/repositories/aprendizaje_repository.dart';
+import 'aprendizaje_local_datasource.dart';
 
 /// Implementación del [AprendizajeRepository] sobre el almacenamiento local.
 class AprendizajeRepositoryImpl implements AprendizajeRepository {

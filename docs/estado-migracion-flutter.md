@@ -22,21 +22,22 @@ y baja del prototipo.
 
 ## Conexión con el backend
 
-La app corre contra la API del backend SGB
-(`https://tp-ia-utn-bibliotech-back-production.up.railway.app`). El
-interruptor es uno solo, `Entorno.usarBackend`, y vive en el composition
-root: decide qué implementación queda atada a cada contrato de dominio. Ni
-los casos de uso, ni los blocs, ni las pantallas se enteran de cuál está
-montada.
+La app corre entera contra la API del backend SGB
+(`https://tp-ia-utn-bibliotech-back-production.up.railway.app`). No hay una
+segunda implementación local a la que caer: cada contrato de dominio se ata a
+su implementación API en el composition root, y ese es el único lugar donde
+se decide.
 
 ```bash
-flutter run -d chrome                                    # contra el backend
-flutter run -d chrome --dart-define=SGB_USAR_BACKEND=false   # modo local
+flutter run -d chrome                              # web
+flutter run -d chrome --dart-define=SGB_API_URL=…  # contra otro backend
 ```
 
-El modo local sigue existiendo a propósito: sirve para mostrar la app sin
-conexión y es el que usan los tests de reglas de negocio, que describen el
-dominio y no deben depender de la red.
+Lo único que queda guardado en el dispositivo es el token de la sesión, con
+las claves propias de `SesionApi`. Ni catálogo, ni padrón, ni circulación, ni
+notificaciones, ni auditoría, ni parámetros: todo eso es del servidor. El
+test `core/di/inyeccion_test.dart` lo sostiene —verifica que cada contrato se
+resuelva contra la API y que arrancar la app no escriba nada—.
 
 ### Qué viene del servidor
 
@@ -49,9 +50,21 @@ dominio y no deben depender de la red.
 | Préstamos | `GET/POST /prestamos`, `/prestamos/devolucion`, `/prestamos/lector/{id}` |
 | Reservas | `GET/POST/DELETE /reservas`, `/reservas/lector/{id}` |
 | Recomendaciones | `GET /recomendaciones` |
+| Notificaciones | `GET/POST /notificaciones`, `/notificaciones/{id}/leida`, `/notificaciones/marcar-leidas` |
+| Auditoría | `GET/POST /auditoria` |
+| Parámetros | `GET/PUT /configuracion` |
+| Aprendizaje | `GET/POST /aprendizaje/interacciones`, `/aprendizaje/correcciones` |
 
-Siguen siendo locales las features que la API no cubre: notificaciones,
-auditoría, configuración de parámetros y registro de aprendizaje.
+Las últimas cuatro vivían en el almacenamiento del navegador hasta que el
+backend las incorporó. Mientras estuvieron ahí, la traza de auditoría se
+perdía al limpiar el cache, dos bibliotecarios veían parámetros distintos,
+las notificaciones no seguían al lector entre dispositivos y la señal de
+aprendizaje quedaba partida en tantos pedazos como navegadores hubiera.
+
+Dos trazas de auditoría las escribe el servidor y no la app: la del
+autorregistro, que al ser público no tiene token con el cual asentarla, y la
+del cambio de parámetros, que altera las reglas para todos. El autor de cada
+evento sale siempre del token.
 
 ### Alta de usuarios: quién da de alta a quién
 
@@ -299,11 +312,13 @@ cambia son las tres piezas de infraestructura del borde.
 
 | Archivo | Qué cubre |
 |---|---|
-| `features/reglas_negocio_test.dart` | Reglas de la §7 sobre los casos de uso: validación estricta, límites, bloqueos, transición de categoría, reimpresión de QR, cola de reservas con 48 hs, multas idempotentes |
+| `features/reglas_negocio_test.dart` | Reglas de la §7 sobre los casos de uso, montados sobre los dobles en memoria de `test/dobles`: validación estricta, límites, bloqueos, transición de categoría, reimpresión de QR, cola de reservas con 48 hs, multas idempotentes |
 | `features/agentes/agente_evaluador_test.dart` | El Evaluador como función pura: decisiones sobre préstamos, reservas y lectores, y ponderación de recomendaciones |
 | `features/auth/sesion_cubit_test.dart` | Login válido, PIN incorrecto, email inexistente, cierre de sesión y validación de campos |
 | `features/reservas/reservas_bloc_test.dart` | Reserva lista vs. en espera, duplicados, cancelación, bloqueo por multa y orden de la cola |
 | `app/arranque_test.dart` | Arranque del composition root, ruteo por rol y tema |
+| `core/di/inyeccion_test.dart` | Que ningún contrato de dominio se resuelva contra el dispositivo y que arrancar no escriba nada en él |
+| `features/sistema/sistema_api_datasource_test.dart` | El contrato de notificaciones, auditoría, configuración y aprendizaje, con los cuerpos que devuelve el backend |
 | `core/api/cliente_api_test.dart` | El borde HTTP: query, JWT y la traducción de cada status a su `Failure` |
 | `features/*/​*_api_datasource_test.dart` | El contrato con la API, con cliente HTTP falso: los cuerpos son los que documenta el OpenAPI, así que un cambio del backend rompe en CI y no en la demo |
 | `features/auth/sesion_repository_api_test.dart` | Login, revalidación del JWT al arrancar, token vencido vs. corte de red |
@@ -407,22 +422,12 @@ cd app
 flutter pub get
 flutter run -d chrome        # web
 flutter run                  # mobile con dispositivo conectado
-flutter test                 # 135 tests
+flutter test                 # 152 tests
 flutter analyze
 ```
 
-Contra el backend, las cuentas son las del servidor y el formulario pide
-email y **contraseña**. La pantalla no prellena nada: las credenciales de la
-demo local no existen del otro lado.
-
-En modo local (`--dart-define=SGB_USAR_BACKEND=false`) valen los usuarios de
-demostración, precargados en cada tarjeta de rol:
-
-| Rol | Email | PIN |
-|---|---|---|
-| Lector | laura@demo.com | 1234 |
-| Bibliotecario | bibliotecario@demo.com | 0000 |
-| Administrador | admin@demo.com | 9999 |
+Las cuentas son las del servidor y el formulario pide email y
+**contraseña**. La pantalla no prellena nada.
 
 Probado con Flutter 3.24.5 / Dart 3.5.4, la versión fijada en el CI. Ojo al
 subir de versión: el código usa `withOpacity`, que 3.27+ reemplaza por

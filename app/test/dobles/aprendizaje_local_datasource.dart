@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/recomendacion.dart';
-import '../models/aprendizaje_models.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/agentes/domain/entities/recomendacion.dart';
+import 'package:bibliotech/features/agentes/data/models/aprendizaje_models.dart';
+import 'coleccion_json.dart';
 
 /// Acceso al almacenamiento local de la memoria del Agente de Aprendizaje.
 ///

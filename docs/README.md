@@ -49,7 +49,7 @@ Todas las rutas son relativas a `app/lib/`.
 | Agente Evaluador (ciclo Observación→Evaluación, §5) | `features/agentes/domain/services/agente_evaluador.dart` y `observador_del_sistema.dart` |
 | Agente de Aprendizaje (§5) | `features/agentes/domain/services/agente_aprendizaje.dart` |
 | Orden del ciclo (§5) | `features/agentes/domain/usecases/correr_ciclo_de_agentes.dart` |
-| Memoria persistente (§6) | El backend SGB. En modo local, `core/storage/` sobre `SharedPreferences` |
+| Memoria persistente (§6) | El backend SGB. En el dispositivo sólo queda el token de la sesión |
 | Reglas de negocio (§7) | `features/*/domain/services/politica_*.dart` y `asignador_de_cola.dart` |
 | Interfaz del lector (§9) | `app/portal_lector.dart` |
 | Interfaz del bibliotecario (§9) | `app/panel_bibliotecario.dart` |

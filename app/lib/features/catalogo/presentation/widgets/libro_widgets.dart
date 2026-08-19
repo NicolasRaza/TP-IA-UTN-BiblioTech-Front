@@ -125,26 +125,45 @@ class TarjetaLibro extends StatelessWidget {
 }
 
 /// Abre la ficha completa del libro, con la acción de reservar.
+///
+/// El diálogo se monta en el Navigator raíz, que está por encima de los
+/// `BlocProvider` de cada panel, así que los blocs se toman acá —donde sí
+/// están en el árbol— y se vuelven a proveer dentro del diálogo. Sin esto la
+/// ficha no encuentra los blocs y la pantalla queda en blanco.
 void mostrarFichaLibro(BuildContext context, Libro libro) {
+  final catalogo = context.read<CatalogoBloc>();
+  final sesion = context.read<SesionCubit>();
+  final reservas = context.read<ReservasBloc>();
+
   showDialog<void>(
     context: context,
-    builder: (_) => _FichaLibro(libroId: libro.id),
+    builder: (_) => MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: catalogo),
+        BlocProvider.value(value: sesion),
+        BlocProvider.value(value: reservas),
+      ],
+      child: _FichaLibro(libroId: libro.id, libroInicial: libro),
+    ),
   );
 }
 
 class _FichaLibro extends StatelessWidget {
-  const _FichaLibro({required this.libroId});
+  const _FichaLibro({required this.libroId, required this.libroInicial});
 
   final String libroId;
+
+  /// Copia del libro con la que se abrió la ficha: se usa mientras el catálogo
+  /// se está recargando, para que el diálogo nunca quede vacío.
+  final Libro libroInicial;
 
   @override
   Widget build(BuildContext context) {
     final catalogo = context.watch<CatalogoBloc>().state;
-    final libro = catalogo.todosLosLibros
-        .where((l) => l.id == libroId)
-        .cast<Libro?>()
-        .firstWhere((l) => true, orElse: () => null);
-    if (libro == null) return const SizedBox.shrink();
+    final libro = catalogo.todosLosLibros.firstWhere(
+      (l) => l.id == libroId,
+      orElse: () => libroInicial,
+    );
 
     final usuario = context.watch<SesionCubit>().state.usuario;
     final reservas = context.watch<ReservasBloc>().state;

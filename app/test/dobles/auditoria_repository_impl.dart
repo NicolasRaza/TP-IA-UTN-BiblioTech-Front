@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../domain/entities/evento_auditoria.dart';
-import '../../domain/repositories/auditoria_repository.dart';
-import '../datasources/administracion_local_datasource.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/administracion/domain/entities/evento_auditoria.dart';
+import 'package:bibliotech/features/administracion/domain/repositories/auditoria_repository.dart';
+import 'administracion_local_datasource.dart';
 
 /// Implementación del [AuditoriaRepository] sobre el almacenamiento local.
 class AuditoriaRepositoryImpl implements AuditoriaRepository {

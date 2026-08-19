@@ -1,10 +1,10 @@
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/services/reloj.dart';
-import '../../../lectores/domain/entities/lector.dart';
-import '../../../lectores/domain/repositories/lector_repository.dart';
-import '../../domain/entities/usuario_interno.dart';
-import '../../domain/repositories/usuario_interno_repository.dart';
+import 'package:bibliotech/core/error/failures.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'package:bibliotech/core/services/reloj.dart';
+import 'package:bibliotech/features/lectores/domain/entities/lector.dart';
+import 'package:bibliotech/features/lectores/domain/repositories/lector_repository.dart';
+import 'package:bibliotech/features/administracion/domain/entities/usuario_interno.dart';
+import 'package:bibliotech/features/administracion/domain/repositories/usuario_interno_repository.dart';
 
 /// Implementación del [UsuarioInternoRepository] sobre el padrón local.
 ///

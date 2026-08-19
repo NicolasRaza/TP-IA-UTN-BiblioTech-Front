@@ -1,8 +1,8 @@
-import '../../../../core/error/result.dart';
-import '../../../../core/storage/coleccion_json.dart';
-import '../../../../core/storage/key_value_store.dart';
-import '../../domain/entities/reserva.dart';
-import '../models/reserva_model.dart';
+import 'package:bibliotech/core/error/result.dart';
+import 'coleccion_json.dart';
+import 'package:bibliotech/core/storage/key_value_store.dart';
+import 'package:bibliotech/features/reservas/domain/entities/reserva.dart';
+import 'package:bibliotech/features/reservas/data/models/reserva_model.dart';
 
 /// Acceso al almacenamiento local de las reservas.
 abstract interface class ReservaLocalDataSource {
