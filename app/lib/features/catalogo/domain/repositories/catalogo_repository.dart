@@ -43,6 +43,18 @@ abstract interface class CatalogoRepository {
 
   Future<Result<void>> eliminar(String libroId);
 
+  /// Suma una copia física a un título ya existente y la devuelve ya
+  /// identificada.
+  ///
+  /// Es una operación propia y no un `actualizar` con la lista de ejemplares
+  /// ampliada porque el alta de un ejemplar no es una edición del título: el
+  /// backend la expone como su propia ruta (`POST /catalogo/ejemplares`) y es
+  /// él quien asigna el id y el código QR de la etiqueta.
+  Future<Result<Ejemplar>> agregarEjemplar(
+    String libroId,
+    CondicionEjemplar condicion,
+  );
+
   /// Cambia el estado de un ejemplar puntual.
   ///
   /// Existe como operación propia porque préstamos y reservas necesitan mover

@@ -147,6 +147,30 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
   }
 
   @override
+  Future<Result<Ejemplar>> agregarEjemplar(
+    String libroId,
+    CondicionEjemplar condicion,
+  ) async {
+    final libroResult = await obtenerPorId(libroId);
+    if (libroResult case Fallo(:final failure)) return Fallo(failure);
+    final libro = libroResult.valorONull!;
+
+    final nuevo = Ejemplar(
+      id: 'ej-${_generadorId.generar()}',
+      libroId: libroId,
+      condicion: condicion,
+      estado: EstadoEjemplar.disponible,
+    );
+
+    final guardado = await actualizar(
+      libro.copyWith(ejemplares: [...libro.ejemplares, nuevo]),
+    );
+    if (guardado case Fallo(:final failure)) return Fallo(failure);
+
+    return Exito(nuevo);
+  }
+
+  @override
   Future<Result<Ejemplar>> cambiarEstadoEjemplar(
     String libroId,
     String ejemplarId,

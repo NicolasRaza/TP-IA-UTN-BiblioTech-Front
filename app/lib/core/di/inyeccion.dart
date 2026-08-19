@@ -349,10 +349,7 @@ void _registrarCasosDeUso(bool usarBackend) {
         catalogoRepository: sl(),
         auditoriaRepository: sl(),
       ));
-  sl.registerLazySingleton(() => AgregarEjemplar(
-        catalogoRepository: sl(),
-        generadorId: sl(),
-      ));
+  sl.registerLazySingleton(() => AgregarEjemplar(catalogoRepository: sl()));
   sl.registerLazySingleton(() => ReimprimirEtiqueta(
         catalogoRepository: sl(),
         auditoriaRepository: sl(),
