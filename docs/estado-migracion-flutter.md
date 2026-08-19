@@ -45,11 +45,31 @@ dominio y no deben depender de la red.
 | Padrón | `GET/POST/PATCH /lectores` |
 | Préstamos | `GET/POST /prestamos`, `/prestamos/devolucion`, `/prestamos/lector/{id}` |
 | Reservas | `GET/POST/DELETE /reservas`, `/reservas/lector/{id}` |
+| Recomendaciones | `GET /recomendaciones` |
 
 Siguen siendo locales las features que la API no cubre: notificaciones,
-auditoría, configuración de parámetros y registro de aprendizaje. Los
-agentes trabajan sobre lo que devuelven los repositorios, así que en modo
-backend evalúan datos reales.
+auditoría, configuración de parámetros y registro de aprendizaje.
+
+### Permisos: qué cambia según quién esté logueado
+
+El backend le reserva `/lectores`, `GET /prestamos` y `GET /reservas` al rol
+bibliotecario. Eso no es un detalle de implementación, define qué puede hacer
+cada pantalla, y hubo que respetarlo en tres lugares:
+
+- **Recomendaciones.** El motor local necesita ver toda la circulación para
+  ponderar historial contra popularidad, y un lector no puede leerla. Contra
+  el backend se usa `GET /recomendaciones`, que corre la misma ponderación de
+  la spec §2 —70/30, cold start con 5 préstamos o menos— sobre datos
+  completos. El aviso de cold start se afirma contando el historial propio
+  del lector, que su rol sí puede leer.
+- **Buscar una reserva por id.** Se empieza por las del dueño de la sesión y
+  recién después por el listado global: al revés, cancelar la propia reserva
+  daría 403.
+- **Ciclo de agentes.** Los pasos que escriben —procesar vencimientos y
+  ejecutar decisiones— son del servidor, que corre su propio planificador en
+  un scheduler desde que arranca. La app observa y decide, así que el
+  bibliotecario sigue viendo qué propone el Evaluador sobre datos reales,
+  pero no duplica acciones ya ejecutadas del otro lado.
 
 ### Cómo está armado
 
@@ -234,7 +254,7 @@ cinco destinos, para que la barra inferior siga siendo usable en un celular:
 - Aprendizaje, sugerencias estratégicas y "acerca de" con la bitácora de la
   sesión y el reinicio de datos.
 
-### Tests — 108, todos en verde
+### Tests — 115, todos en verde
 
 `test/helpers/entorno_de_prueba.dart` levanta el grafo real de la app sobre
 `MemoryStore`, `RelojFijo` y `GeneradorIdSecuencial`. Los tests usan los

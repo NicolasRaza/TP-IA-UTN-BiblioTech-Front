@@ -11,7 +11,9 @@ import '../../features/administracion/domain/usecases/gestionar_configuracion.da
 import '../../features/administracion/presentation/cubit/administracion_cubit.dart';
 import '../../features/agentes/data/datasources/aprendizaje_local_datasource.dart';
 import '../../features/agentes/data/repositories/aprendizaje_repository_impl.dart';
+import '../../features/agentes/data/repositories/recomendacion_remota_api.dart';
 import '../../features/agentes/domain/repositories/aprendizaje_repository.dart';
+import '../../features/agentes/domain/repositories/recomendacion_remota.dart';
 import '../../features/agentes/domain/services/agente_analizador.dart';
 import '../../features/agentes/domain/services/agente_aprendizaje.dart';
 import '../../features/agentes/domain/services/agente_evaluador.dart';
@@ -196,12 +198,21 @@ void _registrarRepositorios(bool usarBackend) {
     sl.registerLazySingleton<PrestamoRepository>(
         () => PrestamoRepositoryApi(sl()));
 
-    sl.registerLazySingleton<ReservaRepository>(
-        () => ReservaRepositoryApi(sl()));
+    sl.registerLazySingleton<ReservaRepository>(() => ReservaRepositoryApi(
+          api: sl(),
+          sesion: sl(),
+        ));
 
     // Puertos para las transacciones que resuelve el servidor de una sola vez.
     sl.registerLazySingleton<PrestamoRemoto>(() => PrestamoRemotoApi(sl()));
     sl.registerLazySingleton<ReservaRemota>(() => ReservaRemotaApi(sl()));
+
+    // Las recomendaciones también son del servidor: el motor local necesita
+    // ver toda la circulación y un lector no tiene permiso para leerla.
+    sl.registerLazySingleton<RecomendacionRemota>(() => RecomendacionRemotaApi(
+          api: sl(),
+          prestamos: sl(),
+        ));
   } else {
     sl.registerLazySingleton<CatalogoRepository>(() => CatalogoRepositoryImpl(
           localDataSource: sl(),
@@ -437,10 +448,14 @@ void _registrarCasosDeUso(bool usarBackend) {
         observador: sl(),
         evaluador: sl(),
         planificador: sl(),
+        // Contra el backend, vencimientos y acciones los corre el scheduler
+        // del servidor: la app observa y decide, pero no ejecuta.
+        ejecutarAcciones: !usarBackend,
       ));
   sl.registerLazySingleton(() => ObtenerRecomendaciones(
         observador: sl(),
         evaluador: sl(),
+        remota: usarBackend ? sl<RecomendacionRemota>() : null,
       ));
   sl.registerLazySingleton(() => ObtenerIndicadores(
         observador: sl(),

@@ -9,6 +9,7 @@ import '../../../catalogo/domain/repositories/catalogo_repository.dart';
 import '../entities/decision.dart';
 import '../entities/recomendacion.dart';
 import '../repositories/aprendizaje_repository.dart';
+import '../repositories/recomendacion_remota.dart';
 import '../services/agente_aprendizaje.dart';
 import '../services/agente_evaluador.dart';
 import '../services/observador_del_sistema.dart';
@@ -29,14 +30,28 @@ class ObtenerRecomendaciones
   const ObtenerRecomendaciones({
     required ObservadorDelSistema observador,
     required AgenteEvaluador evaluador,
+    RecomendacionRemota? remota,
   })  : _observador = observador,
-        _evaluador = evaluador;
+        _evaluador = evaluador,
+        _remota = remota;
 
   final ObservadorDelSistema _observador;
   final AgenteEvaluador _evaluador;
 
+  /// Contra el backend las recomendaciones las calcula el servidor.
+  ///
+  /// No es una preferencia: el motor local necesita ver toda la circulación
+  /// para ponderar popularidad, y un lector no tiene permiso para leerla. El
+  /// servidor corre la misma ponderación de la spec §2 sobre datos completos.
+  final RecomendacionRemota? _remota;
+
   @override
   Future<Result<List<Recomendacion>>> call(RecomendacionesParams params) async {
+    final remota = _remota;
+    if (remota != null) {
+      return remota.para(params.lectorId, limite: params.limite);
+    }
+
     final estado = await _observador.observar();
     return estado.map((e) => _evaluador.recomendarPara(
           e,

@@ -1,3 +1,4 @@
+import '../../../../core/api/sesion_api.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../domain/entities/reserva.dart';
@@ -10,9 +11,17 @@ import '../datasources/reserva_api_datasource.dart';
 /// cancelar reservas son transacciones del servidor y viajan por
 /// `ReservaRemotaApi`.
 class ReservaRepositoryApi implements ReservaRepository {
-  const ReservaRepositoryApi(this._api);
+  const ReservaRepositoryApi({
+    required ReservaApiDataSource api,
+    required SesionApi sesion,
+  })  : _api = api,
+        _sesion = sesion;
 
   final ReservaApiDataSource _api;
+
+  /// Para saber de quién es la sesión: `GET /reservas` pide rol bibliotecario,
+  /// así que un lector sólo puede llegar a las suyas.
+  final SesionApi _sesion;
 
   @override
   Future<Result<List<Reserva>>> obtenerDeLector(String lectorId) =>
@@ -35,8 +44,23 @@ class ReservaRepositoryApi implements ReservaRepository {
     return Exito(cola);
   }
 
+  /// Busca primero entre las reservas del dueño de la sesión y recién después
+  /// en el conjunto.
+  ///
+  /// El orden importa por permisos, no por rendimiento: un lector puede leer
+  /// las suyas —que son las únicas que va a cancelar— pero no `GET /reservas`.
+  /// Empezar por el listado global le daría un 403 al cancelar su propia
+  /// reserva.
   @override
   Future<Result<Reserva>> obtenerPorId(String reservaId) async {
+    final lectorId = _sesion.usuario?.lectorId;
+    if (lectorId != null) {
+      final propias = await _api.deLector('$lectorId');
+      for (final r in propias.valorONull ?? const <Reserva>[]) {
+        if (r.id == reservaId) return Exito(r);
+      }
+    }
+
     final todas = await obtenerTodas();
     if (todas case Fallo(:final failure)) return Fallo(failure);
 
