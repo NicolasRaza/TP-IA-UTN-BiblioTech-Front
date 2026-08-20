@@ -86,7 +86,13 @@ class Libro extends Equatable {
   /// del ISBN: OpenLibrary responde con éxito (200) aunque no tenga la
   /// portada, devolviendo una imagen mínima que `Image.network` carga sin
   /// error y deja un hueco en blanco en vez del placeholder por defecto.
-  String get portadaUrl => portada;
+  ///
+  /// Algunas fuentes (p. ej. Google Books) devuelven la portada en `http://`.
+  /// En la web, con la app servida por `https`, esas imágenes quedan
+  /// bloqueadas como contenido mixto, así que se sube el esquema acá.
+  String get portadaUrl => portada.startsWith('http://')
+      ? portada.replaceFirst('http://', 'https://')
+      : portada;
 
   /// ¿El texto de búsqueda aparece en alguno de los campos indexados?
   bool coincideCon(String consulta) {
