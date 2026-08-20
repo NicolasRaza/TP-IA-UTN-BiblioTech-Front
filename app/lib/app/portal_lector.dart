@@ -91,6 +91,7 @@ class _ShellDelLector extends StatelessWidget {
   Widget build(BuildContext context) {
     final noLeidas =
         context.select<NotificacionesCubit, int>((c) => c.state.noLeidas);
+    final lectorId = context.read<SesionCubit>().state.usuario!.id;
 
     return ShellAdaptativo(
       titulo: 'Portal del Lector',
@@ -101,18 +102,30 @@ class _ShellDelLector extends StatelessWidget {
           icono: Icons.search_outlined,
           iconoActivo: Icons.search,
           constructor: (_) => const SeccionCatalogo(),
+          alSeleccionar: () =>
+              context.read<CatalogoBloc>().add(const CatalogoSolicitado()),
         ),
         Destino(
           etiqueta: 'Para vos',
           icono: Icons.auto_awesome_outlined,
           iconoActivo: Icons.auto_awesome,
           constructor: (_) => const SeccionRecomendaciones(),
+          alSeleccionar: () =>
+              context.read<RecomendacionesCubit>().cargar(lectorId),
         ),
         Destino(
           etiqueta: 'Mi actividad',
           icono: Icons.menu_book_outlined,
           iconoActivo: Icons.menu_book,
           constructor: (_) => const SeccionActividad(),
+          alSeleccionar: () {
+            context
+                .read<PrestamosBloc>()
+                .add(PrestamosDeLectorSolicitados(lectorId));
+            context
+                .read<ReservasBloc>()
+                .add(ReservasDeLectorSolicitadas(lectorId));
+          },
         ),
         Destino(
           etiqueta: 'Avisos',
@@ -120,6 +133,8 @@ class _ShellDelLector extends StatelessWidget {
           iconoActivo: Icons.notifications,
           contador: noLeidas,
           constructor: (_) => const SeccionNotificaciones(),
+          alSeleccionar: () =>
+              context.read<NotificacionesCubit>().cargar(lectorId),
         ),
         Destino(
           etiqueta: 'Perfil',

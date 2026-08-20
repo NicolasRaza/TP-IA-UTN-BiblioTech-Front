@@ -105,6 +105,14 @@ class _ShellDelBibliotecario extends StatelessWidget {
           icono: Icons.dashboard_outlined,
           iconoActivo: Icons.dashboard,
           constructor: (_) => const SeccionDashboard(),
+          alSeleccionar: () {
+            context
+                .read<AgentesBloc>()
+                .add(const DecisionesPendientesSolicitadas());
+            context
+                .read<PrestamosBloc>()
+                .add(const TodosLosPrestamosSolicitados());
+          },
         ),
         Destino(
           etiqueta: 'Alta de libro',
@@ -117,24 +125,34 @@ class _ShellDelBibliotecario extends StatelessWidget {
           icono: Icons.inventory_2_outlined,
           iconoActivo: Icons.inventory_2,
           constructor: (_) => const SeccionInventario(),
+          alSeleccionar: () =>
+              context.read<CatalogoBloc>().add(const CatalogoSolicitado()),
         ),
         Destino(
           etiqueta: 'Préstamo',
           icono: Icons.output_outlined,
           iconoActivo: Icons.output,
           constructor: (_) => const SeccionPrestamo(),
+          alSeleccionar: () => context
+              .read<PrestamosBloc>()
+              .add(const TodosLosPrestamosSolicitados()),
         ),
         Destino(
           etiqueta: 'Devolución',
           icono: Icons.input_outlined,
           iconoActivo: Icons.input,
           constructor: (_) => const SeccionDevolucion(),
+          alSeleccionar: () => context
+              .read<PrestamosBloc>()
+              .add(const TodosLosPrestamosSolicitados()),
         ),
         Destino(
           etiqueta: 'Lectores',
           icono: Icons.people_outline,
           iconoActivo: Icons.people,
           constructor: (_) => const SeccionLectores(),
+          alSeleccionar: () =>
+              context.read<LectoresBloc>().add(const LectoresSolicitados()),
         ),
         Destino(
           etiqueta: 'Alertas',
@@ -142,6 +160,9 @@ class _ShellDelBibliotecario extends StatelessWidget {
           iconoActivo: Icons.warning_amber,
           contador: alertas,
           constructor: (_) => const SeccionAlertas(),
+          alSeleccionar: () => context
+              .read<AgentesBloc>()
+              .add(const DecisionesPendientesSolicitadas()),
         ),
       ],
     );
