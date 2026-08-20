@@ -87,10 +87,28 @@ class _SeccionInventarioState extends State<SeccionInventario> {
   }
 }
 
-class _FilaLibro extends StatelessWidget {
+class _FilaLibro extends StatefulWidget {
   const _FilaLibro({required this.libro});
 
   final Libro libro;
+
+  @override
+  State<_FilaLibro> createState() => _FilaLibroState();
+}
+
+class _FilaLibroState extends State<_FilaLibro> {
+  bool _pedidos = false;
+
+  Libro get libro => widget.libro;
+
+  /// El listado del catálogo solo trae conteos; el detalle de cada
+  /// ejemplar (estado, ubicación, QR) se pide recién al desplegar la fila,
+  /// y una sola vez por libro para no repetir el request en cada toggle.
+  void _alExpandir(bool expandido) {
+    if (!expandido || _pedidos || libro.ejemplares.isNotEmpty) return;
+    _pedidos = true;
+    context.read<CatalogoBloc>().add(EjemplaresDeLibroSolicitados(libro.id));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +117,7 @@ class _FilaLibro extends StatelessWidget {
         shape: const Border(),
         collapsedShape: const Border(),
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        onExpansionChanged: _alExpandir,
         leading:
             SizedBox(width: 40, child: Portada(libro, alto: 58, ancho: 40)),
         title: Text(libro.titulo,
@@ -156,31 +175,63 @@ class _FilaLibro extends StatelessWidget {
                     ),
                   ],
                 ),
-                for (final ej in libro.ejemplares)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            ej.qr,
-                            style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 12,
-                                color: Paleta.textSecondary),
-                          ),
-                        ),
-                        Insignia.condicion(ej.condicion),
-                        const SizedBox(width: 7),
-                        Insignia.estadoEjemplar(ej.estado),
-                        IconButton(
-                          tooltip: 'Ver o reimprimir etiqueta',
-                          icon: const Icon(Icons.qr_code_2, size: 19),
-                          onPressed: () => _mostrarEtiqueta(context, libro, ej),
-                        ),
-                      ],
+                if (libro.ejemplares.isEmpty && libro.totalEjemplares > 0)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     ),
-                  ),
+                  )
+                else
+                  for (final ej in libro.ejemplares)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ej.qr,
+                                  style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                      color: Paleta.textSecondary),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on_outlined,
+                                        size: 13, color: Paleta.textMuted),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      ej.ubicacion,
+                                      style: const TextStyle(
+                                          color: Paleta.textMuted,
+                                          fontSize: 11.5),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Insignia.condicion(ej.condicion),
+                          const SizedBox(width: 7),
+                          Insignia.estadoEjemplar(ej.estado),
+                          IconButton(
+                            tooltip: 'Ver o reimprimir etiqueta',
+                            icon: const Icon(Icons.qr_code_2, size: 19),
+                            onPressed: () =>
+                                _mostrarEtiqueta(context, libro, ej),
+                          ),
+                        ],
+                      ),
+                    ),
               ],
             ),
           ),

@@ -453,6 +453,7 @@ void _registrarPresentacion() {
         buscarLibros: sl(),
         obtenerGeneros: sl(),
         obtenerPendientesValidacion: sl(),
+        obtenerLibro: sl(),
         registrarLibro: sl(),
         validarLibro: sl(),
         agregarEjemplar: sl(),

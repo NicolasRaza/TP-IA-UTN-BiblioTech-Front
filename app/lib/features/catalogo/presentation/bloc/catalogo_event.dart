@@ -83,3 +83,15 @@ class EtiquetaReimpresa extends CatalogoEvent {
 class MensajeCatalogoDescartado extends CatalogoEvent {
   const MensajeCatalogoDescartado();
 }
+
+/// El bibliotecario abrió la ficha de un libro y hace falta el detalle de
+/// sus ejemplares (estado, ubicación y QR), que el listado del catálogo no
+/// trae para no pagar un request por fila.
+class EjemplaresDeLibroSolicitados extends CatalogoEvent {
+  const EjemplaresDeLibroSolicitados(this.libroId);
+
+  final String libroId;
+
+  @override
+  List<Object?> get props => [libroId];
+}
