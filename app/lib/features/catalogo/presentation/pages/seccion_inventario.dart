@@ -261,12 +261,19 @@ class _FilaLibroState extends State<_FilaLibro> {
         .add(EjemplarAgregado(libroId: libroId, condicion: condicion));
   }
 
+  // El diálogo se monta en el Navigator raíz, que está por encima del
+  // BlocProvider<CatalogoBloc> del panel, así que el bloc se toma acá
+  // —donde sí está en el árbol— y se vuelve a proveer dentro del diálogo.
+  // Sin esto el diálogo no encuentra el bloc y la pantalla queda en blanco.
   static void _mostrarEtiqueta(
       BuildContext context, Libro libro, Ejemplar ejemplar) {
+    final catalogo = context.read<CatalogoBloc>();
     showDialog<void>(
       context: context,
-      builder: (_) =>
-          _DialogoEtiqueta(libroId: libro.id, ejemplarId: ejemplar.id),
+      builder: (_) => BlocProvider.value(
+        value: catalogo,
+        child: _DialogoEtiqueta(libroId: libro.id, ejemplarId: ejemplar.id),
+      ),
     );
   }
 }
