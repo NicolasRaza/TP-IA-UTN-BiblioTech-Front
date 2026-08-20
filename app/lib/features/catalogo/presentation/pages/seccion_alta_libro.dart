@@ -53,6 +53,8 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
         );
   }
 
+  void _cargarManual() => context.read<AltaLibroCubit>().cargarManual();
+
   /// Vuelca los valores sugeridos en los campos editables del formulario.
   void _volcarEnFormulario(FichaSugerida ficha) {
     for (final e in ficha.campos.entries) {
@@ -141,7 +143,8 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
                 const SizedBox(height: 6),
                 const Text(
                   'Subí las fotos de la tapa, contratapa y la página con la '
-                  'ficha técnica del ejemplar para extraer los datos automáticamente.',
+                  'ficha técnica del ejemplar para extraer los datos automáticamente, '
+                  'o cargá la ficha a mano si preferís no usar fotos.',
                   style: TextStyle(
                       color: Paleta.textMuted, fontSize: 12.5, height: 1.45),
                 ),
@@ -181,6 +184,12 @@ class _SeccionAltaLibroState extends State<SeccionAltaLibro> {
                           : null,
                       icon: const Icon(Icons.auto_fix_high, size: 18),
                       label: const Text('Analizar'),
+                    ),
+                    const SizedBox(width: 10),
+                    OutlinedButton.icon(
+                      onPressed: _cargarManual,
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Cargar manualmente'),
                     ),
                     const Spacer(),
                     if (ficha != null)

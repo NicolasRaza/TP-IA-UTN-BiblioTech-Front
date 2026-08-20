@@ -89,6 +89,30 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
     ));
   }
 
+  /// Abre la ficha vacía para cargarla a mano, sin depender de las fotos
+  /// ni del reconocimiento automático.
+  void cargarManual() {
+    final campos = {
+      for (final campo in _camposManuales)
+        campo: const CampoSugerido.pendiente(),
+    };
+    emit(state.copyWith(
+      estado: EstadoCarga.exito,
+      ficha: FichaSugerida(campos: campos),
+      sugeridos: {for (final campo in _camposManuales) campo: ''},
+      limpiarMensajes: true,
+    ));
+  }
+
+  static const _camposManuales = [
+    'titulo',
+    'autor',
+    'editorial',
+    'anio',
+    'isbn',
+    'paginas',
+  ];
+
   void limpiar() => emit(const AltaLibroState());
 
   void limpiarMensajes() => emit(state.copyWith(limpiarMensajes: true));
@@ -104,6 +128,12 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
     final titulo = (valores['titulo'] ?? '').trim();
     if (titulo.isEmpty) {
       emit(state.copyWith(mensajeError: 'El título es obligatorio'));
+      return;
+    }
+
+    final isbn = (valores['isbn'] ?? '').trim();
+    if (isbn.isEmpty) {
+      emit(state.copyWith(mensajeError: 'El ISBN es obligatorio'));
       return;
     }
 
@@ -123,7 +153,7 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
         autor: (valores['autor'] ?? '').trim(),
         editorial: (valores['editorial'] ?? '').trim(),
         anio: int.tryParse((valores['anio'] ?? '').trim()),
-        isbn: (valores['isbn'] ?? '').trim(),
+        isbn: isbn,
         paginas: int.tryParse((valores['paginas'] ?? '').trim()),
         fechaAlta: _reloj.ahora,
         camposPendientes: pendientes,

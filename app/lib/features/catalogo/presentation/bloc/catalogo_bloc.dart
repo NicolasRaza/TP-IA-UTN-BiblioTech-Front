@@ -29,6 +29,7 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
     required BuscarLibros buscarLibros,
     required ObtenerGeneros obtenerGeneros,
     required ObtenerPendientesValidacion obtenerPendientesValidacion,
+    required ObtenerLibro obtenerLibro,
     required RegistrarLibro registrarLibro,
     required ValidarLibro validarLibro,
     required AgregarEjemplar agregarEjemplar,
@@ -38,6 +39,7 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
         _buscarLibros = buscarLibros,
         _obtenerGeneros = obtenerGeneros,
         _obtenerPendientes = obtenerPendientesValidacion,
+        _obtenerLibro = obtenerLibro,
         _registrarLibro = registrarLibro,
         _validarLibro = validarLibro,
         _agregarEjemplar = agregarEjemplar,
@@ -53,6 +55,7 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
     on<LibroValidado>(_alValidarLibro);
     on<EjemplarAgregado>(_alAgregarEjemplar);
     on<EtiquetaReimpresa>(_alReimprimirEtiqueta);
+    on<EjemplaresDeLibroSolicitados>(_alSolicitarEjemplaresDeLibro);
     on<MensajeCatalogoDescartado>(
       (_, emit) => emit(state.copyWith(limpiarMensajes: true)),
     );
@@ -62,6 +65,7 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
   final BuscarLibros _buscarLibros;
   final ObtenerGeneros _obtenerGeneros;
   final ObtenerPendientesValidacion _obtenerPendientes;
+  final ObtenerLibro _obtenerLibro;
   final RegistrarLibro _registrarLibro;
   final ValidarLibro _validarLibro;
   final AgregarEjemplar _agregarEjemplar;
@@ -174,6 +178,30 @@ class CatalogoBloc extends Bloc<CatalogoEvent, CatalogoState> {
         ));
       },
     );
+  }
+
+  /// Completa un libro ya listado con el detalle de sus ejemplares.
+  ///
+  /// El listado del catálogo trae solo los conteos (spec: un request por
+  /// título sería carísimo para una grilla), así que la ficha pide el
+  /// detalle recién cuando el bibliotecario la abre.
+  Future<void> _alSolicitarEjemplaresDeLibro(
+    EjemplaresDeLibroSolicitados event,
+    Emitter<CatalogoState> emit,
+  ) async {
+    final resultado = await _obtenerLibro(ObtenerLibroParams(event.libroId));
+    if (resultado case Fallo(:final failure)) {
+      emit(state.copyWith(mensajeError: failure.mensaje));
+      return;
+    }
+
+    final libro = resultado.valorONull!;
+    Libro reemplazar(Libro l) => l.id == libro.id ? libro : l;
+
+    emit(state.copyWith(
+      libros: state.libros.map(reemplazar).toList(),
+      todosLosLibros: state.todosLosLibros.map(reemplazar).toList(),
+    ));
   }
 
   /// Relee catálogo, inventario, pendientes y géneros, y reaplica el filtro
