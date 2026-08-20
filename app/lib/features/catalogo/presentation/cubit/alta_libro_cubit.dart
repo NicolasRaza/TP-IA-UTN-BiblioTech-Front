@@ -131,6 +131,12 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
       return;
     }
 
+    final isbn = (valores['isbn'] ?? '').trim();
+    if (isbn.isEmpty) {
+      emit(state.copyWith(mensajeError: 'El ISBN es obligatorio'));
+      return;
+    }
+
     emit(state.copyWith(guardando: true, limpiarMensajes: true));
 
     // Los campos que el agente marcó para revisar y quedaron vacíos se
@@ -147,7 +153,7 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
         autor: (valores['autor'] ?? '').trim(),
         editorial: (valores['editorial'] ?? '').trim(),
         anio: int.tryParse((valores['anio'] ?? '').trim()),
-        isbn: (valores['isbn'] ?? '').trim(),
+        isbn: isbn,
         paginas: int.tryParse((valores['paginas'] ?? '').trim()),
         fechaAlta: _reloj.ahora,
         camposPendientes: pendientes,
