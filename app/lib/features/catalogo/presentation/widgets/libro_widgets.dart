@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/presentation/widgets/comunes.dart';
 import '../../../../core/theme/tema.dart';
 import '../../../../core/utils/formato.dart';
 import '../../../auth/presentation/cubit/sesion_cubit.dart';
 import '../../../reservas/presentation/bloc/reservas_bloc.dart';
+import '../../domain/entities/ejemplar.dart';
 import '../../domain/entities/libro.dart';
 import '../bloc/catalogo_bloc.dart';
 
@@ -148,7 +150,7 @@ void mostrarFichaLibro(BuildContext context, Libro libro) {
   );
 }
 
-class _FichaLibro extends StatelessWidget {
+class _FichaLibro extends StatefulWidget {
   const _FichaLibro({required this.libroId, required this.libroInicial});
 
   final String libroId;
@@ -158,11 +160,31 @@ class _FichaLibro extends StatelessWidget {
   final Libro libroInicial;
 
   @override
+  State<_FichaLibro> createState() => _FichaLibroState();
+}
+
+class _FichaLibroState extends State<_FichaLibro> {
+  @override
+  void initState() {
+    super.initState();
+    // El listado del catálogo solo trae conteos; el detalle de cada
+    // ejemplar (estado, ubicación, QR) se pide recién al abrir la ficha, y
+    // solo para el bibliotecario, que es quien lo necesita.
+    final esBibliotecario =
+        context.read<SesionCubit>().state.usuario?.esPersonal ?? false;
+    if (esBibliotecario) {
+      context
+          .read<CatalogoBloc>()
+          .add(EjemplaresDeLibroSolicitados(widget.libroId));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final catalogo = context.watch<CatalogoBloc>().state;
     final libro = catalogo.todosLosLibros.firstWhere(
-      (l) => l.id == libroId,
-      orElse: () => libroInicial,
+      (l) => l.id == widget.libroId,
+      orElse: () => widget.libroInicial,
     );
 
     final usuario = context.watch<SesionCubit>().state.usuario;
@@ -270,71 +292,35 @@ class _FichaLibro extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (esBibliotecario && libro.ejemplares.isNotEmpty) ...[
+                    if (esBibliotecario) ...[
                       const SizedBox(height: 20),
-                      const Text('Ejemplares en inventario',
+                      const Text('Ejemplares',
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: Paleta.textPrimary)),
                       const SizedBox(height: 7),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Paleta.bgInput,
-                          borderRadius: BorderRadius.circular(Radios.base),
-                          border: Border.all(color: Paleta.border),
-                        ),
-                        child: Column(
-                          children: [
-                            for (var i = 0;
-                                i < libro.ejemplares.length;
-                                i++) ...[
-                              if (i > 0)
-                                const Divider(height: 1, color: Paleta.border),
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            libro.ejemplares[i].qr,
-                                            style: const TextStyle(
-                                                fontFamily: 'monospace',
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: Paleta.textPrimary),
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                  Icons.location_on_outlined,
-                                                  size: 14,
-                                                  color: Paleta.textSecondary),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                libro.ejemplares[i].ubicacion,
-                                                style: const TextStyle(
-                                                    color: Paleta.textSecondary,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    Insignia.estadoEjemplar(
-                                        libro.ejemplares[i].estado),
-                                  ],
-                                ),
-                              ),
+                      if (libro.ejemplares.isEmpty)
+                        _EstadoEjemplares(cargando: libro.totalEjemplares > 0)
+                      else
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Paleta.bgInput,
+                            borderRadius: BorderRadius.circular(Radios.base),
+                            border: Border.all(color: Paleta.border),
+                          ),
+                          child: Column(
+                            children: [
+                              for (var i = 0;
+                                  i < libro.ejemplares.length;
+                                  i++) ...[
+                                if (i > 0)
+                                  const Divider(
+                                      height: 1, color: Paleta.border),
+                                _FilaEjemplar(ejemplar: libro.ejemplares[i]),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
                     ],
                   ],
                 ),
@@ -377,6 +363,93 @@ class _FichaLibro extends StatelessWidget {
     context
         .read<ReservasBloc>()
         .add(ReservaCreada(lectorId: lectorId, libroId: libroId));
+  }
+}
+
+/// Mientras se piden los ejemplares, o cuando el título no tiene ninguno.
+class _EstadoEjemplares extends StatelessWidget {
+  const _EstadoEjemplares({required this.cargando});
+
+  final bool cargando;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!cargando) {
+      return const Text(
+        'Este título todavía no tiene ejemplares cargados.',
+        style: TextStyle(color: Paleta.textMuted, fontSize: 12.5),
+      );
+    }
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fila de un ejemplar con su QR, ubicación y estado.
+class _FilaEjemplar extends StatelessWidget {
+  const _FilaEjemplar({required this.ejemplar});
+
+  final Ejemplar ejemplar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Radios.sm),
+            ),
+            child: QrImageView(
+              data: ejemplar.qr,
+              size: 38,
+              backgroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ejemplar.qr,
+                  style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Paleta.textPrimary),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined,
+                        size: 14, color: Paleta.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      ejemplar.ubicacion,
+                      style: const TextStyle(
+                          color: Paleta.textSecondary, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Insignia.estadoEjemplar(ejemplar.estado),
+        ],
+      ),
+    );
   }
 }
 
