@@ -207,8 +207,7 @@ class _FilaLibroState extends State<_FilaLibro> {
                                 Row(
                                   children: [
                                     const Icon(Icons.location_on_outlined,
-                                        size: 13,
-                                        color: Paleta.textMuted),
+                                        size: 13, color: Paleta.textMuted),
                                     const SizedBox(width: 3),
                                     Text(
                                       ej.ubicacion,
