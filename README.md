@@ -1,5 +1,11 @@
 # TP-IA-UTN
 
+## Entrega Final - Proyecto en vivo
+
+🔗 **URL de la aplicación:** https://nicolasraza.github.io/TP-IA-UTN-BiblioTech-Front/
+
+Para ingresar como **lector**, es necesario registrarse en la aplicación y luego ser verificado del lado de la biblioteca antes de poder acceder con esas credenciales.
+
 Trabajo de fin de Ciclo
 Orquestación Agéntica Cíclica y Memoria Persistente
 Objetivo
