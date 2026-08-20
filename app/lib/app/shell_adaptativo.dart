@@ -14,6 +14,7 @@ class Destino {
     required this.iconoActivo,
     required this.constructor,
     this.contador = 0,
+    this.alSeleccionar,
   });
 
   final String etiqueta;
@@ -23,6 +24,11 @@ class Destino {
 
   /// Número que se muestra como globo sobre el icono (ej. no leídas).
   final int contador;
+
+  /// Se dispara al entrar a esta sección desde el menú, para refrescar los
+  /// datos que trae: los blocs se crean una sola vez al abrir el panel y no
+  /// se enteran solos de los cambios hechos desde otra sección.
+  final VoidCallback? alSeleccionar;
 }
 
 /// Scaffold que adapta la navegación al tamaño de pantalla.
@@ -60,6 +66,11 @@ class _ShellAdaptativoState extends State<ShellAdaptativo> {
     if (_indice >= widget.destinos.length) _indice = 0;
   }
 
+  void _irA(int i) {
+    if (i != _indice) widget.destinos[i].alSeleccionar?.call();
+    setState(() => _indice = i);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bp = context.breakpoint;
@@ -72,7 +83,7 @@ class _ShellAdaptativoState extends State<ShellAdaptativo> {
         body: SafeArea(child: contenido),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _indice,
-          onDestinationSelected: (i) => setState(() => _indice = i),
+          onDestinationSelected: _irA,
           destinations: [
             for (final d in widget.destinos)
               NavigationDestination(
@@ -96,7 +107,7 @@ class _ShellAdaptativoState extends State<ShellAdaptativo> {
               extended: extendido,
               minExtendedWidth: 232,
               selectedIndex: _indice,
-              onDestinationSelected: (i) => setState(() => _indice = i),
+              onDestinationSelected: _irA,
               leading: extendido ? null : const SizedBox(height: 8),
               destinations: [
                 for (final d in widget.destinos)
