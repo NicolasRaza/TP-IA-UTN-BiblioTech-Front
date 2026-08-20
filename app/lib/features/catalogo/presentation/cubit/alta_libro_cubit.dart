@@ -89,6 +89,30 @@ class AltaLibroCubit extends Cubit<AltaLibroState> {
     ));
   }
 
+  /// Abre la ficha vacía para cargarla a mano, sin depender de las fotos
+  /// ni del reconocimiento automático.
+  void cargarManual() {
+    final campos = {
+      for (final campo in _camposManuales)
+        campo: const CampoSugerido.pendiente(),
+    };
+    emit(state.copyWith(
+      estado: EstadoCarga.exito,
+      ficha: FichaSugerida(campos: campos),
+      sugeridos: {for (final campo in _camposManuales) campo: ''},
+      limpiarMensajes: true,
+    ));
+  }
+
+  static const _camposManuales = [
+    'titulo',
+    'autor',
+    'editorial',
+    'anio',
+    'isbn',
+    'paginas',
+  ];
+
   void limpiar() => emit(const AltaLibroState());
 
   void limpiarMensajes() => emit(state.copyWith(limpiarMensajes: true));
